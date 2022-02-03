@@ -400,9 +400,10 @@ components:
       description: Purpose State
       enum:
         - ACTIVE
-        - PENDING
+        - DRAFT
         - SUSPENDED
-        - INACTIVE
+        - WAITING_FOR_APPROVAL
+        - ARCHIVED
     Purpose:
       type: object
       additionalProperties: false
