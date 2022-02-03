@@ -378,23 +378,12 @@ components:
         id:
           type: string
           format: uuid
-        descriptorId:
-          type: string
-          format: uuid
-        version:
-          type: string
-          pattern: /^[0-9]+$/
         name:
           type: string
           pattern: /^[a-zA-Z]/s+$/
-        state:
-          $ref: '#/components/schemas/EServiceState'
       required:
         - id
-        - descriptorId
-        - version
         - name
-        - state
     PurposeState:
       type: string
       description: Purpose State
