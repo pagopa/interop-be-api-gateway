@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Interoperability API Gateway Micro Service
   description: defines the persistence operations for the agreement
-  version: '0.0.1'
+  version: '0.1.0'
   contact:
     name: API Support
     url: 'http://www.example.com/support'
@@ -11,7 +11,7 @@ info:
   x-api-id: an x-api-id
   x-summary: an x-summary
 servers:
-  - url: 'https://interop.pagopa.it/interop-api-gateway/0.0.1'
+  - url: 'https://interop.pagopa.it/interop-api-gateway/0.1.0'
     description: This service is the interoperability api gateway
 tags:
   - name: api
@@ -19,9 +19,55 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
+  - name: auth
+    description: Get security information
+    externalDocs:
+      description: Find out more
+      url: http://swagger.io
 security:
   - bearerAuth: [ ]
 paths:
+  '/as/token.oauth2':
+    post:
+      security: [ ]
+      tags:
+        - auth
+      summary: Create a new access token
+      description: Return ok
+      operationId: createToken
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccessTokenRequest'
+      responses:
+        "200":
+          description: |-
+            an Access token
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                default: no-cache, no-store
+              description: |-
+                no-cache, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientCredentialsResponse'
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        "400":
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}':
     get:
       tags:
@@ -126,7 +172,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/attribute/{attributeId}':
+  '/attributes/{attributeId}':
     get:
       tags:
         - api
@@ -161,7 +207,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/eservice/{eserviceId}':
+  '/eservices/{eserviceId}':
     get:
       tags:
         - api
@@ -201,7 +247,9 @@ paths:
       tags:
         - api
       summary: Retrieve a list of agreement
-      description: List
+      description: |
+        <br />It is mandatory to insert either the producerId field or the consumerId field.
+        <br />This request operates exclusively in the domain of the requesting entity.
       operationId: getAgreements
       parameters:
         - in: query
@@ -258,6 +306,48 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
+    AccessTokenRequest:
+      type: object
+      required:
+        - client_assertion
+        - client_assertion_type
+        - grant_type
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          example: e58035ce-c753-4f72-b613-46f8a17b71cc
+        client_assertion:
+          type: string
+          format: jws
+        client_assertion_type:
+          type: string
+          example: urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+        grant_type:
+          type: string
+          enum:
+            - CLIENT_CREDENTIALS
+    TokenType:
+      type: string
+      description: Represents the token type
+      enum:
+        - Bearer
+    ClientCredentialsResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          format: jws
+        token_type:
+          $ref: '#/components/schemas/TokenType'
+        expires_in:
+          type: integer
+          format: int64
+          maximum: 600
     Subscriber:
       type: object
       additionalProperties: false
@@ -333,18 +423,10 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Purpose'
-    AttributeState:
-      type: string
-      description: Attribute State
-      enum:
-        - ACTIVE
-        - PENDING
-        - SUSPENDED
-        - INACTIVE
     Attribute:
       type: object
       additionalProperties: false
-      title: VerifiedAttribute
+      title: Attribute
       description: represents the details of a verified attribute bound to the agreement.
       properties:
         id:
@@ -354,16 +436,21 @@ components:
           type: string
           pattern: .*
           maxLength: 48
-        state:
-          $ref: '#/components/schemas/AttributeState'
+        kind:
+          type: string
+          enum:
+            - CERTIFIED
+            - DECLARED
+            - VERIFIED
       required:
         - id
         - name
-        - state
+        - kind
     Attributes:
       type: array
       items:
-        $ref: '#/components/schemas/Attribute'
+        type: string
+        format: uuid
     AgreementState:
       type: string
       description: Agreement State
@@ -470,4 +557,4 @@ components:
       type: http
       description: 'A bearer token in the format of a JWS and conformed to the specifications included in [RFC8725](https://tools.ietf.org/html/RFC8725).'
       scheme: bearer
-      bearerFormat: JWT d'Interoperabilità di AgID (default)
+      bearerFormat: JWT
