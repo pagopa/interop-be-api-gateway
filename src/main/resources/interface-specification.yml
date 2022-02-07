@@ -14,7 +14,7 @@ servers:
   - url: 'https://interop.pagopa.it/interop-api-gateway/0.1.0'
     description: This service is the interoperability api gateway
 tags:
-  - name: api
+  - name: gateway
     description: Everything about your APIs
     externalDocs:
       description: Find out more
@@ -73,7 +73,7 @@ paths:
   '/agreements/{agreementId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an agreement
       description: Retrieve an agreement using an agreement identifier
       operationId: getAgreement
@@ -115,7 +115,7 @@ paths:
   '/purposes/{purposeId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an purpose
       description: Retrieve a purpose using a purpose identifier
       operationId: getPurpose
@@ -154,7 +154,7 @@ paths:
   '/purposes/{purposeId}/agreement':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an agreement by purposeId
       description: Retrieve the agreement associated to a purpose
       operationId: getAgreementByPurpose
@@ -195,7 +195,7 @@ paths:
   '/attributes/{attributeId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an attribute
       description: Retrieve an attribute using an attribute identifier
       operationId: getAttribute
@@ -236,7 +236,7 @@ paths:
   '/eservices/{eserviceId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an eService
       description: Retrieve an eService by identifier
       operationId: getEService
@@ -278,7 +278,7 @@ paths:
   /agreements:
     get:
       tags:
-        - api
+        - gateway
       summary: Retrieve a list of agreement
       description: |
         It is mandatory to insert either the producerId field or the consumerId field.
@@ -338,7 +338,7 @@ paths:
         un errore.
       operationId: get_status
       tags:
-        - api
+        - gateway
       responses:
         '200':
           description: |
@@ -457,6 +457,12 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Purpose'
+    AttributeKind:
+      type: string
+      enum:
+        - CERTIFIED
+        - DECLARED
+        - VERIFIED
     Attribute:
       type: object
       additionalProperties: false
@@ -471,11 +477,7 @@ components:
           pattern: '[a-z0-9 \-]{,48}'
           maxLength: 48
         kind:
-          type: string
-          enum:
-            - CERTIFIED
-            - DECLARED
-            - VERIFIED
+          $ref: '#/components/schemas/AttributeKind'
       required:
         - id
         - name
@@ -529,7 +531,9 @@ components:
       type: object
       properties:
         agreements:
-          $ref: '#/components/schemas/Agreement'
+          type: array
+          items:
+            $ref: '#/components/schemas/Agreement'
       required:
         - agreements
     Problem:

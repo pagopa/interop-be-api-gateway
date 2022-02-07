@@ -37,63 +37,63 @@ w.write(writer.toString)
 w.close()
 
 private val validator: OpenApiInteractionValidator =
-   OpenApiInteractionValidator
-   .createForSpecificationUrl(tmpFile.getPath)
-   .withBasePathOverride(s"{{projectName}}/${interfaceVersion}")
-   .build
+OpenApiInteractionValidator
+.createForSpecificationUrl(tmpFile.getPath)
+.withBasePathOverride(s"{{projectName}}/${interfaceVersion}")
+.build
 
 private val strictnessTimeout = FiniteDuration({{entityStrictnessTimeout}}, SECONDS)
 private val validationsWhitelist: List[String] = List("swagger-ui", "build-info")
 
- def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
-    if (!(validationExceptionToRoute.isDefined && !validationsWhitelist.exists(httpRequest.uri.toString.contains(_))))
-      route
-    else {
-      val builder = new Builder(
-        httpRequest.method match {
-          case HttpMethods.POST =>
-            Method.POST
-          case HttpMethods.GET =>
-            Method.GET
-          case HttpMethods.PUT =>
-            Method.PUT
-          case HttpMethods.DELETE =>
-            Method.DELETE
-          case HttpMethods.HEAD =>
-            Method.HEAD
-          case HttpMethods.OPTIONS =>
-            Method.OPTIONS
-          case HttpMethods.PATCH =>
-            Method.PATCH
-          case HttpMethods.TRACE =>
-            Method.TRACE
-          case _ =>
-            Method.GET
-        },
-        httpRequest.uri.toRelative.path.toString()
-      )
-      val entity      = httpRequest.entity.asInstanceOf[HttpEntity.Strict]
-      val contentType = entity.getContentType().toString
-      val requestHeaders =
-        ("Content-Type", contentType) :: httpRequest.headers.map(header => (header.name(), header.value)).toList
+def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
+if (!(validationExceptionToRoute.isDefined && !validationsWhitelist.exists(httpRequest.uri.toString.contains(_))))
+route
+else {
+val builder = new Builder(
+httpRequest.method match {
+case HttpMethods.POST =>
+Method.POST
+case HttpMethods.GET =>
+Method.GET
+case HttpMethods.PUT =>
+Method.PUT
+case HttpMethods.DELETE =>
+Method.DELETE
+case HttpMethods.HEAD =>
+Method.HEAD
+case HttpMethods.OPTIONS =>
+Method.OPTIONS
+case HttpMethods.PATCH =>
+Method.PATCH
+case HttpMethods.TRACE =>
+Method.TRACE
+case _ =>
+Method.GET
+},
+httpRequest.uri.toRelative.path.toString()
+)
+val entity      = httpRequest.entity.asInstanceOf[HttpEntity.Strict]
+val contentType = entity.getContentType().toString
+val requestHeaders =
+("Content-Type", contentType) :: httpRequest.headers.map(header => (header.name(), header.value)).toList
 
-      val headers = ("Content-Type", contentType) :: requestHeaders
+val headers = ("Content-Type", contentType) :: requestHeaders
 
-      val uri = httpRequest.uri.query().toMap
-      val headedBuilder     = headers.foldLeft(builder)((b, header) => b.withHeader(header._1, header._2))
-      val requestWithParams = uri.foldLeft(headedBuilder)((b, param) => b.withQueryParam(param._1, param._2))
+val uri = httpRequest.uri.query().toMap
+val headedBuilder     = headers.foldLeft(builder)((b, header) => b.withHeader(header._1, header._2))
+val requestWithParams = uri.foldLeft(headedBuilder)((b, param) => b.withQueryParam(param._1, param._2))
 
-      val validatingRequest = requestWithParams.withBody(entity.data.utf8String).build()
-      Try(validator.validateRequest(validatingRequest)) match {
-        case Success(r) if r.hasErrors =>
-          validationExceptionToRoute.fold[Route](complete((400, r.getMessages.asScala.map(_.getMessage).mkString(", "))))(_(r))
-        case Failure(e) =>
-          throw e
-        case Success(_) =>
-          route
-      }
-    }
-  }
+val validatingRequest = requestWithParams.withBody(entity.data.utf8String).build()
+Try(validator.validateRequest(validatingRequest)) match {
+case Success(r) if r.hasErrors =>
+validationExceptionToRoute.fold[Route](complete((400, r.getMessages.asScala.map(_.getMessage).mkString(", "))))(_(r))
+case Failure(e) =>
+throw e
+case Success(_) =>
+route
+}
+}
+}
 
 /**
 * Exposes build information of this project.
@@ -106,9 +106,9 @@ complete(HttpEntity(ContentTypes.`application/json`, buildinfo.BuildInfo.toJson)
 }
 
 def swaggerRoute: Route =
-    pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
-      getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
-    }
+pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
+getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
+}
 
 lazy val routes: Route = getBuildInfo ~ swaggerRoute ~ pathPrefix("{{projectName}}" / interfaceVersion) {
 toStrictEntity(strictnessTimeout) {
@@ -120,6 +120,5 @@ validationFunction(request){
 }
 }
 }
-
 
 }

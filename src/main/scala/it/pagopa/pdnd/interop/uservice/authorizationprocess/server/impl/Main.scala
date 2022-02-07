@@ -6,8 +6,12 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.scaladsl.AkkaManagement
+import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import it.pagopa.interop.be.gateway.api._
+import it.pagopa.interop.be.gateway.server.Controller
 import it.pagopa.pdnd.interop.commons.jwt.service.JWTReader
-import it.pagopa.pdnd.interop.commons.jwt.service.impl.DefaultJWTReader
+import it.pagopa.pdnd.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.pdnd.interop.commons.jwt.{JWTConfiguration, PublicKeysHolder}
 import it.pagopa.pdnd.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions.TryOps
@@ -16,14 +20,13 @@ import it.pagopa.pdnd.interop.commons.utils.{CORSSupport, OpenapiUtils}
 import it.pagopa.pdnd.interop.commons.vault.service.VaultService
 import it.pagopa.pdnd.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
-import it.pagopa.pdnd.interop.uservice.authorizationprocess.api.impl.problemOf
-import it.pagopa.pdnd.interop.uservice.authorizationprocess.api.{AuthApi, ClientApi, OperatorApi}
+import it.pagopa.pdnd.interop.uservice.authorizationprocess.api.impl.{AuthApiMarshallerImpl, problemOf}
 import it.pagopa.pdnd.interop.uservice.authorizationprocess.common.ApplicationConfiguration
 import it.pagopa.pdnd.interop.uservice.authorizationprocess.common.system.{classicActorSystem, executionContext}
-import it.pagopa.pdnd.interop.uservice.authorizationprocess.server.Controller
 import it.pagopa.pdnd.interop.uservice.authorizationprocess.service._
 import it.pagopa.pdnd.interop.uservice.authorizationprocess.service.impl.{
   AgreementManagementServiceImpl,
+  AuthorizationManagementServiceImpl,
   CatalogManagementServiceImpl,
   JWTGeneratorImpl,
   JWTValidatorImpl,
@@ -35,8 +38,6 @@ import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.{
   KeyApi => AuthorizationKeyApi
 }
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.api.{PartyApi => PartyManagementApi}
-import it.pagopa.pdnd.interop.uservice.userregistrymanagement.client.api.{UserApi => UserRegistryManagementApi}
-import it.pagopa.pdnd.interop.uservice.userregistrymanagement.client.invoker.ApiKeyValue
 import kamon.Kamon
 
 import scala.concurrent.Future
@@ -72,11 +73,7 @@ trait AuthorizationManagementDependency {
   val authorizationManagementKeyApi: AuthorizationKeyApi = AuthorizationKeyApi(
     ApplicationConfiguration.getAuthorizationManagementURL
   )
-  val authorizationManagementService = new AuthorizationManagementServiceImpl(
-    AuthorizationManagementInvoker(),
-    AuthorizationClientApi(ApplicationConfiguration.getAuthorizationManagementURL),
-    AuthorizationKeyApi(ApplicationConfiguration.getAuthorizationManagementURL)
-  )
+  val authorizationManagementService = new AuthorizationManagementServiceImpl(AuthorizationManagementInvoker())
 }
 
 trait VaultServiceDependency {
@@ -100,14 +97,14 @@ object Main
     with CatalogManagementDependency
     with PartyManagementDependency
     with JWTGeneratorDependency
-    with JWTValidatorDependency
-    with M2MAuthorizationService
-    with UserRegistryManagementDependency {
+    with JWTValidatorDependency {
 
   val dependenciesLoaded: Future[JWTReader] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
     jwtValidator = new DefaultJWTReader with PublicKeysHolder {
       var publicKeyset = keyset
+      override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
+        getClaimsVerifier(audiences = ApplicationConfiguration.jwtAudience)
     }
   } yield jwtValidator
 
@@ -127,17 +124,30 @@ object Main
       val _ = AkkaManagement.get(classicActorSystem).start()
     }
 
+    val authApiService: AuthApiService       = ???
+    val authApiMarshaller: AuthApiMarshaller = ???
+
+    val gatewayApiService: GatewayApiService       = ???
+    val gatewayApiMarshaller: GatewayApiMarshaller = ???
+
+    val authApi: AuthApi = new AuthApi(
+      authApiService,
+      authApiMarshaller,
+      SecurityDirectives.authenticateOAuth2("SecurityRealm", PassThroughAuthenticator)
+    )
+    val gatewayApi: GatewayApi =
+      new GatewayApi(gatewayApiService, gatewayApiMarshaller, jwtReader.OAuth2JWTValidatorAsContexts)
+
     val controller: Controller = new Controller(
       authApi,
-      clientApi,
-      operatorApi,
+      gatewayApi,
       validationExceptionToRoute = Some(report => {
         val error =
           problemOf(
             StatusCodes.BadRequest,
             ValidationRequestError(OpenapiUtils.errorFromRequestValidationReport(report))
           )
-        complete(error.status, error)(ClientApiMarshallerImpl.toEntityMarshallerProblem)
+        complete(error.status, error)(AuthApiMarshallerImpl.toEntityMarshallerProblem)
       })
     )
 

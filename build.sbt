@@ -22,9 +22,9 @@ lazy val generateCode = taskKey[Unit]("A task for generating the code starting f
 val packagePrefix = settingKey[String]("The package prefix derived from the uservice name")
 
 packagePrefix := name.value
-  .replaceFirst("pdnd-", "pdnd.")
   .replaceFirst("interop-", "interop.")
-  .replaceFirst("uservice-", "uservice.")
+  .replaceFirst("be-", "be.")
+  .replaceFirst("api-", "")
   .replaceAll("-", "")
 
 generateCode := {
