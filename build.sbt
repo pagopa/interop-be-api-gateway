@@ -55,7 +55,7 @@ generateCode := {
 
 }
 
-(Compile / compile) := ((Compile / compile) dependsOn generateCode).value
+//(Compile / compile) := ((Compile / compile) dependsOn generateCode).value
 
 Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "protobuf")
 
@@ -123,3 +123,5 @@ lazy val root = (project in file("."))
   .setupBuildInfo
 
 javaAgents += "io.kamon" % "kanela-agent" % "1.0.13"
+
+ThisBuild / scalacOptions -="-Xfatal-warnings"
