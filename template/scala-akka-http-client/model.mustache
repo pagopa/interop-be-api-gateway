@@ -1,0 +1,70 @@
+{{>licenseInfo}}
+package {{package}}
+
+{{#imports}}
+import {{import}}
+{{/imports}}
+import {{invokerPackage}}.ApiModel
+
+{{#models}}
+{{#model}}
+{{^isEnum}}
+
+case class {{classname}} (
+  {{#vars}}
+  {{#description}}
+  /* {{{.}}} */
+  {{/description}}
+  {{{name}}}: {{^required}}Option[{{/required}}{{^isEnum}}{{dataType}}{{/isEnum}}{{#isEnum}}{{classname}}Enums.{{datatypeWithEnum}}{{/isEnum}}{{^required}}] = None{{/required}}{{^-last}},{{/-last}}
+  {{/vars}}
+) extends ApiModel
+
+{{#hasEnums}}
+object {{classname}}Enums {
+
+  {{#vars}}
+  {{#isEnum}}
+  type {{datatypeWithEnum}} = {{datatypeWithEnum}}.Value
+  {{/isEnum}}
+  {{/vars}}
+  {{#vars}}
+  {{#isEnum}}
+  object {{datatypeWithEnum}} extends Enumeration {
+{{#_enum}}
+    val {{#fnEnumEntry}}{{.}}{{/fnEnumEntry}} = Value("{{.}}")
+{{/_enum}}
+  }
+
+  {{/isEnum}}
+  {{/vars}}
+}
+{{/hasEnums}}
+{{/isEnum}}
+
+
+{{#isEnum}}
+
+sealed trait {{classname}} extends ApiModel
+
+object {{classname}} {
+
+  {{#allowableValues}}
+  {{#values}}
+  case object {{.}} extends {{classname}}
+  {{/values}}
+  {{/allowableValues}}
+
+  def fromValue(value: String): Either[Throwable, {{classname}}] =
+    value match {
+    {{#allowableValues}}
+    {{#values}}
+       case "{{.}}" => Right({{.}})
+    {{/values}}
+    {{/allowableValues}}
+       case other => Left(new RuntimeException(s"Unable to decode value $other"))
+    }
+}
+
+{{/isEnum}}
+{{/model}}
+{{/models}}

@@ -1,0 +1,20 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Scala template
+*.class
+*.log
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+project/project
+project/target
+target
+.idea
+.openapi-generator
+generated/target
+generated/src
+client/target
+client/src
+client/project/build.properties
+.bsp
+.DS_Store
+.env

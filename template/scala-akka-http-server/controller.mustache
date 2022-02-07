@@ -1,0 +1,125 @@
+package {{invokerPackage}}
+
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Route
+{{#apiInfo}}{{#apis}}{{#operations}}import {{package}}.{{classname}}
+{{/operations}}{{/apis}}{{/apiInfo}}
+import akka.http.scaladsl.server.Directives._
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
+import akka.stream.scaladsl.Sink
+import com.atlassian.oai.validator.OpenApiInteractionValidator
+import com.atlassian.oai.validator.model.Request.Method
+import com.atlassian.oai.validator.model.SimpleRequest.Builder
+import com.atlassian.oai.validator.report.ValidationReport
+import com.github.mustachejava.DefaultMustacheFactory
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
+import scala.util.{Failure, Success, Try}
+import java.io.{BufferedWriter, File, FileOutputStream, FileWriter, StringWriter}
+import com.typesafe.config.{Config, ConfigFactory}
+import scala.collection.mutable
+
+class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationReport => Route] = None)(implicit system: ActorSystem) {
+val interfaceVersion = buildinfo.BuildInfo.interfaceVersion
+private val mf = new DefaultMustacheFactory
+val writer =
+mf.compile("interface-specification.yml").execute(new StringWriter(), mutable.HashMap("version" -> interfaceVersion).asJava).asInstanceOf[StringWriter]
+writer.flush()
+writer.close()
+private val tmpFile = File.createTempFile("tmp", "interface-specification.yml")
+tmpFile.deleteOnExit()
+val w = new BufferedWriter(new FileWriter(tmpFile))
+w.write(writer.toString)
+w.close()
+
+private val validator: OpenApiInteractionValidator =
+   OpenApiInteractionValidator
+   .createForSpecificationUrl(tmpFile.getPath)
+   .withBasePathOverride(s"{{projectName}}/${interfaceVersion}")
+   .build
+
+private val strictnessTimeout = FiniteDuration({{entityStrictnessTimeout}}, SECONDS)
+private val validationsWhitelist: List[String] = List("swagger-ui", "build-info")
+
+ def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
+    if (!(validationExceptionToRoute.isDefined && !validationsWhitelist.exists(httpRequest.uri.toString.contains(_))))
+      route
+    else {
+      val builder = new Builder(
+        httpRequest.method match {
+          case HttpMethods.POST =>
+            Method.POST
+          case HttpMethods.GET =>
+            Method.GET
+          case HttpMethods.PUT =>
+            Method.PUT
+          case HttpMethods.DELETE =>
+            Method.DELETE
+          case HttpMethods.HEAD =>
+            Method.HEAD
+          case HttpMethods.OPTIONS =>
+            Method.OPTIONS
+          case HttpMethods.PATCH =>
+            Method.PATCH
+          case HttpMethods.TRACE =>
+            Method.TRACE
+          case _ =>
+            Method.GET
+        },
+        httpRequest.uri.toRelative.path.toString()
+      )
+      val entity      = httpRequest.entity.asInstanceOf[HttpEntity.Strict]
+      val contentType = entity.getContentType().toString
+      val requestHeaders =
+        ("Content-Type", contentType) :: httpRequest.headers.map(header => (header.name(), header.value)).toList
+
+      val headers = ("Content-Type", contentType) :: requestHeaders
+
+      val uri = httpRequest.uri.query().toMap
+      val headedBuilder     = headers.foldLeft(builder)((b, header) => b.withHeader(header._1, header._2))
+      val requestWithParams = uri.foldLeft(headedBuilder)((b, param) => b.withQueryParam(param._1, param._2))
+
+      val validatingRequest = requestWithParams.withBody(entity.data.utf8String).build()
+      Try(validator.validateRequest(validatingRequest)) match {
+        case Success(r) if r.hasErrors =>
+          validationExceptionToRoute.fold[Route](complete((400, r.getMessages.asScala.map(_.getMessage).mkString(", "))))(_(r))
+        case Failure(e) =>
+          throw e
+        case Success(_) =>
+          route
+      }
+    }
+  }
+
+/**
+* Exposes build information of this project.
+*/
+def getBuildInfo: Route =
+path("{{projectName}}" / "build-info") {
+get {
+complete(HttpEntity(ContentTypes.`application/json`, buildinfo.BuildInfo.toJson))
+}
+}
+
+def swaggerRoute: Route =
+    pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
+      getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
+    }
+
+lazy val routes: Route = getBuildInfo ~ swaggerRoute ~ pathPrefix("{{projectName}}" / interfaceVersion) {
+toStrictEntity(strictnessTimeout) {
+extractRequest {
+request =>
+validationFunction(request){
+{{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
+}
+}
+}
+}
+
+
+}

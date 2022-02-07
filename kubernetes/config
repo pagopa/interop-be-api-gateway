@@ -1,0 +1,31 @@
+#!/bin/bash
+SCRIPT_PATH="${BASH_SOURCE[0]}";
+if ([ -h "${SCRIPT_PATH}" ]) then
+  while([ -h "${SCRIPT_PATH}" ]) do SCRIPT_PATH=`readlink "${SCRIPT_PATH}"`; done
+fi
+pushd . > /dev/null
+cd `dirname ${SCRIPT_PATH}` > /dev/null
+SCRIPT_PATH=`pwd`;
+popd  > /dev/null
+
+repository=$DOCKER_REPO
+
+agreementManagementVersion="0.1"
+catalogManagementVersion="0.1"
+keyManagementVersion="0.1"
+partyManagementVersion="0.1"
+userRegistryManagementVersion="0.1"
+wellKnownURL=$WELL_KNOWN_URL
+
+agreementManagementUrl="http://pdnd-interop-uservice-agreement-management.pdnd-interop-uservice-agreement-management.svc.cluster.local:8088/pdnd-interop-uservice-agreement-management/"$agreementManagementVersion
+catalogManagementUrl="http://pdnd-interop-uservice-catalog-management.pdnd-interop-uservice-catalog-management.svc.cluster.local:8088/pdnd-interop-uservice-catalog-management/"$catalogManagementVersion
+keyManagementUrl="http://pdnd-interop-uservice-key-management.pdnd-interop-uservice-key-management.svc.cluster.local:8088/pdnd-interop-uservice-key-management/"$keyManagementVersion
+partyManagementUrl="http://pdnd-interop-uservice-party-management.pdnd-interop-uservice-party-management.svc.cluster.local:8088/pdnd-interop-uservice-party-management/"$partyManagementVersion
+userRegistryManagementUrl="http://pdnd-interop-uservice-user-registry-management.pdnd-interop-uservice-user-registry-management.svc.cluster.local:8088/pdnd-interop-uservice-user-registry-management/"$userRegistryManagementVersion
+
+name=$(cat $SCRIPT_PATH/../build.sbt | grep "name :=" | awk -F:= '{ print $2 }' | sed 's/\"//' | sed 's/\",//' | sed 's/ //' | tr '[:upper:]' '[:lower:]' | grep -v client)
+
+#getting version from sbt
+cd $SCRIPT_PATH/..
+version=$(sbt -Dsbt.log.noformat=true 'inspect actual version' | grep "Setting: java.lang.String" | cut -d '=' -f2 | tr -d ' ')
+cd $SCRIPT_PATH
