@@ -25,11 +25,11 @@ tags:
       description: Find out more
       url: http://swagger.io
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 paths:
   '/as/token.oauth2':
     post:
-      security: [ { } ]
+      security: [{}]
       tags:
         - auth
       summary: Create a new access token
@@ -42,7 +42,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AccessTokenRequest'
       responses:
-        "200":
+        '200':
           description: |-
             an Access token
           headers:
@@ -56,14 +56,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientCredentialsResponse'
-        "401":
+        '401':
           description: Unauthorized
           x-noqa: RFC6749
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "400":
+        '400':
           description: Bad request
           x-noqa: RFC6749
           content:
@@ -78,7 +78,7 @@ paths:
       description: Retrieve an agreement using an agreement identifier
       operationId: getAgreement
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: agreementId
           in: path
@@ -100,7 +100,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
@@ -139,7 +139,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
@@ -159,7 +159,7 @@ paths:
       description: Retrieve the agreement associated to a purpose
       operationId: getAgreementByPurpose
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: purposeId
           in: path
@@ -180,7 +180,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
@@ -200,7 +200,7 @@ paths:
       description: Retrieve an attribute using an attribute identifier
       operationId: getAttribute
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: attributeId
           in: path
@@ -221,7 +221,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
@@ -241,7 +241,7 @@ paths:
       description: Retrieve an eService by identifier
       operationId: getEService
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: eserviceId
           in: path
@@ -263,7 +263,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
@@ -317,13 +317,13 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "403":
+        '403':
           description: Forbidden
           content:
             application/problem+json:
@@ -359,7 +359,6 @@ components:
       properties:
         client_id:
           type: string
-          format: uuid
           example: e58035ce-c753-4f72-b613-46f8a17b71cc
         client_assertion:
           type: string

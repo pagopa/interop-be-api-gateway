@@ -123,5 +123,3 @@ lazy val root = (project in file("."))
   .setupBuildInfo
 
 javaAgents += "io.kamon" % "kanela-agent" % "1.0.13"
-
-ThisBuild / scalacOptions -="-Xfatal-warnings"

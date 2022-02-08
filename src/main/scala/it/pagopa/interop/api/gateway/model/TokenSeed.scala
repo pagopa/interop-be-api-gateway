@@ -4,8 +4,6 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jwt.SignedJWT
 import it.pagopa.interop.api.gateway.common.ApplicationConfiguration
-import it.pagopa.pdnd.interop.uservice.authorizationprocess.common.ApplicationConfiguration
-import it.pagopa.pdnd.interop.uservice.authorizationprocess.common.utils.expireIn
 
 import java.time.{Clock, Instant, ZoneId}
 import java.util.UUID
@@ -24,7 +22,11 @@ final case class TokenSeed(
   purposes: String
 )
 
+//TODO! Replace with TokenSeed of commons
 object TokenSeed {
+
+  val expireIn: Long = 0L
+
   def create(assertion: SignedJWT, key: JWK, audience: List[String], purposes: String): Try[TokenSeed] = Try {
     val issuedAt = Instant.now(Clock.system(ZoneId.of("UTC")))
     TokenSeed(

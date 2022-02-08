@@ -5,7 +5,7 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.{JOSEObjectType, JWSAlgorithm, JWSHeader, JWSSigner}
 import com.nimbusds.jwt.{JWTClaimsSet, SignedJWT}
 import it.pagopa.interop.api.gateway.common.ApplicationConfiguration
-import it.pagopa.interop.api.gateway.model.TokenSeed
+// import it.pagopa.interop.api.gateway.model.TokenSeed
 import it.pagopa.interop.api.gateway.service.{JWTGenerator, VaultSecretPaths}
 import it.pagopa.pdnd.interop.commons.vault.service.VaultService
 import it.pagopa.pdnd.interop.commons.jwt.model.TokenSeed
@@ -34,8 +34,6 @@ final case class JWTGeneratorImpl(vaultService: VaultService) extends JWTGenerat
     vaultService.readBase64EncodedData(path)
   }
   //  TODO:End
-
-  private val purposesClaimName: String = "purposes"
 
   override def generate(assertion: SignedJWT, audience: List[String], purposes: String): Future[String] =
     Future.fromTry {
@@ -93,14 +91,18 @@ final case class JWTGeneratorImpl(vaultService: VaultService) extends JWTGenerat
       .keyID(seed.kid)
       .build()
 
-    val payload: JWTClaimsSet = new JWTClaimsSet.Builder()
+    val payloadSeed = new JWTClaimsSet.Builder()
       .issuer(seed.issuer)
       .audience(seed.audience.asJava)
       .subject(seed.clientId)
       .issueTime(issuedAt)
       .notBeforeTime(notBeforeTime)
       .expirationTime(expirationTime)
-      .claim(purposesClaimName, seed.purposes)
+
+    val payload = seed.customClaims.toList
+      .foldLeft(payloadSeed) { case (payloadToBuild, (claimName, claim)) =>
+        payloadToBuild.claim(claimName, claim)
+      }
       .build()
 
     new SignedJWT(header, payload)

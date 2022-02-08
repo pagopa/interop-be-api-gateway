@@ -13,6 +13,8 @@ import scala.util.{Failure, Success, Try}
 
 trait Validation {
 
+  //TODO! This may be already present in common. Consider to generalize.
+
   final val jwtBearerClientAssertionType: String = "urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer"
   final val clientCredentialsGrantType: String   = "client_credentials"
 

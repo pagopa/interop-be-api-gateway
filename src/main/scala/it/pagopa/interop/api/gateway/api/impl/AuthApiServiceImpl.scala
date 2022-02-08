@@ -5,8 +5,6 @@ import akka.http.scaladsl.server.Route
 import it.pagopa.interop.be.gateway.api.AuthApiService
 import it.pagopa.interop.be.gateway.model.{ClientCredentialsResponse, Problem}
 
-import java.util.UUID
-
 class AuthApiServiceImpl extends AuthApiService {
 
   /** Code: 200, Message: an Access token, DataType: ClientCredentialsResponse
@@ -17,7 +15,7 @@ class AuthApiServiceImpl extends AuthApiService {
     clientAssertion: String,
     clientAssertionType: String,
     grantType: String,
-    clientId: Option[UUID]
+    clientId: Option[String]
   )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerClientCredentialsResponse: ToEntityMarshaller[ClientCredentialsResponse],

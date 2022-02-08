@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.scaladsl.AkkaManagement
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
-import it.pagopa.interop.api.gateway.api.impl.{AuthApiMarshallerImpl, problemOf}
+import it.pagopa.interop.api.gateway.api.impl.problemOf
 import it.pagopa.interop.api.gateway.common.ApplicationConfiguration
 import it.pagopa.interop.api.gateway.common.system.{classicActorSystem, executionContext}
 import it.pagopa.interop.api.gateway.service._
@@ -21,6 +21,12 @@ import it.pagopa.interop.api.gateway.service.impl.{
   PartyManagementServiceImpl
 }
 import it.pagopa.interop.be.gateway.api._
+import it.pagopa.interop.api.gateway.api.impl.{
+  AuthApiServiceImpl,
+  AuthApiMarshallerImpl,
+  GatewayApiServiceImpl,
+  GatewayApiMarshallerImpl
+}
 import it.pagopa.interop.be.gateway.server.Controller
 import it.pagopa.pdnd.interop.commons.jwt.service.JWTReader
 import it.pagopa.pdnd.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
@@ -73,7 +79,8 @@ trait AuthorizationManagementDependency {
   val authorizationManagementKeyApi: AuthorizationKeyApi = AuthorizationKeyApi(
     ApplicationConfiguration.getAuthorizationManagementURL
   )
-  val authorizationManagementService = new AuthorizationManagementServiceImpl(AuthorizationManagementInvoker())
+  val authorizationManagementService =
+    new AuthorizationManagementServiceImpl(AuthorizationManagementInvoker(), authorizationManagementKeyApi)
 }
 
 trait VaultServiceDependency {
@@ -124,11 +131,11 @@ object Main
       val _ = AkkaManagement.get(classicActorSystem).start()
     }
 
-    val authApiService: AuthApiService       = ???
-    val authApiMarshaller: AuthApiMarshaller = ???
+    val authApiService: AuthApiService       = new AuthApiServiceImpl()
+    val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
-    val gatewayApiService: GatewayApiService       = ???
-    val gatewayApiMarshaller: GatewayApiMarshaller = ???
+    val gatewayApiService: GatewayApiService       = new GatewayApiServiceImpl()
+    val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
     val authApi: AuthApi = new AuthApi(
       authApiService,
