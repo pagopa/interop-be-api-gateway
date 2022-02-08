@@ -14,6 +14,10 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
+  override def getAgreementById(agreementId: String)(bearerToken: String): Future[Agreement] = {
+    val request: ApiRequest[Agreement] = api.getAgreement(agreementId)(BearerToken(bearerToken))
+    invoker.invoke(request, s"Retrieving agreement by id = $agreementId")
+  }
   override def getAgreements(
     bearerToken: String,
     consumerId: UUID,

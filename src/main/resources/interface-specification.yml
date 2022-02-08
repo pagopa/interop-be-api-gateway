@@ -391,7 +391,7 @@ components:
           type: integer
           format: int32
           maximum: 600
-    Subscriber:
+    Organization:
       type: object
       additionalProperties: false
       properties:
@@ -501,15 +501,12 @@ components:
         id:
           type: string
           format: uuid
-        eserviceId:
+        eservice:
           $ref: '#/components/schemas/EService'
-        descriptorId:
-          type: string
-          format: uuid
         producer:
-          $ref: '#/components/schemas/Subscriber'
+          $ref: '#/components/schemas/Organization'
         consumer:
-          $ref: '#/components/schemas/Subscriber'
+          $ref: '#/components/schemas/Organization'
         state:
           $ref: '#/components/schemas/AgreementState'
         attributes:
@@ -518,8 +515,7 @@ components:
           $ref: '#/components/schemas/Purposes'
       required:
         - id
-        - eserviceId
-        - descriptorId
+        - eservice
         - producer
         - consumer
         - state

@@ -20,7 +20,7 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
     * @param eServiceId
     * @return
     */
-  override def getEService(bearerToken: String, eServiceId: UUID): Future[EService] = {
+  override def getEService(eServiceId: UUID)(bearerToken: String): Future[EService] = {
     val request: ApiRequest[EService] = api.getEService(eServiceId.toString)(BearerToken(bearerToken))
     invoker.invoke(request, "Retrieving E-Service")
   }

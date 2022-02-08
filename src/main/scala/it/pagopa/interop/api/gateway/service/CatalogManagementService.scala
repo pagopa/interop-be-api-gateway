@@ -7,5 +7,5 @@ import scala.concurrent.Future
 
 trait CatalogManagementService {
 
-  def getEService(bearerToken: String, eServiceId: UUID): Future[EService]
+  def getEService(eServiceId: UUID)(bearerToken: String): Future[EService]
 }

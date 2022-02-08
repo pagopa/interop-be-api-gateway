@@ -20,6 +20,9 @@ trait AgreementManagementService {
     eserviceId: UUID,
     status: Option[AgreementState]
   ): Future[Seq[Agreement]]
+
+  def getAgreementById(agreementId: String)(bearerToken: String): Future[Agreement]
+
 }
 
 //object AgreementManagementService {

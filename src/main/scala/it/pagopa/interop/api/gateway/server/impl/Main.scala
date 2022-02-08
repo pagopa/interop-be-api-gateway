@@ -111,7 +111,7 @@ object Main
     jwtValidator = new DefaultJWTReader with PublicKeysHolder {
       var publicKeyset = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
-        getClaimsVerifier(audiences = ApplicationConfiguration.jwtAudience)
+        getClaimsVerifier(audience = ApplicationConfiguration.jwtAudience)
     }
   } yield jwtValidator
 
@@ -134,7 +134,8 @@ object Main
     val authApiService: AuthApiService       = new AuthApiServiceImpl()
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
-    val gatewayApiService: GatewayApiService       = new GatewayApiServiceImpl()
+    val gatewayApiService: GatewayApiService =
+      new GatewayApiServiceImpl(partyManagementService, agreementManagementService, catalogManagementService)
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
     val authApi: AuthApi = new AuthApi(
