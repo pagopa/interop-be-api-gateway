@@ -84,6 +84,8 @@ spec:
               value: "{{keyManagementUrl}}"
             - name: PARTY_MANAGEMENT_URL
               value: "{{partyManagementUrl}}"
+            - name: ATTRIBUTE_REGISTRY_MANAGEMENT_URL
+              value: "{{attributeRegistryManagementUrl}}"
             - name: USER_REGISTRY_MANAGEMENT_URL
               value: "{{userRegistryManagementUrl}}"
             - name: WELL_KNOWN_URL

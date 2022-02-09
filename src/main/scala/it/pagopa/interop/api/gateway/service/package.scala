@@ -5,10 +5,11 @@ import it.pagopa.pdnd.interop.uservice._
 import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.Client
 
 package object service {
-  type CatalogManagementInvoker       = catalogmanagement.client.invoker.ApiInvoker
-  type PartyManagementInvoker         = partymanagement.client.invoker.ApiInvoker
-  type AgreementManagementInvoker     = agreementmanagement.client.invoker.ApiInvoker
-  type AuthorizationManagementInvoker = keymanagement.client.invoker.ApiInvoker
+  type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
+  type PartyManagementInvoker             = partymanagement.client.invoker.ApiInvoker
+  type AgreementManagementInvoker         = agreementmanagement.client.invoker.ApiInvoker
+  type AuthorizationManagementInvoker     = keymanagement.client.invoker.ApiInvoker
+  type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
 
   type ManagementClient = Client
 
@@ -30,6 +31,11 @@ package object service {
   object AuthorizationManagementInvoker {
     def apply()(implicit actorSystem: ActorSystem): AuthorizationManagementInvoker =
       keymanagement.client.invoker.ApiInvoker(keymanagement.client.api.EnumsSerializers.all)
+  }
+
+  object AttributeRegistryManagementInvoker {
+    def apply()(implicit actorSystem: ActorSystem): AttributeRegistryManagementInvoker =
+      attributeregistrymanagement.client.invoker.ApiInvoker(attributeregistrymanagement.client.api.EnumsSerializers.all)
   }
 
 }

@@ -11,7 +11,7 @@ info:
   x-api-id: an x-api-id
   x-summary: an x-summary
 servers:
-  - url: 'https://interop.pagopa.it/interop-api-gateway/0.1.0'
+  - url: '/interop-be-api-gateway/{{version}}'
     description: This service is the interoperability api gateway
 tags:
   - name: gateway
@@ -228,7 +228,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Agreement not found
+          description: Attribute not found
           content:
             application/problem+json:
               schema:
@@ -470,7 +470,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         name:
           type: string
           pattern: '[a-z0-9 \-]{,48}'

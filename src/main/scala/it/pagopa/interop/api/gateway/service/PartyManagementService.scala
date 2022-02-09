@@ -30,7 +30,11 @@ object PartyManagementService {
 
   def organizationToApi(organization: PartyManagementApiOrganization): Try[Organization] =
     organization.institutionId.toUUID.map { institutionId =>
-      Organization(institutionId, organization.description, organization.attributes.headOption.getOrElse("UNKNOWN"))
+      Organization(
+        institutionId,
+        organization.description,
+        organization.attributes.headOption.map(_.description).getOrElse("UNKNOWN")
+      )
     }
 
 }

@@ -8,12 +8,19 @@ import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.scaladsl.AkkaManagement
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
-import it.pagopa.interop.api.gateway.api.impl.problemOf
+import it.pagopa.interop.api.gateway.api.impl.{
+  AuthApiMarshallerImpl,
+  AuthApiServiceImpl,
+  GatewayApiMarshallerImpl,
+  GatewayApiServiceImpl,
+  problemOf
+}
 import it.pagopa.interop.api.gateway.common.ApplicationConfiguration
 import it.pagopa.interop.api.gateway.common.system.{classicActorSystem, executionContext}
 import it.pagopa.interop.api.gateway.service._
 import it.pagopa.interop.api.gateway.service.impl.{
   AgreementManagementServiceImpl,
+  AttributeRegistryManagementServiceImpl,
   AuthorizationManagementServiceImpl,
   CatalogManagementServiceImpl,
   JWTGeneratorImpl,
@@ -21,12 +28,6 @@ import it.pagopa.interop.api.gateway.service.impl.{
   PartyManagementServiceImpl
 }
 import it.pagopa.interop.be.gateway.api._
-import it.pagopa.interop.api.gateway.api.impl.{
-  AuthApiServiceImpl,
-  AuthApiMarshallerImpl,
-  GatewayApiServiceImpl,
-  GatewayApiMarshallerImpl
-}
 import it.pagopa.interop.be.gateway.server.Controller
 import it.pagopa.pdnd.interop.commons.jwt.service.JWTReader
 import it.pagopa.pdnd.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
@@ -38,6 +39,7 @@ import it.pagopa.pdnd.interop.commons.utils.{CORSSupport, OpenapiUtils}
 import it.pagopa.pdnd.interop.commons.vault.service.VaultService
 import it.pagopa.pdnd.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
+import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
 import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.{
   ClientApi => AuthorizationClientApi,
@@ -95,6 +97,15 @@ trait JWTValidatorDependency { self: AuthorizationManagementDependency with Vaul
   val jwtValidator: JWTValidatorImpl = JWTValidatorImpl(authorizationManagementService, vaultService)
 }
 
+trait AttributeRegistryManagementDependency {
+  val attributeRegistryManagementApi: AttributeApi = AttributeApi(
+    ApplicationConfiguration.getAttributeRegistryManagementURL
+  )
+
+  val attributeRegistryManagementService =
+    new AttributeRegistryManagementServiceImpl(AttributeRegistryManagementInvoker(), attributeRegistryManagementApi)
+}
+
 object Main
     extends App
     with CORSSupport
@@ -103,6 +114,7 @@ object Main
     with AuthorizationManagementDependency
     with CatalogManagementDependency
     with PartyManagementDependency
+    with AttributeRegistryManagementDependency
     with JWTGeneratorDependency
     with JWTValidatorDependency {
 
@@ -117,11 +129,10 @@ object Main
 
   dependenciesLoaded.transformWith {
     case Success(jwtValidator) => launchApp(jwtValidator)
-    case Failure(ex) => {
+    case Failure(ex) =>
       classicActorSystem.log.error(s"Startup error: ${ex.getMessage}")
       classicActorSystem.log.error(s"${ex.getStackTrace.mkString("\n")}")
       CoordinatedShutdown(classicActorSystem).run(StartupErrorShutdown)
-    }
   }
 
   private def launchApp(jwtReader: JWTReader): Future[Http.ServerBinding] = {
@@ -135,7 +146,12 @@ object Main
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
     val gatewayApiService: GatewayApiService =
-      new GatewayApiServiceImpl(partyManagementService, agreementManagementService, catalogManagementService)
+      new GatewayApiServiceImpl(
+        partyManagementService,
+        agreementManagementService,
+        catalogManagementService,
+        attributeRegistryManagementService
+      )
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
     val authApi: AuthApi = new AuthApi(

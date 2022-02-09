@@ -7,10 +7,11 @@ object ApplicationConfiguration {
 
   def serverPort: Int = config.getInt("interop-api-gateway.port")
 
-  def getAgreementManagementURL: String     = config.getString("services.agreement-management")
-  def getAuthorizationManagementURL: String = config.getString("services.authorization-management")
-  def getCatalogManagementURL: String       = config.getString("services.catalog-management")
-  def getPartyManagementURL: String         = config.getString("services.party-management")
+  def getAgreementManagementURL: String         = config.getString("services.agreement-management")
+  def getAuthorizationManagementURL: String     = config.getString("services.authorization-management")
+  def getCatalogManagementURL: String           = config.getString("services.catalog-management")
+  def getPartyManagementURL: String             = config.getString("services.party-management")
+  def getAttributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
 
   def getPdndIdIssuer: String = config.getString("interop-api-gateway.issuer")
 
