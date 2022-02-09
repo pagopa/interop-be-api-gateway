@@ -3,19 +3,21 @@ package it.pagopa.interop.api.gateway.api
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import it.pagopa.interop.be.gateway.model._
+import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
+import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
+import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.{
+  ACTIVE,
+  INACTIVE,
+  PENDING,
+  SUSPENDED
+}
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
   AgreementState => AgreementManagementApiAgreementState
 }
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{EService => CatalogManagementApiEService}
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
-import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
-import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.ACTIVE
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.INACTIVE
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.PENDING
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.SUSPENDED
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
@@ -82,8 +84,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       Organization(
         id = organization.id,
         name = organization.description,
-        category = "categoriaIPA"
-      ) //TODO! Capire con Stefano che é
+        category = organization.attributes.headOption
+          .map(_.description)
+          .getOrElse("N/A") //TODO, consider to make this retrieval better
+      )
   }
 
 }
