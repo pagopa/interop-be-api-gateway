@@ -1,22 +1,29 @@
 package it.pagopa.interop.api.gateway.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives.{onComplete}
+import com.typesafe.scalalogging.Logger
+import it.pagopa.interop.api.gateway.error.GatewayErrors._
 import it.pagopa.interop.be.gateway.api.GatewayApiService
 import it.pagopa.interop.be.gateway.model._
+import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.pdnd.interop.commons.utils.AkkaUtils._
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import scala.util.Failure
+import org.slf4j.LoggerFactory
+
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.{Failure, Success}
 // import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{Agreement => AgreementManagementApiAgreement}
 import akka.http.scaladsl.model.StatusCodes
+import it.pagopa.interop.api.gateway.service.{
+  AgreementManagementService,
+  CatalogManagementService,
+  PartyManagementService
+}
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
+
 import scala.concurrent.ExecutionContext
-import it.pagopa.interop.api.gateway.service.AgreementManagementService
-import it.pagopa.interop.api.gateway.service.PartyManagementService
-import it.pagopa.interop.api.gateway.service.CatalogManagementService
 
 class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
@@ -24,6 +31,8 @@ class GatewayApiServiceImpl(
   catalogManagementService: CatalogManagementService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
+
+  val logger = Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
 
   /** Code: 200, Message: Agreement retrieved, DataType: Agreement
     * Code: 400, Message: Bad request, DataType: Problem
@@ -45,7 +54,7 @@ class GatewayApiServiceImpl(
         .cond(
           (organizationId == rawAgreement.producerId || organizationId == rawAgreement.consumerId),
           rawAgreement,
-          new Exception("KABOOOM non sei autorizzato a vedere sto agreement e probabilmente ti becchi un 403")
+          AgreementNotFoundForOrganizationError
         )
         .toFuture
 
@@ -58,6 +67,13 @@ class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(agr) =>
         getAgreement200(agr)
+      case Failure(AgreementNotFoundForOrganizationError) =>
+        logger.error(
+          "Error while getting agreement id {}: {}",
+          agreementId,
+          AgreementNotFoundForOrganizationError.getMessage
+        )
+        getAgreement400(problemOf(StatusCodes.InternalServerError, AgreementNotFoundForOrganizationError))
       case Failure(_) =>
         getAgreement400(problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1")))
     }
