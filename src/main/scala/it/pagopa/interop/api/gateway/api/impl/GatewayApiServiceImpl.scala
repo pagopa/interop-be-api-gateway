@@ -2,7 +2,7 @@ package it.pagopa.interop.api.gateway.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.onComplete
+import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
@@ -53,16 +53,12 @@ class GatewayApiServiceImpl(
     val result: Future[Agreement] = for {
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-      rawAgreement   <- agreementManagementService.getAgreementById(agreementId)(bearerToken)
-
-      agreement <- Either
-        .cond(
-          (organizationId == rawAgreement.producerId || organizationId == rawAgreement.consumerId),
-          rawAgreement,
-          AgreementNotFoundForOrganizationError
-        )
-        .toFuture
-
+      agreement <-
+        agreementManagementService
+          .getAgreementById(agreementId)(bearerToken)
+          .ensure(AgreementNotFoundForOrganizationError)(agr =>
+            organizationId == agr.producerId || organizationId == agr.consumerId
+          )
       eservice <- catalogManagementService.getEService(agreement.eserviceId)(bearerToken)
       producer <- partyManagementService.getOrganization(agreement.producerId)(bearerToken)
       consumer <- partyManagementService.getOrganization(agreement.consumerId)(bearerToken)
@@ -182,7 +178,33 @@ class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerEService: ToEntityMarshaller[EService]
-  ): Route = ???
+  ): Route = {
+    val result: Future[EService] = for {
+      bearerToken    <- getFutureBearer(contexts)
+      organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      eserviceUUID   <- eserviceId.toFutureUUID
+      eservice <- catalogManagementService
+        .getEService(eserviceUUID)(bearerToken)
+        .ensure(EServiceNotFoundForOrganizationError)(_.producerId == organizationId)
+    } yield eservice.toModel
+
+    onComplete(result) {
+      case Success(eservice) =>
+        getEService200(eservice)
+      case Failure(EServiceNotFoundForOrganizationError) =>
+        logger.error(
+          "Error while getting e-service id {}: {}",
+          eserviceId,
+          EServiceNotFoundForOrganizationError.getMessage
+        )
+        getAgreement404(problemOf(StatusCodes.NotFound, EServiceNotFoundForOrganizationError))
+      case Failure(_) =>
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1"))
+        )
+    }
+  }
 
   /** Code: 200, Message: Purpose retrieved, DataType: Purpose
     * Code: 400, Message: Bad request, DataType: Problem
