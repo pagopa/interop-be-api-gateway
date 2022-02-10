@@ -13,6 +13,8 @@ import it.pagopa.interop.api.gateway.api.impl.{
   AuthApiServiceImpl,
   GatewayApiMarshallerImpl,
   GatewayApiServiceImpl,
+  HealthApiMarshallerImpl,
+  HealthServiceApiImpl,
   problemOf
 }
 import it.pagopa.interop.api.gateway.common.ApplicationConfiguration
@@ -161,9 +163,16 @@ object Main
     val gatewayApi: GatewayApi =
       new GatewayApi(gatewayApiService, gatewayApiMarshaller, jwtReader.OAuth2JWTValidatorAsContexts)
 
+    val healthApi: HealthApi = new HealthApi(
+      new HealthServiceApiImpl(),
+      HealthApiMarshallerImpl,
+      SecurityDirectives.authenticateOAuth2("SecurityRealm", PassThroughAuthenticator)
+    )
+
     val controller: Controller = new Controller(
       authApi,
       gatewayApi,
+      healthApi,
       validationExceptionToRoute = Some(report => {
         val error =
           problemOf(

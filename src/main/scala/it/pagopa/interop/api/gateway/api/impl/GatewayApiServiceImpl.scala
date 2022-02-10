@@ -207,13 +207,6 @@ class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = ???
 
-  /** Code: 200, Message: Il server ha ritornato lo status. In caso di problemi ritorna sempre un problem+json. , DataType: Problem
-    */
-  override def getStatus()(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = ???
-
   /** Code: 200, Message: Purposes retrieved, DataType: Seq[Purpose]
     * Code: 400, Message: Bad request, DataType: Problem
     * Code: 401, Message: Unauthorized, DataType: Problem

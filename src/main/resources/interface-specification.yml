@@ -24,6 +24,11 @@ tags:
     externalDocs:
       description: Find out more
       url: http://swagger.io
+  - name: health
+    description: Verify service status
+    externalDocs:
+      description: Find out more
+      url: http://swagger.io
 security:
   - bearerAuth: []
 paths:
@@ -338,7 +343,7 @@ paths:
         un errore.
       operationId: get_status
       tags:
-        - gateway
+        - health
       responses:
         '200':
           description: |
