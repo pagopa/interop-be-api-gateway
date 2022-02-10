@@ -136,9 +136,9 @@ class GatewayApiServiceImpl(
   /** Code: 200, Message: EService retrieved, DataType: EService
     * Code: 400, Message: Bad request, DataType: Problem
     * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Agreement not found, DataType: Problem
+    * Code: 404, Message: EService not found, DataType: Problem
     */
-  override def getEService(eserviceId: String)(implicit
+  override def getEService(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerEService: ToEntityMarshaller[EService]
@@ -166,6 +166,17 @@ class GatewayApiServiceImpl(
         )
     }
   }
+
+  /** Code: 200, Message: Organization retrieved, DataType: Organization
+    * Code: 400, Message: Bad request, DataType: Problem
+    * Code: 401, Message: Unauthorized, DataType: Problem
+    * Code: 404, Message: Organization not found, DataType: Problem
+    */
+  override def getOrganization(organizationId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerOrganization: ToEntityMarshaller[Organization],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = ???
 
   /** Code: 200, Message: Attributes retrieved, DataType: Seq[UUID]
     * Code: 400, Message: Bad request, DataType: Problem
