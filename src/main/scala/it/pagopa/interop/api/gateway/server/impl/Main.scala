@@ -147,7 +147,6 @@ object Main
 
     val gatewayApiService: GatewayApiService =
       new GatewayApiServiceImpl(
-        partyManagementService,
         agreementManagementService,
         catalogManagementService,
         attributeRegistryManagementService

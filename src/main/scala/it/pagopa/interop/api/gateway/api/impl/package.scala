@@ -37,15 +37,18 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     ClientCredentialsResponse
   )
 
-  implicit val purposeFormat: RootJsonFormat[Purpose] = jsonFormat3(Purpose)
+  implicit val purposeFormat: RootJsonFormat[Purpose]   = jsonFormat3(Purpose)
+  implicit val purposesFormat: RootJsonFormat[Purposes] = jsonFormat1(Purposes)
 
   implicit val subscriberFormat: RootJsonFormat[Organization] = jsonFormat3(Organization)
   implicit val eServiceFormat: RootJsonFormat[EService]       = jsonFormat2(EService)
 
-  implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat7(Agreement)
+  implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat5(Agreement)
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
 
-  implicit val attributeFormat: RootJsonFormat[Attribute] = jsonFormat3(Attribute)
+  implicit val attributeFormat: RootJsonFormat[Attribute] = jsonFormat4(Attribute)
+
+  implicit val attributesFormat: RootJsonFormat[Attributes] = jsonFormat1(Attributes)
 
   final val serviceErrorCodePrefix: String = "013"
   final val defaultProblemType: String     = "about:blank"
@@ -64,20 +67,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     )
 
   implicit class EnrichedAgreement(private val agreement: AgreementManagementApiAgreement) extends AnyVal {
-    def toModel(
-      eservice: EService,
-      producer: Organization,
-      consumer: Organization,
-      flattenAttributes: Set[UUID]
-    ): Agreement =
+    def toModel: Agreement =
       Agreement(
         id = agreement.id,
-        eservice = eservice,
-        producer = producer,
-        consumer = consumer,
-        state = agreement.state.toModel,
-        attributes = flattenAttributes.toSeq,
-        purposes = None
+        eserviceId = agreement.eserviceId,
+        producerId = agreement.producerId,
+        consumerId = agreement.consumerId,
+        state = agreement.state.toModel
       )
   }
 
@@ -123,8 +119,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   //FIXME attribute kind MUST be properly retrieved from ???
+  //TODO validity
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
-    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = AttributeKind.DECLARED)
+    def toModel: Attribute = Attribute(
+      id = attribute.id,
+      name = attribute.name,
+      kind = AttributeKind.DECLARED,
+      validity = AttributeValidity.VALID
+    )
   }
 
 }

@@ -348,6 +348,86 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/purposes':
+    get:
+      tags:
+        - gateway
+      summary: Get an purpose
+      description: Retrieve purposes of the agreement
+      operationId: getAgreementPurposes
+      parameters:
+        - name: agreementId
+          in: path
+          description: the agreement identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Purposes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purposes'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Purposes not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/attributes':
+    get:
+      tags:
+        - gateway
+      summary: Get an purpose
+      description: Retrieve attributes of the agreement
+      operationId: getAgreementAttributes
+      parameters:
+        - name: agreementId
+          in: path
+          description: the agreement identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attributes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attributes'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Purposes not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   schemas:
     AccessTokenRequest:
@@ -453,15 +533,25 @@ components:
         - throughput
         - state
     Purposes:
-      type: array
-      items:
-        $ref: '#/components/schemas/Purpose'
+      type: object
+      properties:
+        purposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purpose'
+      required:
+        - purposes
     AttributeKind:
       type: string
       enum:
         - CERTIFIED
         - DECLARED
         - VERIFIED
+    AttributeValidity:
+      type: string
+      enum:
+        - VALID
+        - INVALID
     Attribute:
       type: object
       additionalProperties: false
@@ -476,15 +566,22 @@ components:
           maxLength: 48
         kind:
           $ref: '#/components/schemas/AttributeKind'
+        validity:
+          $ref: '#/components/schemas/AttributeValidity'
       required:
         - id
         - name
         - kind
+        - validity
     Attributes:
-      type: array
-      items:
-        type: string
-        format: uuid
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attribute'
+      required:
+        - attributes
     AgreementState:
       type: string
       description: Agreement State
@@ -500,26 +597,23 @@ components:
         id:
           type: string
           format: uuid
-        eservice:
-          $ref: '#/components/schemas/EService'
-        producer:
-          $ref: '#/components/schemas/Organization'
-        consumer:
-          $ref: '#/components/schemas/Organization'
+        eserviceId:
+          type: string
+          format: uuid
+        producerId:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
         state:
           $ref: '#/components/schemas/AgreementState'
-        attributes:
-          $ref: '#/components/schemas/Attributes'
-        purposes:
-          $ref: '#/components/schemas/Purposes'
       required:
         - id
-        - eservice
-        - producer
-        - consumer
+        - eserviceId
+        - producerId
+        - consumerId
         - state
-        - attributes
-        - purpose
       description: business representation of an agreement
     Agreements:
       type: object

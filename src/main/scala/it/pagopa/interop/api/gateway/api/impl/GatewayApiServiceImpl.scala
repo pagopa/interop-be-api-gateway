@@ -10,8 +10,7 @@ import it.pagopa.interop.api.gateway.error.GatewayErrors._
 import it.pagopa.interop.api.gateway.service.{
   AgreementManagementService,
   AttributeRegistryManagementService,
-  CatalogManagementService,
-  PartyManagementService
+  CatalogManagementService
 }
 import it.pagopa.interop.be.gateway.api.GatewayApiService
 import it.pagopa.interop.be.gateway.model._
@@ -20,7 +19,6 @@ import it.pagopa.pdnd.interop.commons.utils.AkkaUtils._
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
-  Agreement => AgreementManagementApiAgreement,
   AgreementState => AgreementManagementApiAgreementState
 }
 import org.slf4j.LoggerFactory
@@ -29,7 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class GatewayApiServiceImpl(
-  partyManagementService: PartyManagementService,
   agreementManagementService: AgreementManagementService,
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService
@@ -59,11 +56,7 @@ class GatewayApiServiceImpl(
           .ensure(AgreementNotFoundForOrganizationError)(agr =>
             organizationId == agr.producerId || organizationId == agr.consumerId
           )
-      eservice <- catalogManagementService.getEService(agreement.eserviceId)(bearerToken)
-      producer <- partyManagementService.getOrganization(agreement.producerId)(bearerToken)
-      consumer <- partyManagementService.getOrganization(agreement.consumerId)(bearerToken)
-
-    } yield agreement.toModel(eservice.toModel, producer.toModel, consumer.toModel, eservice.attributesUUIDs)
+    } yield agreement.toModel
 
     onComplete(result) {
       case Success(agr) =>
@@ -79,17 +72,6 @@ class GatewayApiServiceImpl(
         getAgreement400(problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1")))
     }
   }
-
-  /** Code: 200, Message: Agreement retrieved, DataType: Agreement
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Agreement not found, DataType: Problem
-    */
-  override def getAgreementByPurpose(purposeId: String)(implicit
-    contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
-  ): Route = ???
 
   /** Code: 200, Message: A list of Agreement, DataType: Agreements
     * Code: 400, Message: Bad Request, DataType: Problem
@@ -107,18 +89,6 @@ class GatewayApiServiceImpl(
     toEntityMarshallerAgreements: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    def getAgreementDetails(agreement: AgreementManagementApiAgreement)(bearerToken: String): Future[Agreement] = {
-      //multiplexed calls to embrace parallelism
-      val eServiceF = catalogManagementService.getEService(agreement.eserviceId)(bearerToken)
-      val producerF = partyManagementService.getOrganization(agreement.producerId)(bearerToken)
-      val consumerF = partyManagementService.getOrganization(agreement.consumerId)(bearerToken)
-
-      for {
-        eService <- eServiceF
-        producer <- producerF
-        consumer <- consumerF
-      } yield agreement.toModel(eService.toModel, producer.toModel, consumer.toModel, eService.attributesUUIDs)
-    }
 
     val result: Future[Agreements] = for {
       bearerToken    <- getFutureBearer(contexts)
@@ -135,7 +105,7 @@ class GatewayApiServiceImpl(
       rawAgreements <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementState)(
         bearerToken
       )
-      agreements <- rawAgreements.toList.traverse(getAgreementDetails(_)(bearerToken))
+      agreements = rawAgreements.map(_.toModel)
     } yield Agreements(agreements = agreements)
 
     onComplete(result) {
@@ -180,12 +150,9 @@ class GatewayApiServiceImpl(
     toEntityMarshallerEService: ToEntityMarshaller[EService]
   ): Route = {
     val result: Future[EService] = for {
-      bearerToken    <- getFutureBearer(contexts)
-      organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-      eserviceUUID   <- eserviceId.toFutureUUID
-      eservice <- catalogManagementService
-        .getEService(eserviceUUID)(bearerToken)
-        .ensure(EServiceNotFoundForOrganizationError)(_.producerId == organizationId)
+      bearerToken  <- getFutureBearer(contexts)
+      eserviceUUID <- eserviceId.toFutureUUID
+      eservice     <- catalogManagementService.getEService(eserviceUUID)(bearerToken)
     } yield eservice.toModel
 
     onComplete(result) {
@@ -206,6 +173,29 @@ class GatewayApiServiceImpl(
     }
   }
 
+  /** Code: 200, Message: Attributes retrieved, DataType: Seq[UUID]
+    * Code: 400, Message: Bad request, DataType: Problem
+    * Code: 401, Message: Unauthorized, DataType: Problem
+    * Code: 404, Message: Purposes not found, DataType: Problem
+    */
+  override def getAgreementAttributes(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttributes: ToEntityMarshaller[Attributes],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route =
+    ???
+
+  /** Code: 200, Message: Agreement retrieved, DataType: Agreement
+    * Code: 400, Message: Bad request, DataType: Problem
+    * Code: 401, Message: Unauthorized, DataType: Problem
+    * Code: 404, Message: Agreement not found, DataType: Problem
+    */
+  override def getAgreementByPurpose(purposeId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
+  ): Route = ???
+
   /** Code: 200, Message: Purpose retrieved, DataType: Purpose
     * Code: 400, Message: Bad request, DataType: Problem
     * Code: 401, Message: Unauthorized, DataType: Problem
@@ -221,6 +211,17 @@ class GatewayApiServiceImpl(
     */
   override def getStatus()(implicit
     contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = ???
+
+  /** Code: 200, Message: Purposes retrieved, DataType: Seq[Purpose]
+    * Code: 400, Message: Bad request, DataType: Problem
+    * Code: 401, Message: Unauthorized, DataType: Problem
+    * Code: 404, Message: Purposes not found, DataType: Problem
+    */
+  override def getAgreementPurposes(agreementId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = ???
 }
