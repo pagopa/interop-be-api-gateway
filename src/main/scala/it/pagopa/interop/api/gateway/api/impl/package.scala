@@ -15,24 +15,24 @@ import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.Agreemen
 }
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
-  AgreementState => AgreementManagementApiAgreementState
+  AgreementState => AgreementManagementApiAgreementState,
+  VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute
 }
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{
   Attribute => CatalogManagementApiAttribute,
-  EService => CatalogManagementApiEService
+  EService => CatalogManagementApiEService,
+  EServiceDescriptor => CatalogManagementApiDescriptor,
+  EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
-import java.util.UUID
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
-  VerifiedAttribute => AgreementManagementApiVerifiedAttribute
-}
-import scala.annotation.nowarn
 import java.time.OffsetDateTime
+import java.util.UUID
+import scala.annotation.nowarn
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
@@ -96,8 +96,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+  implicit class EnrichedEServiceState(private val state: CatalogManagementApiDescriptorState) extends AnyVal {
+    def toModel: EServiceState = state match {
+      case CatalogManagementApiDescriptorState.DRAFT      => EServiceState.DRAFT
+      case CatalogManagementApiDescriptorState.PUBLISHED  => EServiceState.PUBLISHED
+      case CatalogManagementApiDescriptorState.DEPRECATED => EServiceState.DEPRECATED
+      case CatalogManagementApiDescriptorState.SUSPENDED  => EServiceState.SUSPENDED
+      case CatalogManagementApiDescriptorState.ARCHIVED   => EServiceState.ARCHIVED
+    }
+  }
+
   implicit class EnrichedEService(private val eservice: CatalogManagementApiEService) extends AnyVal {
-    def toModel: EService = EService(eservice.id, eservice.name)
+    def toModel(descriptor: CatalogManagementApiDescriptor): EService =
+      EService(eservice.id, eservice.name, version = descriptor.version, state = descriptor.state.toModel)
 
     private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
       val flattenAttributes: Option[Seq[String]] = for {

@@ -10,7 +10,8 @@ import it.pagopa.interop.api.gateway.error.GatewayErrors._
 import it.pagopa.interop.api.gateway.service.{
   AgreementManagementService,
   AttributeRegistryManagementService,
-  CatalogManagementService
+  CatalogManagementService,
+  PartyManagementService
 }
 import it.pagopa.interop.be.gateway.api.GatewayApiService
 import it.pagopa.interop.be.gateway.model._
@@ -27,6 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class GatewayApiServiceImpl(
+  partyManagementService: PartyManagementService,
   agreementManagementService: AgreementManagementService,
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService
@@ -147,7 +149,10 @@ class GatewayApiServiceImpl(
       bearerToken  <- getFutureBearer(contexts)
       eserviceUUID <- eserviceId.toFutureUUID
       eservice     <- catalogManagementService.getEService(eserviceUUID)(bearerToken)
-    } yield eservice.toModel
+      descriptor <- eservice.descriptors
+        .find(_.id == descriptorId)
+        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
+    } yield eservice.toModel(descriptor)
 
     onComplete(result) {
       case Success(eservice) =>
@@ -158,7 +163,10 @@ class GatewayApiServiceImpl(
           eserviceId,
           EServiceNotFoundForOrganizationError.getMessage
         )
-        getAgreement404(problemOf(StatusCodes.NotFound, EServiceNotFoundForOrganizationError))
+        getEService404(problemOf(StatusCodes.NotFound, EServiceNotFoundForOrganizationError))
+      case Failure(ex: EServiceDescriptorNotFound) =>
+        logger.error("Error while getting e-service id {}: {}", eserviceId, ex.getMessage)
+        getEService404(problemOf(StatusCodes.NotFound, ex))
       case Failure(_) =>
         complete(
           StatusCodes.InternalServerError,
@@ -176,7 +184,20 @@ class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerOrganization: ToEntityMarshaller[Organization],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = ???
+  ): Route = {
+    val result: Future[Organization] = for {
+      bearerToken      <- getFutureBearer(contexts)
+      organizationUUID <- organizationId.toFutureUUID
+      organization     <- partyManagementService.getOrganization(organizationUUID)(bearerToken)
+    } yield organization.toModel
+
+    onComplete(result) {
+      case Success(organization) =>
+        getOrganization200(organization)
+      case Failure(_) =>
+        complete(StatusCodes.InternalServerError, problemOf(StatusCodes.InternalServerError, OrganizationError))
+    }
+  }
 
   /** Code: 200, Message: Attributes retrieved, DataType: Seq[UUID]
     * Code: 400, Message: Bad request, DataType: Problem

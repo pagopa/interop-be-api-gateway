@@ -13,4 +13,8 @@ object GatewayErrors {
 
   final case object EServiceNotFoundForOrganizationError
       extends ComponentError("0005", "E-Service not found for this organization")
+
+  final case object OrganizationError extends ComponentError("0006", "Error while retrieving organization")
+  final case class EServiceDescriptorNotFound(eserviceId: String, descriptorId: String)
+      extends ComponentError("0007", s"Descriptor $descriptorId not found for e-service $eserviceId")
 }
