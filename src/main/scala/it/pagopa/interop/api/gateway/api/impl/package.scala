@@ -28,6 +28,11 @@ import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organizatio
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import java.util.UUID
+import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
+  VerifiedAttribute => AgreementManagementApiVerifiedAttribute
+}
+import scala.annotation.nowarn
+import java.time.OffsetDateTime
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
@@ -46,7 +51,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat5(Agreement)
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
 
-  implicit val attributeFormat: RootJsonFormat[Attribute] = jsonFormat4(Attribute)
+  implicit val attributeFormat: RootJsonFormat[Attribute] = jsonFormat3(Attribute)
+
+  implicit val attributeValidityStateFormat: RootJsonFormat[AttributeValidityState] = jsonFormat2(
+    AttributeValidityState
+  )
 
   implicit val attributesFormat: RootJsonFormat[Attributes] = jsonFormat1(Attributes)
 
@@ -102,6 +111,30 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         .toSet
     }
 
+    def isVerified(attribute: AgreementManagementApiVerifiedAttribute): Boolean =
+      attribute.verified.contains(true)
+
+    def isInTimeRange(attribute: AgreementManagementApiVerifiedAttribute): Boolean =
+      attribute.verificationDate.zip(attribute.validityTimespan).fold(true) { case (verDate, offset) =>
+        OffsetDateTime.now().isBefore(verDate.plusSeconds(offset))
+      }
+
+    def attributeUUIDSummary(
+      @nowarn certifiedFromParty: Set[UUID], //TODO replace with the correct model once it's created
+      verifiedFromAgreement: Set[AgreementManagementApiVerifiedAttribute],
+      @nowarn declaredFromAgreement: Set[UUID] //TODO replace with the correct model once it's created
+    ): Set[AttributeValidityState] = eservice.attributes.verified.toSet
+      .flatMap(flatAttributes)
+      .map(uuid =>
+        verifiedFromAgreement
+          .find(_.id == uuid)
+          .fold(AttributeValidityState(uuid.toString, AttributeValidity.INVALID))(attr => {
+            if (isVerified(attr) && isInTimeRange(attr)) {
+              AttributeValidityState(uuid.toString, AttributeValidity.VALID)
+            } else AttributeValidityState(uuid.toString, AttributeValidity.INVALID)
+          })
+      )
+
     def attributesUUIDs: Set[UUID] =
       (eservice.attributes.declared ++ eservice.attributes.certified ++ eservice.attributes.verified).toSet
         .flatMap(flatAttributes)
@@ -121,12 +154,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   //FIXME attribute kind MUST be properly retrieved from ???
   //TODO validity
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
-    def toModel: Attribute = Attribute(
-      id = attribute.id,
-      name = attribute.name,
-      kind = AttributeKind.DECLARED,
-      validity = AttributeValidity.VALID
-    )
+    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = AttributeKind.DECLARED)
   }
 
 }

@@ -571,22 +571,33 @@ components:
           maxLength: 48
         kind:
           $ref: '#/components/schemas/AttributeKind'
-        validity:
-          $ref: '#/components/schemas/AttributeValidity'
       required:
         - id
         - name
         - kind
-        - validity
     Attributes:
       type: object
       properties:
         attributes:
           type: array
+          uniqueItems: true
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: '#/components/schemas/AttributeValidityState'
       required:
         - attributes
+    AttributeValidityState:
+      type: object
+      additionalProperties: false
+      title: AttributeValidityState
+      description: represents the validity of a specified attribute
+      properties:
+        id:
+          type: string
+        validity:
+          $ref: '#/components/schemas/AttributeValidity'
+      required:
+        - id
+        - validity
     AgreementState:
       type: string
       description: Agreement State

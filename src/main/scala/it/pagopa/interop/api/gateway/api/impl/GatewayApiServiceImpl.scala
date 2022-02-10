@@ -53,21 +53,15 @@ class GatewayApiServiceImpl(
       agreement <-
         agreementManagementService
           .getAgreementById(agreementId)(bearerToken)
-          .ensure(AgreementNotFoundForOrganizationError)(agr =>
-            organizationId == agr.producerId || organizationId == agr.consumerId
-          )
+          .ensure(AgreementNotFound)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
     } yield agreement.toModel
 
     onComplete(result) {
       case Success(agr) =>
         getAgreement200(agr)
-      case Failure(AgreementNotFoundForOrganizationError) =>
-        logger.error(
-          "Error while getting agreement id {}: {}",
-          agreementId,
-          AgreementNotFoundForOrganizationError.getMessage
-        )
-        getAgreement400(problemOf(StatusCodes.InternalServerError, AgreementNotFoundForOrganizationError))
+      case Failure(AgreementNotFound) =>
+        logger.error("Error while getting agreement id {}: {}", agreementId, AgreementNotFound.getMessage)
+        getAgreement400(problemOf(StatusCodes.InternalServerError, AgreementNotFound))
       case Failure(_) =>
         getAgreement400(problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1")))
     }
@@ -182,8 +176,39 @@ class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerAttributes: ToEntityMarshaller[Attributes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route =
-    ???
+  ): Route = {
+
+    val result: Future[Attributes] = for {
+      bearerToken    <- getFutureBearer(contexts)
+      organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+
+      rawAgreement <-
+        agreementManagementService
+          .getAgreementById(agreementId)(bearerToken)
+          .ensure(AgreementNotFound)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
+
+      eservice <- catalogManagementService.getEService(rawAgreement.eserviceId)(bearerToken)
+
+      attributeValidityStates = eservice.attributeUUIDSummary(
+        certifiedFromParty = Set.empty,
+        verifiedFromAgreement = rawAgreement.verifiedAttributes.toSet,
+        declaredFromAgreement = Set.empty
+      )
+
+    } yield Attributes(attributeValidityStates)
+
+    onComplete(result) {
+      case Success(agr) => getAgreementAttributes200(agr)
+      case Failure(AgreementNotFound) =>
+        logger.error("Error while getting agreement id {}: {}", agreementId, AgreementNotFound.getMessage)
+        getAgreementAttributes400(problemOf(StatusCodes.InternalServerError, AgreementNotFound))
+      case Failure(_) =>
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1"))
+        )
+    }
+  }
 
   /** Code: 200, Message: Agreement retrieved, DataType: Agreement
     * Code: 400, Message: Bad request, DataType: Problem
