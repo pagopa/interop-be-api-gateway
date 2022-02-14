@@ -35,7 +35,7 @@ object TokenSeed {
       kid = key.computeThumbprint().toString,
       clientId = assertion.getJWTClaimsSet.getSubject,
       //TODO issuer: only for test purpose, priv/pub key are deployed to key manager associated to this uuid
-      issuer = ApplicationConfiguration.getPdndIdIssuer,
+      issuer = ApplicationConfiguration.pdndIdIssuer,
       issuedAt = issuedAt.toEpochMilli,
       nbf = issuedAt.toEpochMilli,
       expireAt = issuedAt.plusMillis(expireIn).toEpochMilli,

@@ -52,36 +52,42 @@ import kamon.Kamon
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import it.pagopa.pdnd.interop.commons.jwt.service.impl.DefaultPDNDTokenGenerator
+import it.pagopa.pdnd.interop.commons.jwt.PrivateKeysHolder
+import it.pagopa.pdnd.interop.commons.jwt.{KID, SerializedKey}
+import it.pagopa.pdnd.interop.commons.jwt.service.PDNDTokenGenerator
+import it.pagopa.pdnd.interop.commons.jwt.service.impl.DefaultClientAssertionValidator
+import it.pagopa.pdnd.interop.commons.jwt.service.ClientAssertionValidator
 //shuts down the actor system in case of startup errors
 case object StartupErrorShutdown extends CoordinatedShutdown.Reason
 
 trait AgreementManagementDependency {
   val agreementManagementService = new AgreementManagementServiceImpl(
     AgreementManagementInvoker(),
-    AgreementManagementApi(ApplicationConfiguration.getAgreementManagementURL)
+    AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
   )
 }
 
 trait CatalogManagementDependency {
   val catalogManagementService = new CatalogManagementServiceImpl(
     CatalogManagementInvoker(),
-    CatalogManagementApi(ApplicationConfiguration.getCatalogManagementURL)
+    CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
   )
 }
 
 trait PartyManagementDependency {
   val partyManagementService = new PartyManagementServiceImpl(
     PartyManagementInvoker(),
-    PartyManagementApi(ApplicationConfiguration.getPartyManagementURL)
+    PartyManagementApi(ApplicationConfiguration.partyManagementURL)
   )
 }
 
 trait AuthorizationManagementDependency {
   val authorizationManagementClientApi: AuthorizationClientApi = AuthorizationClientApi(
-    ApplicationConfiguration.getAuthorizationManagementURL
+    ApplicationConfiguration.authorizationManagementURL
   )
   val authorizationManagementKeyApi: AuthorizationKeyApi = AuthorizationKeyApi(
-    ApplicationConfiguration.getAuthorizationManagementURL
+    ApplicationConfiguration.authorizationManagementURL
   )
   val authorizationManagementService =
     new AuthorizationManagementServiceImpl(AuthorizationManagementInvoker(), authorizationManagementKeyApi)
@@ -101,7 +107,7 @@ trait JWTValidatorDependency { self: AuthorizationManagementDependency with Vaul
 
 trait AttributeRegistryManagementDependency {
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
-    ApplicationConfiguration.getAttributeRegistryManagementURL
+    ApplicationConfiguration.attributeRegistryManagementURL
   )
 
   val attributeRegistryManagementService =
@@ -120,31 +126,47 @@ object Main
     with JWTGeneratorDependency
     with JWTValidatorDependency {
 
-  val dependenciesLoaded: Future[JWTReader] = for {
+  val dependenciesLoaded: Future[(JWTReader, ClientAssertionValidator, PDNDTokenGenerator)] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
-    jwtValidator = new DefaultJWTReader with PublicKeysHolder {
-      var publicKeyset = keyset
+    jwtReader = new DefaultJWTReader with PublicKeysHolder {
+      var publicKeyset: Map[KID, SerializedKey] = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
         getClaimsVerifier(audience = ApplicationConfiguration.jwtAudience)
     }
-  } yield jwtValidator
+    clientAssertionValidator = new DefaultClientAssertionValidator with PublicKeysHolder {
+      var publicKeyset: Map[KID, SerializedKey] = keyset
+      override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
+        getClaimsVerifier(audience = ApplicationConfiguration.jwtAudience)
+    }
+    pdndTokenGenerator = new DefaultPDNDTokenGenerator with PrivateKeysHolder {
+      override val RSAPrivateKeyset: Map[KID, SerializedKey] =
+        vaultService.readBase64EncodedData(ApplicationConfiguration.rsaPrivatePath)
+      override val ECPrivateKeyset: Map[KID, SerializedKey] =
+        vaultService.readBase64EncodedData(ApplicationConfiguration.ecPrivatePath)
+    }
+  } yield (jwtReader, clientAssertionValidator, pdndTokenGenerator)
 
   dependenciesLoaded.transformWith {
-    case Success(jwtValidator) => launchApp(jwtValidator)
+    case Success((jwtReader, clientAssertionValidator, pdndTokenGenerator)) =>
+      launchApp(jwtReader, clientAssertionValidator, pdndTokenGenerator)
     case Failure(ex) =>
       classicActorSystem.log.error(s"Startup error: ${ex.getMessage}")
       classicActorSystem.log.error(s"${ex.getStackTrace.mkString("\n")}")
       CoordinatedShutdown(classicActorSystem).run(StartupErrorShutdown)
   }
 
-  private def launchApp(jwtReader: JWTReader): Future[Http.ServerBinding] = {
+  private def launchApp(
+    jwtReader: JWTReader,
+    clientAssertionValidator: ClientAssertionValidator,
+    pdndTokenGenerator: PDNDTokenGenerator
+  ): Future[Http.ServerBinding] = {
     Kamon.init()
 
     locally {
       val _ = AkkaManagement.get(classicActorSystem).start()
     }
 
-    val authApiService: AuthApiService       = new AuthApiServiceImpl()
+    val authApiService: AuthApiService       = new AuthApiServiceImpl(clientAssertionValidator, pdndTokenGenerator)
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
     val gatewayApiService: GatewayApiService =

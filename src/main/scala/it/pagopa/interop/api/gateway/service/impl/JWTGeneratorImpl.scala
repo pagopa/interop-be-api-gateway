@@ -44,7 +44,7 @@ final case class JWTGeneratorImpl(vaultService: VaultService) extends JWTGenerat
           key = key,
           audience = audience,
           customClaims = Map.empty,
-          tokenIssuer = ApplicationConfiguration.getPdndIdIssuer,
+          tokenIssuer = ApplicationConfiguration.pdndIdIssuer,
           validityDurationMilliseconds = 10L
         ) //TODO get validityDurationMilliseconds from ClientObject
 
