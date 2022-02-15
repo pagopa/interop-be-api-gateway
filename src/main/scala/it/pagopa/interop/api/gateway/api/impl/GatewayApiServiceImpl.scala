@@ -26,14 +26,19 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.api.gateway.service.PurposeManagementService
+import it.pagopa.interop.api.gateway.error.GatewayErrors.Unauthorized
 
 class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
   agreementManagementService: AgreementManagementService,
   catalogManagementService: CatalogManagementService,
-  attributeRegistryManagementService: AttributeRegistryManagementService
+  attributeRegistryManagementService: AttributeRegistryManagementService,
+  purposeManagementService: PurposeManagementService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
+
+  //TODO! Error Handling
 
   val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
@@ -48,7 +53,6 @@ class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
   ): Route = {
-
     val result: Future[Agreement] = for {
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
@@ -85,7 +89,6 @@ class GatewayApiServiceImpl(
     toEntityMarshallerAgreements: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-
     val result: Future[Agreements] = for {
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts)
@@ -262,7 +265,33 @@ class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = ???
+  ): Route = {
+
+    val result: Future[Purpose] = for {
+      bearerToken <- getFutureBearer(contexts)
+      subject     <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      purposeUUID <- purposeId.toFutureUUID
+      purpose <- purposeManagementService
+        .getPurpose(purposeUUID)(bearerToken)
+        .ensure(Unauthorized)(_.consumerId == subject)
+      actualPurposeVersion <- purpose.toModel.toFuture
+    } yield actualPurposeVersion
+
+    onComplete(result) {
+      case Success(agr) => getPurpose200(agr)
+      case Failure(e: MissingActivePurposeVersion) =>
+        logger.error("Unable to find an active version of purpose {}", purposeId)
+        getAgreement404(problemOf(StatusCodes.NotFound, e))
+      case Failure(Unauthorized) =>
+        logger.error("Unable to find an active version of purpose {}", purposeId)
+        getAgreement401(problemOf(StatusCodes.Unauthorized, Unauthorized))
+      case Failure(_) =>
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1"))
+        )
+    }
+  }
 
   /** Code: 200, Message: Purposes retrieved, DataType: Seq[Purpose]
     * Code: 400, Message: Bad request, DataType: Problem

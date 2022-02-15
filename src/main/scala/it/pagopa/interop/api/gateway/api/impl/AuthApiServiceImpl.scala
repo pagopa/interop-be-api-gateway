@@ -12,7 +12,7 @@ import it.pagopa.interop.api.gateway.service.{AuthorizationManagementInvoker, Au
 import it.pagopa.interop.be.gateway.api.AuthApiService
 import it.pagopa.interop.be.gateway.model.TokenType.Bearer
 import it.pagopa.interop.be.gateway.model.{ClientCredentialsResponse, Problem}
-import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, ClientAssertionRequest}
+import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, ValidClientAssertionRequest}
 import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, PDNDTokenGenerator}
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
@@ -48,10 +48,15 @@ class AuthApiServiceImpl(
   ): Route = {
 
     val tokenAndCheckerF: Try[(String, ClientAssertionChecker)] = for {
-      m2mToken               <- pdndTokenGenerator.generateInternalRSAToken()
-      clientUUID             <- clientId.traverse(_.toUUID)
-      clientAssertionRequest <- ClientAssertionRequest(clientAssertion, clientAssertionType, grantType, clientUUID)
-      checker                <- jwtValidator.extractJwtInfo(clientAssertionRequest)
+      m2mToken   <- pdndTokenGenerator.generateInternalRSAToken()
+      clientUUID <- clientId.traverse(_.toUUID)
+      clientAssertionRequest <- ValidClientAssertionRequest.from(
+        clientAssertion,
+        clientAssertionType,
+        grantType,
+        clientUUID
+      )
+      checker <- jwtValidator.extractJwtInfo(clientAssertionRequest)
     } yield (m2mToken, checker)
 
     val result: Future[ClientCredentialsResponse] = for {
@@ -74,7 +79,6 @@ class AuthApiServiceImpl(
           validityDuration = 0L // client.voucherLifespan     //TODO ! add lifespan
         )
         .toFuture
-
     } yield ClientCredentialsResponse(
       access_token = token,
       token_type = Bearer,

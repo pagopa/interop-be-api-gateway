@@ -40,6 +40,9 @@ object Dependencies {
     lazy val attributeRegistryManagement =
       namespace %% "pdnd-interop-uservice-attribute-registry-management-client" % attributeRegistryManagementVersion
 
+    lazy val purposeManagement =
+      namespace %% "pdnd-interop-uservice-purpose-management-client" % purposeManagementVersion
+
     lazy val commons = namespace %% "pdnd-interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "pdnd-interop-commons-jwt"   % commonsVersion
     lazy val vault   = namespace %% "pdnd-interop-commons-vault" % commonsVersion
@@ -128,6 +131,7 @@ object Dependencies {
       pagopa.jwt                         % Compile,
       pagopa.keyManagement               % Compile,
       pagopa.partyManagement             % Compile,
+      pagopa.purposeManagement           % Compile,
       pagopa.vault                       % Compile,
       scalpb.core                        % "protobuf",
       akka.httpTestkit                   % Test,

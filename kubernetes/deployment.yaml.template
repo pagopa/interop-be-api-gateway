@@ -88,6 +88,8 @@ spec:
               value: "{{attributeRegistryManagementUrl}}"
             - name: USER_REGISTRY_MANAGEMENT_URL
               value: "{{userRegistryManagementUrl}}"
+            - name: PURPOSE_MANAGEMENT_URL
+              value: "{{purposeManagementUrl}}"
             - name: WELL_KNOWN_URL
               value: "{{wellKnownURL}}"
 ---

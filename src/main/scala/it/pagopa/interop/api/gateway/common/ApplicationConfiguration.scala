@@ -12,6 +12,7 @@ object ApplicationConfiguration {
   def catalogManagementURL: String           = config.getString("services.catalog-management")
   def partyManagementURL: String             = config.getString("services.party-management")
   def attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
+  def purposeManagementURL: String           = config.getString("services.purpose-management")
 
   def pdndIdIssuer: String = config.getString("interop-api-gateway.issuer")
 

@@ -5,7 +5,8 @@ import akka.http.scaladsl.model.StatusCode
 import cats.implicits._
 import it.pagopa.interop.be.gateway.model._
 import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
-import it.pagopa.pdnd.interop.commons.utils.TypeConversions.StringOps
+import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.api.gateway.error.GatewayErrors.MissingActivePurposeVersion
 import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.{
   ACTIVE,
@@ -28,11 +29,18 @@ import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{
   EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{
+  Purpose => PurposeManagementApiPurpose,
+  Purposes => PurposeManagementApiPurposes
+}
+
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import java.time.OffsetDateTime
 import java.util.UUID
 import scala.annotation.nowarn
+import scala.util.Try
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
@@ -74,6 +82,18 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         )
       )
     )
+
+  implicit class EnrichedPurpose(private val purpose: PurposeManagementApiPurpose) extends AnyVal {
+    def toModel: Try[Purpose] =
+      purpose.versions
+        .find(_.state == PurposeVersionState.ACTIVE)
+        .toTry(MissingActivePurposeVersion(purpose.id))
+        .map(version => Purpose(id = purpose.id, throughput = version.dailyCalls, state = PurposeState.ACTIVE))
+  }
+
+  implicit class EnrichedPurposes(private val purpose: PurposeManagementApiPurposes) extends AnyVal {
+    def toModel: Purposes = ???
+  }
 
   implicit class EnrichedAgreement(private val agreement: AgreementManagementApiAgreement) extends AnyVal {
     def toModel: Agreement =

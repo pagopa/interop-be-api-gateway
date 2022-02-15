@@ -29,4 +29,9 @@ object GatewayErrors {
 
   final case object CreateTokenRequestError
       extends ComponentError("0011", "Error while creating a token for this request")
+
+  final case class MissingActivePurposeVersion(purposeId: UUID)
+      extends ComponentError("0012", s"There is no active version for purpose $purposeId")
+
+  final case object Unauthorized extends ComponentError("9999", s"The user has no access to the requested resource")
 }

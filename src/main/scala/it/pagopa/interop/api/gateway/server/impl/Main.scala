@@ -25,8 +25,6 @@ import it.pagopa.interop.api.gateway.service.impl.{
   AttributeRegistryManagementServiceImpl,
   AuthorizationManagementServiceImpl,
   CatalogManagementServiceImpl,
-  JWTGeneratorImpl,
-  JWTValidatorImpl,
   PartyManagementServiceImpl
 }
 import it.pagopa.interop.be.gateway.api._
@@ -57,6 +55,8 @@ import kamon.Kamon
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import it.pagopa.interop.api.gateway.service.impl.PurposeManagementServiceImpl
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
 //shuts down the actor system in case of startup errors
 case object StartupErrorShutdown extends CoordinatedShutdown.Reason
 
@@ -100,14 +100,6 @@ trait VaultServiceDependency {
   val vaultService: VaultService = new DefaultVaultService with DefaultVaultClient.DefaultClientInstance
 }
 
-trait JWTGeneratorDependency { self: VaultServiceDependency =>
-  val jwtGenerator: JWTGeneratorImpl = JWTGeneratorImpl(vaultService)
-}
-
-trait JWTValidatorDependency { self: AuthorizationManagementDependency with VaultServiceDependency =>
-  val jwtValidator: JWTValidatorImpl = JWTValidatorImpl(authorizationManagementService, vaultService)
-}
-
 trait AttributeRegistryManagementDependency {
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
     ApplicationConfiguration.attributeRegistryManagementURL
@@ -115,6 +107,13 @@ trait AttributeRegistryManagementDependency {
 
   val attributeRegistryManagementService =
     new AttributeRegistryManagementServiceImpl(AttributeRegistryManagementInvoker(), attributeRegistryManagementApi)
+}
+
+trait PurposeManagementDependency {
+  val purposeManagementService = new PurposeManagementServiceImpl(
+    PurposeManagementInvoker(),
+    PurposeApi(ApplicationConfiguration.purposeManagementURL)
+  )
 }
 
 object Main
@@ -126,8 +125,7 @@ object Main
     with CatalogManagementDependency
     with PartyManagementDependency
     with AttributeRegistryManagementDependency
-    with JWTGeneratorDependency
-    with JWTValidatorDependency {
+    with PurposeManagementDependency {
 
   val dependenciesLoaded: Future[(JWTReader, ClientAssertionValidator, PDNDTokenGenerator)] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
@@ -178,7 +176,8 @@ object Main
         partyManagementService,
         agreementManagementService,
         catalogManagementService,
-        attributeRegistryManagementService
+        attributeRegistryManagementService,
+        purposeManagementService
       )
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
