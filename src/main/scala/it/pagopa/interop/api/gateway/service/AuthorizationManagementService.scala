@@ -8,5 +8,6 @@ import scala.concurrent.Future
 trait AuthorizationManagementService {
 
   def getKey(clientId: UUID, kid: String)(bearer: String): Future[ClientKey]
+  def getClient(clientId: UUID)(bearer: String): Future[Client]
 
 }

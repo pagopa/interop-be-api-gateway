@@ -150,7 +150,7 @@ class GatewayApiServiceImpl(
       eserviceUUID <- eserviceId.toFutureUUID
       eservice     <- catalogManagementService.getEService(eserviceUUID)(bearerToken)
       descriptor <- eservice.descriptors
-        .find(_.id == descriptorId)
+        .find(_.id.toString == descriptorId)
         .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
     } yield eservice.toModel(descriptor)
 

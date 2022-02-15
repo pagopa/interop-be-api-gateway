@@ -2,7 +2,10 @@ package it.pagopa.interop.api.gateway
 
 import akka.actor.ActorSystem
 import it.pagopa.pdnd.interop.uservice._
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.Client
+import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.Serializers
+import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.{Client, Key}
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization
 
 package object service {
   type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
@@ -31,6 +34,10 @@ package object service {
   object AuthorizationManagementInvoker {
     def apply()(implicit actorSystem: ActorSystem): AuthorizationManagementInvoker =
       keymanagement.client.invoker.ApiInvoker(keymanagement.client.api.EnumsSerializers.all)
+
+    private def serializationFormats =
+      DefaultFormats ++ Serializers.all ++ keymanagement.client.api.EnumsSerializers.all
+    def serializeKey(key: Key) = Serialization.write(key)(serializationFormats)
   }
 
   object AttributeRegistryManagementInvoker {

@@ -2,6 +2,7 @@ package it.pagopa.interop.api.gateway.service.impl
 
 import it.pagopa.interop.api.gateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
 import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.KeyApi
+import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.ClientApi
 import it.pagopa.pdnd.interop.uservice.keymanagement.client.invoker.{ApiRequest, BearerToken}
 import it.pagopa.pdnd.interop.uservice.keymanagement.client.model._
 import org.slf4j.{Logger, LoggerFactory}
@@ -9,7 +10,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import java.util.UUID
 import scala.concurrent.Future
 
-class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker, keyApi: KeyApi)
+class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker, keyApi: KeyApi, clientApi: ClientApi)
     extends AuthorizationManagementService {
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
@@ -17,5 +18,10 @@ class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker
   override def getKey(clientId: UUID, kid: String)(bearer: String): Future[ClientKey] = {
     val request: ApiRequest[ClientKey] = keyApi.getClientKeyById(clientId, kid)(BearerToken(bearer))
     invoker.invoke(request, "Key Retrieve")
+  }
+
+  override def getClient(clientId: UUID)(bearer: String): Future[Client] = {
+    val request: ApiRequest[Client] = clientApi.getClient(clientId.toString)(BearerToken(bearer))
+    invoker.invoke(request, "Client retrieval")
   }
 }

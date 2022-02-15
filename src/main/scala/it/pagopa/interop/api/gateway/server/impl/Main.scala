@@ -31,9 +31,14 @@ import it.pagopa.interop.api.gateway.service.impl.{
 }
 import it.pagopa.interop.be.gateway.api._
 import it.pagopa.interop.be.gateway.server.Controller
-import it.pagopa.pdnd.interop.commons.jwt.service.JWTReader
-import it.pagopa.pdnd.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
-import it.pagopa.pdnd.interop.commons.jwt.{JWTConfiguration, PublicKeysHolder}
+import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, PDNDTokenGenerator}
+import it.pagopa.pdnd.interop.commons.jwt.service.impl.{
+  DefaultClientAssertionValidator,
+  DefaultJWTReader,
+  DefaultPDNDTokenGenerator,
+  getClaimsVerifier
+}
+import it.pagopa.pdnd.interop.commons.jwt._
 import it.pagopa.pdnd.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
@@ -52,12 +57,6 @@ import kamon.Kamon
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import it.pagopa.pdnd.interop.commons.jwt.service.impl.DefaultPDNDTokenGenerator
-import it.pagopa.pdnd.interop.commons.jwt.PrivateKeysHolder
-import it.pagopa.pdnd.interop.commons.jwt.{KID, SerializedKey}
-import it.pagopa.pdnd.interop.commons.jwt.service.PDNDTokenGenerator
-import it.pagopa.pdnd.interop.commons.jwt.service.impl.DefaultClientAssertionValidator
-import it.pagopa.pdnd.interop.commons.jwt.service.ClientAssertionValidator
 //shuts down the actor system in case of startup errors
 case object StartupErrorShutdown extends CoordinatedShutdown.Reason
 
@@ -90,7 +89,11 @@ trait AuthorizationManagementDependency {
     ApplicationConfiguration.authorizationManagementURL
   )
   val authorizationManagementService =
-    new AuthorizationManagementServiceImpl(AuthorizationManagementInvoker(), authorizationManagementKeyApi)
+    new AuthorizationManagementServiceImpl(
+      AuthorizationManagementInvoker(),
+      authorizationManagementKeyApi,
+      authorizationManagementClientApi
+    )
 }
 
 trait VaultServiceDependency {
@@ -166,7 +169,8 @@ object Main
       val _ = AkkaManagement.get(classicActorSystem).start()
     }
 
-    val authApiService: AuthApiService       = new AuthApiServiceImpl(clientAssertionValidator, pdndTokenGenerator)
+    val authApiService: AuthApiService =
+      new AuthApiServiceImpl(authorizationManagementService, clientAssertionValidator, pdndTokenGenerator)
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
     val gatewayApiService: GatewayApiService =

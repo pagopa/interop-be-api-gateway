@@ -21,3 +21,4 @@ addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.3")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.5"
 
 addDependencyTreePlugin
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
