@@ -3,7 +3,7 @@ package it.pagopa.interop.api.gateway
 import akka.actor.ActorSystem
 import it.pagopa.pdnd.interop.uservice._
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.Serializers
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.{Client, Key}
+import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.Key
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 
@@ -14,8 +14,6 @@ package object service {
   type AuthorizationManagementInvoker     = keymanagement.client.invoker.ApiInvoker
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
   type PurposeManagementInvoker           = purposemanagement.client.invoker.ApiInvoker
-
-  type ManagementClient = Client
 
   object AgreementManagementInvoker {
     def apply()(implicit actorSystem: ActorSystem): AgreementManagementInvoker =

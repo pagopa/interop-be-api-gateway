@@ -20,7 +20,8 @@ import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.{
-  Attribute => AttributeRegistryManagementApiAttribute
+  Attribute => AttributeRegistryManagementApiAttribute,
+  AttributeKind => AttributeRegistryManagementApiAttributeKind
 }
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{
   Attribute => CatalogManagementApiAttribute,
@@ -47,6 +48,9 @@ import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVer
 import cats.data.Validated
 import scala.util.Success
 import scala.util.Failure
+import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.CERTIFIED
+import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.DECLARED
+import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.VERIFIED
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
@@ -204,10 +208,15 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       )
   }
 
-  //FIXME attribute kind MUST be properly retrieved from ???
-  //TODO validity
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
-    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = attribute.kind)
+    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = attribute.kind.toModel)
   }
 
+  implicit class EnrichedAttributeKind(private val kind: AttributeRegistryManagementApiAttributeKind) extends AnyVal {
+    def toModel: AttributeKind = kind match {
+      case CERTIFIED => AttributeKind.CERTIFIED
+      case DECLARED  => AttributeKind.DECLARED
+      case VERIFIED  => AttributeKind.VERIFIED
+    }
+  }
 }

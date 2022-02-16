@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import it.pagopa.interop.api.gateway.service.PurposeManagementService
-import it.pagopa.interop.api.gateway.error.GatewayErrors.Unauthorized
+import it.pagopa.interop.api.gateway.error.GatewayErrors.Forbidden
 import java.util.UUID
-import it.pagopa.interop.api.gateway.error.GatewayErrors
+import akka.http.scaladsl.server.StandardRoute
 
 class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
@@ -44,16 +44,12 @@ class GatewayApiServiceImpl(
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
-  //TODO! Error Handling
+  lazy val internalServerError: StandardRoute =
+    complete(StatusCodes.InternalServerError, problemOf(StatusCodes.InternalServerError, InternalServerError))
 
   val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
 
-  /** Code: 200, Message: Agreement retrieved, DataType: Agreement
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Agreement not found, DataType: Problem
-    */
   override def getAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -66,25 +62,22 @@ class GatewayApiServiceImpl(
       agreement <-
         agreementManagementService
           .getAgreementById(agreementUUID)(bearerToken)
-          .ensure(AgreementNotFound)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
+          .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
     } yield agreement.toModel
 
     onComplete(result) {
       case Success(agr) =>
         getAgreement200(agr)
-      case Failure(AgreementNotFound) =>
-        logger.error("Error while getting agreement id {}: {}", agreementId, AgreementNotFound.getMessage)
-        getAgreement400(problemOf(StatusCodes.InternalServerError, AgreementNotFound))
-      case Failure(_) =>
-        getAgreement400(problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1")))
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested agreement: {}", agreementId)
+        getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting agreement {}: {}", agreementId, ex.getMessage)
+        getAgreement404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(_) => internalServerError
     }
   }
 
-  /** Code: 200, Message: A list of Agreement, DataType: Agreements
-    * Code: 400, Message: Bad Request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 403, Message: Forbidden, DataType: Problem
-    */
   override def getAgreements(
     producerId: Option[String],
     consumerId: Option[String],
@@ -104,7 +97,9 @@ class GatewayApiServiceImpl(
         case (None, consumer @ Some(_))                   => Future.successful((Some(organizationId), consumer))
         case (Some(`organizationId`), consumer @ Some(_)) => Future.successful((Some(organizationId), consumer))
         case (producer @ Some(_), Some(`organizationId`)) => Future.successful((producer, Some(organizationId)))
-        case _                                            => Future.failed(InvalidAgreementsInput)
+        case (None, None)                                 => Future.failed(InvalidAgreementsInput)
+        //TODO! case (Some(x), Some(y)) if x === y
+        case _ => Future.failed(Forbidden)
       }
       (prod, cons) = params
       agreementState <- state.traverse(AgreementManagementApiAgreementState.fromValue(_).toFuture)
@@ -112,19 +107,20 @@ class GatewayApiServiceImpl(
         bearerToken
       )
       agreements = rawAgreements.map(_.toModel)
-    } yield Agreements(agreements = agreements)
+    } yield Agreements(agreements)
 
     onComplete(result) {
       case Success(agreements) => getAgreements200(agreements)
-      case Failure(_)          => getAgreements400(problemOf(StatusCodes.InternalServerError, AgreementsError))
+      case Failure(InvalidAgreementsInput) =>
+        logger.error("Error while getting agreements: {}", InvalidAgreementsInput.getMessage)
+        getAgreements400(problemOf(StatusCodes.BadRequest, InvalidAgreementsInput))
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested agreements")
+        getAgreements403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(_) => internalServerError
     }
   }
 
-  /** Code: 200, Message: Attribute retrieved, DataType: Attribute
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Agreement not found, DataType: Problem
-    */
   override def getAttribute(attributeId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
@@ -139,17 +135,13 @@ class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(attribute) =>
         getAttribute200(attribute)
-      case Failure(_) =>
-        logger.error("Error while getting attribute id {} - Attribute not found", attributeId)
-        getAttribute404(problemOf(StatusCodes.NotFound, AttributeNotFoundError(attributeId)))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting attribute {}: {}", attributeId, ex.getMessage)
+        getAttribute404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(_) => internalServerError
     }
   }
 
-  /** Code: 200, Message: EService retrieved, DataType: EService
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: EService not found, DataType: Problem
-    */
   override def getEService(eserviceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -167,29 +159,16 @@ class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(eservice) =>
         getEService200(eservice)
-      case Failure(EServiceNotFoundForOrganizationError) =>
-        logger.error(
-          "Error while getting e-service id {}: {}",
-          eserviceId,
-          EServiceNotFoundForOrganizationError.getMessage
-        )
-        getEService404(problemOf(StatusCodes.NotFound, EServiceNotFoundForOrganizationError))
-      case Failure(ex: EServiceDescriptorNotFound) =>
-        logger.error("Error while getting e-service id {}: {}", eserviceId, ex.getMessage)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting eservice {}: {}", eserviceId, ex.getMessage)
         getEService404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) =>
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1"))
-        )
+      case Failure(ex: EServiceDescriptorNotFound) =>
+        logger.error(ex.getMessage)
+        getEService404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(_) => internalServerError
     }
   }
 
-  /** Code: 200, Message: Organization retrieved, DataType: Organization
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Organization not found, DataType: Problem
-    */
   override def getOrganization(organizationId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerOrganization: ToEntityMarshaller[Organization],
@@ -202,10 +181,11 @@ class GatewayApiServiceImpl(
     } yield organization.toModel
 
     onComplete(result) {
-      case Success(organization) =>
-        getOrganization200(organization)
-      case Failure(_) =>
-        complete(StatusCodes.InternalServerError, problemOf(StatusCodes.InternalServerError, OrganizationError))
+      case Success(organization) => getOrganization200(organization)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting organization {}: {}", organizationId, ex.getMessage)
+        getOrganization404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(_) => internalServerError
     }
   }
 
@@ -227,7 +207,7 @@ class GatewayApiServiceImpl(
       rawAgreement <-
         agreementManagementService
           .getAgreementById(agreementUUID)(bearerToken)
-          .ensure(AgreementNotFound)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
+          .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
 
       eservice <- catalogManagementService.getEService(rawAgreement.eserviceId)(bearerToken)
 
@@ -239,16 +219,18 @@ class GatewayApiServiceImpl(
 
     } yield Attributes(attributeValidityStates)
 
+    // getAgreementAttributes401()
+    // getAgreementAttributes404()
+
     onComplete(result) {
       case Success(agr) => getAgreementAttributes200(agr)
-      case Failure(AgreementNotFound) =>
-        logger.error("Error while getting agreement id {}: {}", agreementId, AgreementNotFound.getMessage)
-        getAgreementAttributes400(problemOf(StatusCodes.InternalServerError, AgreementNotFound))
-      case Failure(_) =>
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1"))
-        )
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested attributes for agreement: {}", agreementId)
+        getAgreementAttributes403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting attributes for agreement {}: {}", agreementId, ex.getMessage)
+        getAgreementAttributes404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(_) => internalServerError
     }
   }
 
@@ -269,25 +251,18 @@ class GatewayApiServiceImpl(
       purpose     <- purposeManagementService.getPurpose(purposeUUID)(bearerToken)
       agreement <- agreementManagementService
         .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)(bearerToken)
-        .ensure(Unauthorized)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
+        .ensure(Forbidden)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
     } yield agreement.toModel
 
     onComplete(result) {
       case Success(agreement) => getAgreementByPurpose200(agreement)
-      case Failure(AgreementNotFound) =>
-        logger.error("Unable to find an active or suspended agreement for purpose {}", purposeId)
-        getAgreement404(problemOf(StatusCodes.NotFound, AgreementNotFound))
-      case Failure(Unauthorized) =>
-        logger.error(
-          "The user is not authorized to retrieve an active or suspended agreement for purpose {}",
-          purposeId
-        )
-        getAgreement401(problemOf(StatusCodes.Unauthorized, Unauthorized))
-      case Failure(_) =>
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(StatusCodes.InternalServerError, GatewayErrors.InternalServerError)
-        )
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested agreement for purpose {}", purposeId)
+        getAgreementByPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting the requested agreement for purpose {} : {}", purposeId, ex.getMessage)
+        getAgreementByPurpose404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(_) => internalServerError
     }
   }
 
@@ -308,7 +283,7 @@ class GatewayApiServiceImpl(
       catalogManagementService
         .getEService(purpose.eserviceId)(bearerToken)
         .map(_.producerId == subject)
-        .ifM(Future.successful(purpose), Future.failed(Unauthorized))
+        .ifM(Future.successful(purpose), Future.failed(Forbidden))
 
     def getPurposeIfAuthorized(subject: UUID, purposeUUID: UUID)(
       bearerToken: String
@@ -329,17 +304,16 @@ class GatewayApiServiceImpl(
 
     onComplete(result) {
       case Success(agr) => getPurpose200(agr)
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested purpose {}", purposeId)
+        getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting the requested agreement for purpose {} : {}", purposeId, ex.getMessage)
+        getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(e: MissingActivePurposeVersion) =>
         logger.error("Unable to find an active version of purpose {}", purposeId)
-        getAgreement404(problemOf(StatusCodes.NotFound, e))
-      case Failure(Unauthorized) =>
-        logger.error("The user is not authorized to retrieve the purpose with id {}", purposeId)
-        getAgreement401(problemOf(StatusCodes.Unauthorized, Unauthorized))
-      case Failure(_) =>
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(StatusCodes.InternalServerError, GenericComponentErrors.ResourceNotFoundError("1"))
-        )
+        getPurpose404(problemOf(StatusCodes.NotFound, e))
+      case Failure(_) => internalServerError
     }
   }
 
@@ -360,13 +334,19 @@ class GatewayApiServiceImpl(
       agreementUUID <- agreementId.toFutureUUID
       agreement <- agreementManagementService
         .getAgreementById(agreementUUID)(bearerToken)
-        .ensure(Unauthorized)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
+        .ensure(Forbidden)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
       clientPurposes <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(bearerToken)
       purposes       <- clientPurposes.toModel.toFuture
     } yield purposes
 
     onComplete(result) {
       case Success(agreement) => getAgreementPurposes200(agreement)
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested agreement {}", agreementId)
+        getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting the requested purposes for agreement {} : {}", agreementId, ex.getMessage)
+        getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(e: MissingActivePurposesVersions) =>
         logger.error(
           "Unable to find active or suspended versions for purposes {} in the agreement {}",
@@ -374,14 +354,7 @@ class GatewayApiServiceImpl(
           agreementId
         )
         getAgreementPurposes404(problemOf(StatusCodes.NotFound, e))
-      case Failure(Unauthorized) =>
-        logger.error("The user is not authorized to retrieve the purposes for the agreement {}", agreementId)
-        getAgreementPurposes401(problemOf(StatusCodes.Unauthorized, Unauthorized))
-      case Failure(_) =>
-        complete(
-          StatusCodes.InternalServerError,
-          problemOf(StatusCodes.InternalServerError, GatewayErrors.InternalServerError)
-        )
+      case Failure(_) => internalServerError
     }
   }
 }
