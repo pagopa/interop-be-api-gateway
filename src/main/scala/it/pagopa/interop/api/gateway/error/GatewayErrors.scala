@@ -33,5 +33,10 @@ object GatewayErrors {
   final case class MissingActivePurposeVersion(purposeId: UUID)
       extends ComponentError("0012", s"There is no active version for purpose $purposeId")
 
+  final case class MissingActivePurposesVersions(purposesIds: Seq[UUID])
+      extends ComponentError("0012", s"There is no active version for purposes ${purposesIds.mkString(", ")}")
+
+  final case object InternalServerError extends ComponentError("9998", "There was an internal server error")
+
   final case object Unauthorized extends ComponentError("9999", s"The user has no access to the requested resource")
 }

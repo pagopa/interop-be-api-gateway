@@ -6,7 +6,7 @@ import cats.implicits._
 import it.pagopa.interop.be.gateway.model._
 import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.api.gateway.error.GatewayErrors.MissingActivePurposeVersion
+import it.pagopa.interop.api.gateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
 import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.{
   ACTIVE,
@@ -41,6 +41,12 @@ import java.util.UUID
 import scala.annotation.nowarn
 import scala.util.Try
 import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.DRAFT
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.ARCHIVED
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.WAITING_FOR_APPROVAL
+import cats.data.Validated
+import scala.util.Success
+import scala.util.Failure
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
@@ -83,28 +89,46 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       )
     )
 
+  private val descendingOffsetDateTimeOrdering: Ordering[OffsetDateTime] = implicitly[Ordering[OffsetDateTime]].reverse
+
   implicit class EnrichedPurpose(private val purpose: PurposeManagementApiPurpose) extends AnyVal {
     def toModel: Try[Purpose] =
       purpose.versions
-        .find(_.state == PurposeVersionState.ACTIVE)
+        .sortBy(_.createdAt)(descendingOffsetDateTimeOrdering)
+        .find(p => p.state == PurposeVersionState.ACTIVE && p.state == PurposeVersionState.SUSPENDED)
         .toTry(MissingActivePurposeVersion(purpose.id))
-        .map(version => Purpose(id = purpose.id, throughput = version.dailyCalls, state = PurposeState.ACTIVE))
+        .map(version => Purpose(id = purpose.id, throughput = version.dailyCalls, state = version.state.toModel))
   }
 
-  implicit class EnrichedPurposes(private val purpose: PurposeManagementApiPurposes) extends AnyVal {
-    def toModel: Purposes = ???
+  implicit class EnrichedPurposeVersionState(private val state: PurposeVersionState) extends AnyVal {
+    def toModel: PurposeState = state match {
+      case PurposeVersionState.ACTIVE    => PurposeState.ACTIVE
+      case DRAFT                         => PurposeState.DRAFT
+      case ARCHIVED                      => PurposeState.ARCHIVED
+      case WAITING_FOR_APPROVAL          => PurposeState.WAITING_FOR_APPROVAL
+      case PurposeVersionState.SUSPENDED => PurposeState.SUSPENDED
+    }
+  }
+
+  implicit class EnrichedPurposes(private val purposes: PurposeManagementApiPurposes) extends AnyVal {
+    def toModel: Try[Purposes] = purposes.purposes.toList.traverse(_.toModel.toValidated.toValidatedNel) match {
+      case Validated.Valid(purposes) => Success(Purposes(purposes))
+      case Validated.Invalid(errors) =>
+        Failure(MissingActivePurposesVersions(errors.toList.collect { case MissingActivePurposeVersion(purposeId) =>
+          purposeId
+        }))
+    }
   }
 
   implicit class EnrichedAgreement(private val agreement: AgreementManagementApiAgreement) extends AnyVal {
-    def toModel: Agreement =
-      Agreement(
-        id = agreement.id,
-        eserviceId = agreement.eserviceId,
-        descriptorId = agreement.descriptorId,
-        producerId = agreement.producerId,
-        consumerId = agreement.consumerId,
-        state = agreement.state.toModel
-      )
+    def toModel: Agreement = Agreement(
+      id = agreement.id,
+      eserviceId = agreement.eserviceId,
+      descriptorId = agreement.descriptorId,
+      producerId = agreement.producerId,
+      consumerId = agreement.consumerId,
+      state = agreement.state.toModel
+    )
   }
 
   implicit class EnrichedAgreementState(private val agreement: AgreementManagementApiAgreementState) extends AnyVal {
@@ -137,14 +161,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       } yield group.map(_.id).appended(single)
 
       flattenAttributes
-        .fold(List.empty[UUID]) { ids =>
-          ids.toList.traverse(_.toUUID).getOrElse(List.empty)
-        }
+        .fold(List.empty[UUID])(ids => ids.toList.traverse(_.toUUID).getOrElse(List.empty))
         .toSet
     }
 
-    def isVerified(attribute: AgreementManagementApiVerifiedAttribute): Boolean =
-      attribute.verified.contains(true)
+    def isVerified(attribute: AgreementManagementApiVerifiedAttribute): Boolean = attribute.verified.contains(true)
 
     def isInTimeRange(attribute: AgreementManagementApiVerifiedAttribute): Boolean =
       attribute.verificationDate.zip(attribute.validityTimespan).fold(true) { case (verDate, offset) =>
@@ -160,11 +181,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       .map(uuid =>
         verifiedFromAgreement
           .find(_.id == uuid)
-          .fold(AttributeValidityState(uuid.toString, AttributeValidity.INVALID))(attr => {
+          .fold(AttributeValidityState(uuid.toString, AttributeValidity.INVALID))(attr =>
             if (isVerified(attr) && isInTimeRange(attr)) {
               AttributeValidityState(uuid.toString, AttributeValidity.VALID)
             } else AttributeValidityState(uuid.toString, AttributeValidity.INVALID)
-          })
+          )
       )
 
     def attributesUUIDs: Set[UUID] =
@@ -186,7 +207,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   //FIXME attribute kind MUST be properly retrieved from ???
   //TODO validity
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
-    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = AttributeKind.DECLARED)
+    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = attribute.kind)
   }
 
 }

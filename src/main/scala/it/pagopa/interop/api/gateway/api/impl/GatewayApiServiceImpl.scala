@@ -22,12 +22,18 @@ import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   AgreementState => AgreementManagementApiAgreementState
 }
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{
+  Purpose => PurposeManagementApiPurpose
+// Purposes => PurposeManagementApiPurposes
+}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import it.pagopa.interop.api.gateway.service.PurposeManagementService
 import it.pagopa.interop.api.gateway.error.GatewayErrors.Unauthorized
+import java.util.UUID
+import it.pagopa.interop.api.gateway.error.GatewayErrors
 
 class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
@@ -56,9 +62,10 @@ class GatewayApiServiceImpl(
     val result: Future[Agreement] = for {
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      agreementUUID  <- agreementId.toFutureUUID
       agreement <-
         agreementManagementService
-          .getAgreementById(agreementId)(bearerToken)
+          .getAgreementById(agreementUUID)(bearerToken)
           .ensure(AgreementNotFound)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
     } yield agreement.toModel
 
@@ -216,10 +223,10 @@ class GatewayApiServiceImpl(
     val result: Future[Attributes] = for {
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-
+      agreementUUID  <- agreementId.toFutureUUID
       rawAgreement <-
         agreementManagementService
-          .getAgreementById(agreementId)(bearerToken)
+          .getAgreementById(agreementUUID)(bearerToken)
           .ensure(AgreementNotFound)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
 
       eservice <- catalogManagementService.getEService(rawAgreement.eserviceId)(bearerToken)
@@ -254,7 +261,35 @@ class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
-  ): Route = ???
+  ): Route = {
+    val result: Future[Agreement] = for {
+      bearerToken <- getFutureBearer(contexts)
+      subjectUUID <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      purposeUUID <- purposeId.toFutureUUID
+      purpose     <- purposeManagementService.getPurpose(purposeUUID)(bearerToken)
+      agreement <- agreementManagementService
+        .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)(bearerToken)
+        .ensure(Unauthorized)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
+    } yield agreement.toModel
+
+    onComplete(result) {
+      case Success(agreement) => getAgreementByPurpose200(agreement)
+      case Failure(AgreementNotFound) =>
+        logger.error("Unable to find an active or suspended agreement for purpose {}", purposeId)
+        getAgreement404(problemOf(StatusCodes.NotFound, AgreementNotFound))
+      case Failure(Unauthorized) =>
+        logger.error(
+          "The user is not authorized to retrieve an active or suspended agreement for purpose {}",
+          purposeId
+        )
+        getAgreement401(problemOf(StatusCodes.Unauthorized, Unauthorized))
+      case Failure(_) =>
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(StatusCodes.InternalServerError, GatewayErrors.InternalServerError)
+        )
+    }
+  }
 
   /** Code: 200, Message: Purpose retrieved, DataType: Purpose
     * Code: 400, Message: Bad request, DataType: Problem
@@ -267,13 +302,28 @@ class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
 
+    def validatePurposeIfSubjectIsProducer(subject: UUID, purpose: PurposeManagementApiPurpose)(
+      bearerToken: String
+    ): Future[PurposeManagementApiPurpose] =
+      catalogManagementService
+        .getEService(purpose.eserviceId)(bearerToken)
+        .map(_.producerId == subject)
+        .ifM(Future.successful(purpose), Future.failed(Unauthorized))
+
+    def getPurposeIfAuthorized(subject: UUID, purposeUUID: UUID)(
+      bearerToken: String
+    ): Future[PurposeManagementApiPurpose] = purposeManagementService
+      .getPurpose(purposeUUID)(bearerToken)
+      .flatMap(purpose =>
+        if (purpose.consumerId == subject) Future.successful(purpose)
+        else validatePurposeIfSubjectIsProducer(subject, purpose)(bearerToken)
+      )
+
     val result: Future[Purpose] = for {
-      bearerToken <- getFutureBearer(contexts)
-      subject     <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-      purposeUUID <- purposeId.toFutureUUID
-      purpose <- purposeManagementService
-        .getPurpose(purposeUUID)(bearerToken)
-        .ensure(Unauthorized)(_.consumerId == subject)
+      bearerToken          <- getFutureBearer(contexts)
+      subjectUUID          <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      purposeUUID          <- purposeId.toFutureUUID
+      purpose              <- getPurposeIfAuthorized(subjectUUID, purposeUUID)(bearerToken)
       actualPurposeVersion <- purpose.toModel.toFuture
     } yield actualPurposeVersion
 
@@ -283,7 +333,7 @@ class GatewayApiServiceImpl(
         logger.error("Unable to find an active version of purpose {}", purposeId)
         getAgreement404(problemOf(StatusCodes.NotFound, e))
       case Failure(Unauthorized) =>
-        logger.error("Unable to find an active version of purpose {}", purposeId)
+        logger.error("The user is not authorized to retrieve the purpose with id {}", purposeId)
         getAgreement401(problemOf(StatusCodes.Unauthorized, Unauthorized))
       case Failure(_) =>
         complete(
@@ -302,5 +352,36 @@ class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = ???
+  ): Route = {
+
+    val result: Future[Purposes] = for {
+      bearerToken   <- getFutureBearer(contexts)
+      subjectUUID   <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      agreementUUID <- agreementId.toFutureUUID
+      agreement <- agreementManagementService
+        .getAgreementById(agreementUUID)(bearerToken)
+        .ensure(Unauthorized)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
+      clientPurposes <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(bearerToken)
+      purposes       <- clientPurposes.toModel.toFuture
+    } yield purposes
+
+    onComplete(result) {
+      case Success(agreement) => getAgreementPurposes200(agreement)
+      case Failure(e: MissingActivePurposesVersions) =>
+        logger.error(
+          "Unable to find active or suspended versions for purposes {} in the agreement {}",
+          e.purposesIds.mkString(", "),
+          agreementId
+        )
+        getAgreementPurposes404(problemOf(StatusCodes.NotFound, e))
+      case Failure(Unauthorized) =>
+        logger.error("The user is not authorized to retrieve the purposes for the agreement {}", agreementId)
+        getAgreementPurposes401(problemOf(StatusCodes.Unauthorized, Unauthorized))
+      case Failure(_) =>
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(StatusCodes.InternalServerError, GatewayErrors.InternalServerError)
+        )
+    }
+  }
 }

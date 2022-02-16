@@ -46,7 +46,6 @@ class AuthApiServiceImpl(
     toEntityMarshallerClientCredentialsResponse: ToEntityMarshaller[ClientCredentialsResponse],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-
     val tokenAndCheckerF: Try[(String, ClientAssertionChecker)] = for {
       m2mToken   <- pdndTokenGenerator.generateInternalRSAToken()
       clientUUID <- clientId.traverse(_.toUUID)
@@ -69,21 +68,18 @@ class AuthApiServiceImpl(
       purposeUUID <- checker.purposeId.toFutureUUID
       client      <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
       purpose     <- client.purposes.find(_.purposeId == purposeUUID).toFuture(PurposeNotFound(client.id, purposeUUID))
-      _           <- checkPurposeState(purpose.states).ifM(Future.successful(()), Future.failed(InactiveClient(client.id)))
+      eService = purpose.states.eservice
+      _ <- checkPurposeState(purpose.states).ifM(Future.successful(()), Future.failed(InactiveClient(client.id)))
       token <- pdndTokenGenerator
         .generate(
           clientAssertion,
-          audience = List(""), //  client.audience,  //TODO ! add audience
+          audience = eService.audience.toList,
           customClaims = Map.empty,
           tokenIssuer = ApplicationConfiguration.pdndIdIssuer,
-          validityDuration = 0L // client.voucherLifespan     //TODO ! add lifespan
+          validityDuration = eService.voucherLifespan.toLong
         )
         .toFuture
-    } yield ClientCredentialsResponse(
-      access_token = token,
-      token_type = Bearer,
-      expires_in = 600 //TODO ! fix me with proper client lifespan
-    )
+    } yield ClientCredentialsResponse(access_token = token, token_type = Bearer, expires_in = eService.voucherLifespan)
 
     onComplete(result) {
       case Success(token) => createToken200(token)
@@ -104,5 +100,4 @@ class AuthApiServiceImpl(
         statesChain.eservice.state == ClientComponentState.ACTIVE &&
         statesChain.agreement.state == ClientComponentState.ACTIVE
     )
-
 }

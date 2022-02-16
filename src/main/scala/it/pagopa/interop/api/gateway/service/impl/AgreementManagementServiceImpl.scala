@@ -7,14 +7,15 @@ import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{Agreeme
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future
+import java.util.UUID
 
 class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: AgreementApi)
     extends AgreementManagementService {
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def getAgreementById(agreementId: String)(bearerToken: String): Future[Agreement] = {
-    val request: ApiRequest[Agreement] = api.getAgreement(agreementId)(BearerToken(bearerToken))
+  override def getAgreementById(agreementId: UUID)(bearerToken: String): Future[Agreement] = {
+    val request: ApiRequest[Agreement] = api.getAgreement(agreementId.toString)(BearerToken(bearerToken))
     invoker.invoke(request, s"Retrieving agreement by id = $agreementId")
   }
 
