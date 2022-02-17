@@ -3,18 +3,13 @@ package it.pagopa.interop.apigateway.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Route, StandardRoute}
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.apigateway.error.GatewayErrors._
-import it.pagopa.interop.apigateway.service.{
-  AgreementManagementService,
-  AttributeRegistryManagementService,
-  CatalogManagementService,
-  PartyManagementService
-}
 import it.pagopa.interop.apigateway.api.GatewayApiService
+import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
+import it.pagopa.interop.apigateway.service._
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.pdnd.interop.commons.utils.AkkaUtils._
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
@@ -22,18 +17,12 @@ import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   AgreementState => AgreementManagementApiAgreementState
 }
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{
-  Purpose => PurposeManagementApiPurpose
-// Purposes => PurposeManagementApiPurposes
-}
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import org.slf4j.LoggerFactory
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-import it.pagopa.interop.apigateway.service.PurposeManagementService
-import it.pagopa.interop.apigateway.error.GatewayErrors.Forbidden
-import java.util.UUID
-import akka.http.scaladsl.server.StandardRoute
 
 class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,

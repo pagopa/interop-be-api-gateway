@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.directives.SecurityDirectives
 import akka.management.scaladsl.AkkaManagement
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import it.pagopa.interop.apigateway.api._
 import it.pagopa.interop.apigateway.api.impl.{
   AuthApiMarshallerImpl,
   AuthApiServiceImpl,
@@ -19,24 +20,17 @@ import it.pagopa.interop.apigateway.api.impl.{
 }
 import it.pagopa.interop.apigateway.common.ApplicationConfiguration
 import it.pagopa.interop.apigateway.common.system.{classicActorSystem, executionContext}
-import it.pagopa.interop.apigateway.service._
-import it.pagopa.interop.apigateway.service.impl.{
-  AgreementManagementServiceImpl,
-  AttributeRegistryManagementServiceImpl,
-  AuthorizationManagementServiceImpl,
-  CatalogManagementServiceImpl,
-  PartyManagementServiceImpl
-}
-import it.pagopa.interop.apigateway.api._
 import it.pagopa.interop.apigateway.server.Controller
-import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, PDNDTokenGenerator}
+import it.pagopa.interop.apigateway.service._
+import it.pagopa.interop.apigateway.service.impl._
+import it.pagopa.pdnd.interop.commons.jwt._
 import it.pagopa.pdnd.interop.commons.jwt.service.impl.{
   DefaultClientAssertionValidator,
   DefaultJWTReader,
   DefaultPDNDTokenGenerator,
   getClaimsVerifier
 }
-import it.pagopa.pdnd.interop.commons.jwt._
+import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, PDNDTokenGenerator}
 import it.pagopa.pdnd.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
@@ -51,12 +45,11 @@ import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.{
   KeyApi => AuthorizationKeyApi
 }
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.api.{PartyApi => PartyManagementApi}
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import it.pagopa.interop.apigateway.service.impl.PurposeManagementServiceImpl
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
 //shuts down the actor system in case of startup errors
 case object StartupErrorShutdown extends CoordinatedShutdown.Reason
 

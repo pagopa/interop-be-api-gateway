@@ -1,8 +1,9 @@
 package it.pagopa.interop.apigateway.service
 
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose, Purposes}
+
 import java.util.UUID
 import scala.concurrent.Future
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose, Purposes}
 
 trait PurposeManagementService {
 

@@ -1,15 +1,14 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
+import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.invoker.{ApiRequest, BearerToken}
+import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.Attribute
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
 import scala.concurrent.Future
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.invoker.ApiError
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 
 class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)
     extends AttributeRegistryManagementService {

@@ -1,13 +1,11 @@
 package it.pagopa.interop.apigateway.service
 
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{Agreement, AgreementState}
-//import it.pagopa.interop.be.gateway.model.{Agreement => ApiAgreement, AgreementState => ApiAgreementState}
-
-import scala.concurrent.Future
-import java.util.UUID
-import scala.concurrent.ExecutionContext
 import it.pagopa.interop.apigateway.error.GatewayErrors
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
+
+import java.util.UUID
+import scala.concurrent.{ExecutionContext, Future}
 
 trait AgreementManagementService {
 

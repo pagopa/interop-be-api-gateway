@@ -2,11 +2,12 @@ package it.pagopa.interop.apigateway.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
+import cats.data.Validated
 import cats.implicits._
+import it.pagopa.interop.apigateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.apigateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
 import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.{
   ACTIVE,
@@ -19,6 +20,11 @@ import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   AgreementState => AgreementManagementApiAgreementState,
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
+import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.{
+  CERTIFIED,
+  DECLARED,
+  VERIFIED
+}
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
   AttributeKind => AttributeRegistryManagementApiAttributeKind
@@ -30,27 +36,22 @@ import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{
   EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.{
+  ARCHIVED,
+  DRAFT,
+  WAITING_FOR_APPROVAL
+}
 import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{
+  PurposeVersionState,
   Purpose => PurposeManagementApiPurpose,
   Purposes => PurposeManagementApiPurposes
 }
-
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import java.time.OffsetDateTime
 import java.util.UUID
 import scala.annotation.nowarn
-import scala.util.Try
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.DRAFT
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.ARCHIVED
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.WAITING_FOR_APPROVAL
-import cats.data.Validated
-import scala.util.Success
-import scala.util.Failure
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.CERTIFIED
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.DECLARED
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.VERIFIED
+import scala.util.{Failure, Success, Try}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)

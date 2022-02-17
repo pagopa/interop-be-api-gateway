@@ -6,12 +6,12 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.apigateway.api.AuthApiService
 import it.pagopa.interop.apigateway.common.ApplicationConfiguration
 import it.pagopa.interop.apigateway.error.GatewayErrors._
-import it.pagopa.interop.apigateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
-import it.pagopa.interop.apigateway.api.AuthApiService
 import it.pagopa.interop.apigateway.model.TokenType.Bearer
 import it.pagopa.interop.apigateway.model.{ClientCredentialsResponse, Problem}
+import it.pagopa.interop.apigateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
 import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, ValidClientAssertionRequest}
 import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, PDNDTokenGenerator}
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}

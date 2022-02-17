@@ -1,16 +1,16 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import it.pagopa.interop.apigateway.service.{PurposeManagementService, PurposeManagementInvoker}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.invoker.BearerToken
-import java.util.UUID
 import cats.implicits._
-import scala.concurrent.Future
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose, Purposes}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.invoker.ApiRequest
-import org.slf4j.{Logger, LoggerFactory}
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.invoker.ApiError
+import it.pagopa.interop.apigateway.service.{PurposeManagementInvoker, PurposeManagementService}
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.pdnd.interop.uservice.partymanagement.client.invoker.ApiError
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.invoker.{ApiRequest, BearerToken}
+import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose, Purposes}
+import org.slf4j.{Logger, LoggerFactory}
+
+import java.util.UUID
+import scala.concurrent.Future
 
 class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: PurposeApi)
     extends PurposeManagementService {

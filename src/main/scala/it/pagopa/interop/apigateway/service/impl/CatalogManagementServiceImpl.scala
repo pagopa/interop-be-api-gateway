@@ -1,15 +1,14 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{CatalogManagementInvoker, CatalogManagementService}
+import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.api.EServiceApi
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.{ApiRequest, BearerToken}
+import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.EService
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
 import scala.concurrent.Future
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.ApiError
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
 
 class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServiceApi)
     extends CatalogManagementService {
