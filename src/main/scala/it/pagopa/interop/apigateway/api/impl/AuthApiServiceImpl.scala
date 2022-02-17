@@ -12,13 +12,20 @@ import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model.TokenType.Bearer
 import it.pagopa.interop.apigateway.model.{ClientCredentialsResponse, Problem}
 import it.pagopa.interop.apigateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
-import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, ValidClientAssertionRequest}
+import it.pagopa.interop.authorizationmanagement.client.model.{
+  Client,
+  ClientComponentState,
+  ClientKind,
+  ClientStatesChain
+}
+import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, RSA, ValidClientAssertionRequest}
 import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, PDNDTokenGenerator}
+import it.pagopa.pdnd.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.{ClientComponentState, ClientStatesChain}
 import org.slf4j.LoggerFactory
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -32,10 +39,8 @@ class AuthApiServiceImpl(
   val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
 
-  /** Code: 200, Message: an Access token, DataType: ClientCredentialsResponse
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 400, Message: Bad request, DataType: Problem
-    */
+  lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig
+
   override def createToken(
     clientAssertion: String,
     clientAssertionType: String,
@@ -47,7 +52,13 @@ class AuthApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val tokenAndCheckerF: Try[(String, ClientAssertionChecker)] = for {
-      m2mToken   <- pdndTokenGenerator.generateInternalRSAToken()
+      m2mToken <- pdndTokenGenerator.generateInternalToken(
+        jwtAlgorithmType = RSA,
+        subject = jwtConfig.subject,
+        audience = jwtConfig.audience.toList,
+        tokenIssuer = jwtConfig.issuer,
+        secondsDuration = jwtConfig.durationInSeconds
+      )
       clientUUID <- clientId.traverse(_.toUUID)
       clientAssertionRequest <- ValidClientAssertionRequest.from(
         clientAssertion,
@@ -64,22 +75,20 @@ class AuthApiServiceImpl(
       publicKey <- authorizationManagementService
         .getKey(subjectUUID, checker.kid)(m2mToken)
         .map(k => AuthorizationManagementInvoker.serializeKey(k.key))
-      _           <- checker.verify(publicKey).toFuture
-      purposeUUID <- checker.purposeId.toFutureUUID
-      client      <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
-      purpose     <- client.purposes.find(_.purposeId == purposeUUID).toFuture(PurposeNotFound(client.id, purposeUUID))
-      eService = purpose.states.eservice
-      _ <- checkPurposeState(purpose.states).ifM(Future.successful(()), Future.failed(InactiveClient(client.id)))
+      _                         <- checker.verify(publicKey).toFuture
+      purposeUUID               <- checker.purposeId.toFutureUUID
+      client                    <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
+      (audience, tokenDuration) <- checkClientValidity(client, purposeUUID)
       token <- pdndTokenGenerator
         .generate(
           clientAssertion,
-          audience = eService.audience.toList,
+          audience = audience.toList,
           customClaims = Map.empty,
           tokenIssuer = ApplicationConfiguration.pdndIdIssuer,
-          validityDuration = eService.voucherLifespan.toLong
+          validityDurationInSeconds = tokenDuration.toLong
         )
         .toFuture
-    } yield ClientCredentialsResponse(access_token = token, token_type = Bearer, expires_in = eService.voucherLifespan)
+    } yield ClientCredentialsResponse(access_token = token, token_type = Bearer, expires_in = tokenDuration)
 
     onComplete(result) {
       case Success(token) => createToken200(token)
@@ -94,10 +103,28 @@ class AuthApiServiceImpl(
     }
   }
 
-  private def checkPurposeState(statesChain: ClientStatesChain): Future[Boolean] =
-    Future.successful(
-      statesChain.purpose.state == ClientComponentState.ACTIVE &&
-        statesChain.eservice.state == ClientComponentState.ACTIVE &&
-        statesChain.agreement.state == ClientComponentState.ACTIVE
-    )
+  private def checkClientValidity(client: Client, purposeUUID: UUID): Future[(Seq[String], Int)] = {
+    def checkPurposeState(statesChain: ClientStatesChain): Future[Boolean] =
+      Future.successful(
+        statesChain.purpose.state == ClientComponentState.ACTIVE &&
+          statesChain.eservice.state == ClientComponentState.ACTIVE &&
+          statesChain.agreement.state == ClientComponentState.ACTIVE
+      )
+
+    client.kind match {
+      case ClientKind.CONSUMER =>
+        for {
+          purpose <- client.purposes.find(_.purposeId == purposeUUID).toFuture(PurposeNotFound(client.id, purposeUUID))
+          eservice = purpose.states.eservice
+          checkState <- checkPurposeState(purpose.states)
+            .ifM(
+              Future.successful((eservice.audience, eservice.voucherLifespan)),
+              Future.failed(InactiveClient(client.id))
+            )
+        } yield checkState
+      case ClientKind.API =>
+        Future.successful((ApplicationConfiguration.pdndAudience.toSeq, ApplicationConfiguration.pdndTokenDuration))
+    }
+  }
+
 }

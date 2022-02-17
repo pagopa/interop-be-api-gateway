@@ -40,7 +40,7 @@ import it.pagopa.pdnd.interop.commons.vault.service.impl.{DefaultVaultClient, De
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.{
+import it.pagopa.interop.authorizationmanagement.client.api.{
   ClientApi => AuthorizationClientApi,
   KeyApi => AuthorizationKeyApi
 }
@@ -125,7 +125,7 @@ object Main
     jwtReader = new DefaultJWTReader with PublicKeysHolder {
       var publicKeyset: Map[KID, SerializedKey] = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
-        getClaimsVerifier(audience = ApplicationConfiguration.jwtAudience)
+        getClaimsVerifier(audience = ApplicationConfiguration.pdndAudience)
     }
     clientAssertionValidator = new DefaultClientAssertionValidator with PublicKeysHolder {
       var publicKeyset: Map[KID, SerializedKey] = keyset

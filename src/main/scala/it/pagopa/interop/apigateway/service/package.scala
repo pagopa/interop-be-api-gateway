@@ -2,8 +2,9 @@ package it.pagopa.interop.apigateway
 
 import akka.actor.ActorSystem
 import it.pagopa.pdnd.interop.uservice._
+import it.pagopa.interop._
+import it.pagopa.interop.authorizationmanagement.client.model.Key
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.Serializers
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.model.Key
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 
@@ -11,7 +12,7 @@ package object service {
   type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
   type PartyManagementInvoker             = partymanagement.client.invoker.ApiInvoker
   type AgreementManagementInvoker         = agreementmanagement.client.invoker.ApiInvoker
-  type AuthorizationManagementInvoker     = keymanagement.client.invoker.ApiInvoker
+  type AuthorizationManagementInvoker     = authorizationmanagement.client.invoker.ApiInvoker
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
   type PurposeManagementInvoker           = purposemanagement.client.invoker.ApiInvoker
 
@@ -31,11 +32,12 @@ package object service {
   }
 
   object AuthorizationManagementInvoker {
-    def apply()(implicit actorSystem: ActorSystem): AuthorizationManagementInvoker =
-      keymanagement.client.invoker.ApiInvoker(keymanagement.client.api.EnumsSerializers.all)
+    def apply()(implicit actorSystem: ActorSystem): AuthorizationManagementInvoker = {
+      authorizationmanagement.client.invoker.ApiInvoker(authorizationmanagement.client.api.EnumsSerializers.all)
+    }
 
     private def serializationFormats =
-      DefaultFormats ++ Serializers.all ++ keymanagement.client.api.EnumsSerializers.all
+      DefaultFormats ++ Serializers.all ++ authorizationmanagement.client.api.EnumsSerializers.all
     def serializeKey(key: Key) = Serialization.write(key)(serializationFormats)
   }
 

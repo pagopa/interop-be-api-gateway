@@ -27,7 +27,8 @@ object Dependencies {
   private[this] object pagopa {
     lazy val namespace = "it.pagopa"
 
-    lazy val keyManagement = namespace %% "pdnd-interop-uservice-key-management-client" % keyManagementVersion
+    lazy val authorizationManagement =
+      namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
 
     lazy val agreementManagement =
       namespace %% "pdnd-interop-uservice-agreement-management-client" % agreementManagementVersion
@@ -129,7 +130,7 @@ object Dependencies {
       pagopa.commons                     % Compile,
       pagopa.catalogManagement           % Compile,
       pagopa.jwt                         % Compile,
-      pagopa.keyManagement               % Compile,
+      pagopa.authorizationManagement     % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
       pagopa.vault                       % Compile,

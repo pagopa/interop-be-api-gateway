@@ -2,9 +2,9 @@ package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
 import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.api.{ClientApi, KeyApi}
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
-import it.pagopa.pdnd.interop.uservice.keymanagement.client.model._
+import it.pagopa.interop.authorizationmanagement.client.api.{ClientApi, KeyApi}
+import it.pagopa.interop.authorizationmanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.authorizationmanagement.client.model._
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
