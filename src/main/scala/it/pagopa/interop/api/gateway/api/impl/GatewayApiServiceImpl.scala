@@ -13,8 +13,8 @@ import it.pagopa.interop.api.gateway.service.{
   CatalogManagementService,
   PartyManagementService
 }
-import it.pagopa.interop.be.gateway.api.GatewayApiService
-import it.pagopa.interop.be.gateway.model._
+import it.pagopa.interop.apigateway.api.GatewayApiService
+import it.pagopa.interop.apigateway.model._
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.pdnd.interop.commons.utils.AkkaUtils._
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._

@@ -3,7 +3,7 @@ package it.pagopa.interop.api.gateway.api
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import cats.implicits._
-import it.pagopa.interop.be.gateway.model._
+import it.pagopa.interop.apigateway.model._
 import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.api.gateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}

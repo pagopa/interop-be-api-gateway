@@ -3,8 +3,8 @@ package it.pagopa.interop.api.gateway.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import it.pagopa.interop.be.gateway.api.HealthApiService
-import it.pagopa.interop.be.gateway.model.Problem
+import it.pagopa.interop.apigateway.api.HealthApiService
+import it.pagopa.interop.apigateway.model.Problem
 
 class HealthServiceApiImpl extends HealthApiService {
 

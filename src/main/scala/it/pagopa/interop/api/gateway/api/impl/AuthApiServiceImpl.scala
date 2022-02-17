@@ -9,9 +9,9 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.api.gateway.common.ApplicationConfiguration
 import it.pagopa.interop.api.gateway.error.GatewayErrors._
 import it.pagopa.interop.api.gateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
-import it.pagopa.interop.be.gateway.api.AuthApiService
-import it.pagopa.interop.be.gateway.model.TokenType.Bearer
-import it.pagopa.interop.be.gateway.model.{ClientCredentialsResponse, Problem}
+import it.pagopa.interop.apigateway.api.AuthApiService
+import it.pagopa.interop.apigateway.model.TokenType.Bearer
+import it.pagopa.interop.apigateway.model.{ClientCredentialsResponse, Problem}
 import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, ValidClientAssertionRequest}
 import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, PDNDTokenGenerator}
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}

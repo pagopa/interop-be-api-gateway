@@ -27,8 +27,8 @@ import it.pagopa.interop.api.gateway.service.impl.{
   CatalogManagementServiceImpl,
   PartyManagementServiceImpl
 }
-import it.pagopa.interop.be.gateway.api._
-import it.pagopa.interop.be.gateway.server.Controller
+import it.pagopa.interop.apigateway.api._
+import it.pagopa.interop.apigateway.server.Controller
 import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, PDNDTokenGenerator}
 import it.pagopa.pdnd.interop.commons.jwt.service.impl.{
   DefaultClientAssertionValidator,

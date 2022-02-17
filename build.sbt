@@ -23,8 +23,8 @@ val packagePrefix = settingKey[String]("The package prefix derived from the user
 
 packagePrefix := name.value
   .replaceFirst("interop-", "interop.")
-  .replaceFirst("be-", "be.")
-  .replaceFirst("api-", "")
+  .replaceFirst("be-", "")
+  .replaceFirst("api-", "api") // Specific for this project, in order to have apigateway
   .replaceAll("-", "")
 
 generateCode := {
