@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Interoperability API Gateway Micro Service
-  description: defines the persistence operations for the agreement
+  description: exposes the API for interacting with interoperability features
   version: '0.1.0'
   contact:
     name: API Support
@@ -12,7 +12,7 @@ info:
   x-summary: an x-summary
 servers:
   - url: '/interop-be-api-gateway/{{version}}'
-    description: This service is the interoperability api gateway
+    description: This service is the interoperability API gateway
 tags:
   - name: gateway
     description: Everything about your APIs
@@ -421,19 +421,16 @@ paths:
                 $ref: '#/components/schemas/Problem'
   /status:
     get:
-      summary: Ritorna lo stato dell'applicazione.
+      summary: Returns the application status
       description: |
-        Ritorna lo stato dell'applicazione. A scopo
-        di test, su base randomica puo' ritornare
-        un errore.
+        Returns the application status. For testing purposes, it might randomly reply with an error.
       operationId: get_status
       tags:
         - health
       responses:
         '200':
           description: |
-            Il server ha ritornato lo status. In caso di problemi
-            ritorna sempre un problem+json.
+            This is the valid status from the server.
           content:
             application/problem+json:
               schema:
