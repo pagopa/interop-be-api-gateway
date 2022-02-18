@@ -178,11 +178,6 @@ class GatewayApiServiceImpl(
     }
   }
 
-  /** Code: 200, Message: Attributes retrieved, DataType: Seq[UUID]
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Purposes not found, DataType: Problem
-    */
   override def getAgreementAttributes(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerAttributes: ToEntityMarshaller[Attributes],
@@ -208,9 +203,6 @@ class GatewayApiServiceImpl(
 
     } yield Attributes(attributeValidityStates)
 
-    // getAgreementAttributes401()
-    // getAgreementAttributes404()
-
     onComplete(result) {
       case Success(agr) => getAgreementAttributes200(agr)
       case Failure(Forbidden) =>
@@ -223,11 +215,6 @@ class GatewayApiServiceImpl(
     }
   }
 
-  /** Code: 200, Message: Agreement retrieved, DataType: Agreement
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Agreement not found, DataType: Problem
-    */
   override def getAgreementByPurpose(purposeId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -255,11 +242,6 @@ class GatewayApiServiceImpl(
     }
   }
 
-  /** Code: 200, Message: Purpose retrieved, DataType: Purpose
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Purpose not found, DataType: Problem
-    */
   override def getPurpose(purposeId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
@@ -306,11 +288,6 @@ class GatewayApiServiceImpl(
     }
   }
 
-  /** Code: 200, Message: Purposes retrieved, DataType: Seq[Purpose]
-    * Code: 400, Message: Bad request, DataType: Problem
-    * Code: 401, Message: Unauthorized, DataType: Problem
-    * Code: 404, Message: Purposes not found, DataType: Problem
-    */
   override def getAgreementPurposes(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
