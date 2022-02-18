@@ -26,8 +26,6 @@ object ApplicationConfiguration {
   def ecPrivatePath =
     s"${vaultSecretsRootPath}/${config.getString("interop-api-gateway.ec-private-path").stripPrefix("/")}"
 
-  def jwtAudience: Set[String] = Set.empty //TODO see why this is empty
-
   lazy val pdndAudience: Set[String] = config.getStringList("interop-api-gateway.pdnd-jwt.audience").asScala.toSet
   lazy val pdndTokenDuration: Int    = config.getInt("interop-api-gateway.pdnd-jwt.duration-seconds")
 }

@@ -130,7 +130,7 @@ object Main
     clientAssertionValidator = new DefaultClientAssertionValidator with PublicKeysHolder {
       var publicKeyset: Map[KID, SerializedKey] = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
-        getClaimsVerifier(audience = ApplicationConfiguration.jwtAudience)
+        getClaimsVerifier(audience = ApplicationConfiguration.pdndAudience)
     }
     pdndTokenGenerator = new DefaultPDNDTokenGenerator with PrivateKeysHolder {
       override val RSAPrivateKeyset: Map[KID, SerializedKey] =
