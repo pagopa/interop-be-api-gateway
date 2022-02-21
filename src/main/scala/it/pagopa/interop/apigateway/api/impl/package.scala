@@ -107,11 +107,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedPurposeVersionState(private val state: PurposeVersionState) extends AnyVal {
     def toModel: PurposeState = state match {
-      case PurposeVersionState.ACTIVE  => PurposeState.ACTIVE
-      case PurposeVersionState.DRAFT  => PurposeState.DRAFT
-      case PurposeVersionState.ARCHIVED => PurposeState.ARCHIVED
-      case PurposeVersionState.WAITING_FOR_APPROVAL  => PurposeState.WAITING_FOR_APPROVAL
-      case PurposeVersionState.SUSPENDED => PurposeState.SUSPENDED
+      case PurposeVersionState.ACTIVE               => PurposeState.ACTIVE
+      case PurposeVersionState.DRAFT                => PurposeState.DRAFT
+      case PurposeVersionState.ARCHIVED             => PurposeState.ARCHIVED
+      case PurposeVersionState.WAITING_FOR_APPROVAL => PurposeState.WAITING_FOR_APPROVAL
+      case PurposeVersionState.SUSPENDED            => PurposeState.SUSPENDED
     }
   }
 
@@ -138,10 +138,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedAgreementState(private val agreement: AgreementManagementApiAgreementState) extends AnyVal {
     def toModel: AgreementState = agreement match {
-      case ACTIVE    => AgreementState.ACTIVE
-      case INACTIVE  => AgreementState.INACTIVE
-      case PENDING   => AgreementState.PENDING
-      case SUSPENDED => AgreementState.SUSPENDED
+      case AgreementManagementApiAgreementState.ACTIVE    => AgreementState.ACTIVE
+      case AgreementManagementApiAgreementState.INACTIVE  => AgreementState.INACTIVE
+      case AgreementManagementApiAgreementState.PENDING   => AgreementState.PENDING
+      case AgreementManagementApiAgreementState.SUSPENDED => AgreementState.SUSPENDED
     }
   }
 
@@ -215,9 +215,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedAttributeKind(private val kind: AttributeRegistryManagementApiAttributeKind) extends AnyVal {
     def toModel: AttributeKind = kind match {
-      case CERTIFIED => AttributeKind.CERTIFIED
-      case DECLARED  => AttributeKind.DECLARED
-      case VERIFIED  => AttributeKind.VERIFIED
+      case AttributeRegistryManagementApiAttributeKind.CERTIFIED => AttributeKind.CERTIFIED
+      case AttributeRegistryManagementApiAttributeKind.DECLARED  => AttributeKind.DECLARED
+      case AttributeRegistryManagementApiAttributeKind.VERIFIED  => AttributeKind.VERIFIED
     }
   }
 }
