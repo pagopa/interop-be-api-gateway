@@ -312,20 +312,20 @@ final case class GatewayApiServiceImpl(
     } yield purposes
 
     onComplete(result) {
-      case Success(agreement) => getAgreementPurposes200(agreement)
-      case Failure(Forbidden) =>
-        logger.error("The user has no access to the requested agreement {}", agreementId)
-        getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
-      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting the requested purposes for agreement {} : {}", agreementId, ex.getMessage)
-        getPurpose404(problemOf(StatusCodes.NotFound, ex))
+      case Success(purposes) => getAgreementPurposes200(purposes)
       case Failure(e: MissingActivePurposesVersions) =>
         logger.error(
           "Unable to find active or suspended versions for purposes {} in the agreement {}",
           e.purposesIds.mkString(", "),
           agreementId
         )
-        getAgreementPurposes404(problemOf(StatusCodes.NotFound, e))
+        getAgreementPurposes200(Purposes(purposes = Seq.empty))
+      case Failure(Forbidden) =>
+        logger.error("The user has no access to the requested agreement {}", agreementId)
+        getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error("Error while getting the requested purposes for agreement {} : {}", agreementId, ex.getMessage)
+        getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) =>
         internalServerError(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")
     }
