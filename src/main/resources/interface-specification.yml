@@ -485,7 +485,7 @@ paths:
     get:
       tags:
         - gateway
-      summary: Get an purpose
+      summary: Get agreement attributes
       description: Retrieve attributes of the agreement
       operationId: getAgreementAttributes
       parameters:
