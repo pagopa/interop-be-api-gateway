@@ -585,7 +585,7 @@ components:
         - id
         - name
         - category
-    EServiceState:
+    EServiceDescriptorState:
       type: string
       description: EService State
       enum:
@@ -608,7 +608,7 @@ components:
           type: string
           pattern: ^[0-9]{1,4}$
         state:
-          $ref: '#/components/schemas/EServiceState'
+          $ref: '#/components/schemas/EServiceDescriptorState'
       required:
         - id
         - name

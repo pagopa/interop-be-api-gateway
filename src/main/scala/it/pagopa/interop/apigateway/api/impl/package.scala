@@ -9,21 +9,10 @@ import it.pagopa.interop.apigateway.model._
 import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
 import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.AgreementState.{
-  ACTIVE,
-  INACTIVE,
-  PENDING,
-  SUSPENDED
-}
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
   AgreementState => AgreementManagementApiAgreementState,
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
-}
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.AttributeKind.{
-  CERTIFIED,
-  DECLARED,
-  VERIFIED
 }
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
@@ -36,11 +25,6 @@ import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{
   EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.PurposeVersionState.{
-  ARCHIVED,
-  DRAFT,
-  WAITING_FOR_APPROVAL
-}
 import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{
   PurposeVersionState,
   Purpose => PurposeManagementApiPurpose,
@@ -145,13 +129,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit class EnrichedEServiceState(private val state: CatalogManagementApiDescriptorState) extends AnyVal {
-    def toModel: EServiceState = state match {
-      case CatalogManagementApiDescriptorState.DRAFT      => EServiceState.DRAFT
-      case CatalogManagementApiDescriptorState.PUBLISHED  => EServiceState.PUBLISHED
-      case CatalogManagementApiDescriptorState.DEPRECATED => EServiceState.DEPRECATED
-      case CatalogManagementApiDescriptorState.SUSPENDED  => EServiceState.SUSPENDED
-      case CatalogManagementApiDescriptorState.ARCHIVED   => EServiceState.ARCHIVED
+  implicit class EnrichedEServiceDescriptorState(private val state: CatalogManagementApiDescriptorState)
+      extends AnyVal {
+    def toModel: EServiceDescriptorState = state match {
+      case CatalogManagementApiDescriptorState.DRAFT      => EServiceDescriptorState.DRAFT
+      case CatalogManagementApiDescriptorState.PUBLISHED  => EServiceDescriptorState.PUBLISHED
+      case CatalogManagementApiDescriptorState.DEPRECATED => EServiceDescriptorState.DEPRECATED
+      case CatalogManagementApiDescriptorState.SUSPENDED  => EServiceDescriptorState.SUSPENDED
+      case CatalogManagementApiDescriptorState.ARCHIVED   => EServiceDescriptorState.ARCHIVED
     }
   }
 
