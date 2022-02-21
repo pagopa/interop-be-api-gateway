@@ -33,8 +33,10 @@ final case class GatewayApiServiceImpl(
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
-  lazy val internalServerError: StandardRoute =
+  def internalServerError(message: String)(implicit c: ContextFieldsToLog): StandardRoute = {
+    logger.error(message)
     complete(StatusCodes.InternalServerError, problemOf(StatusCodes.InternalServerError, InternalServerError))
+  }
 
   val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](LoggerFactory.getLogger(this.getClass))
@@ -63,7 +65,7 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error("Error while getting agreement {}: {}", agreementId, ex.getMessage)
         getAgreement404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) => internalServerError
+      case Failure(ex) => internalServerError(s"Error while getting agreement - ${ex.getMessage}")
     }
   }
 
@@ -106,7 +108,7 @@ final case class GatewayApiServiceImpl(
       case Failure(Forbidden) =>
         logger.error("The user has no access to the requested agreements")
         getAgreements403(problemOf(StatusCodes.Forbidden, Forbidden))
-      case Failure(_) => internalServerError
+      case Failure(ex) => internalServerError(s"Error while getting agreements - ${ex.getMessage}")
     }
   }
 
@@ -127,7 +129,7 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error("Error while getting attribute {}: {}", attributeId, ex.getMessage)
         getAttribute404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) => internalServerError
+      case Failure(ex) => internalServerError(s"Error while getting attribute - ${ex.getMessage}")
     }
   }
 
@@ -154,7 +156,7 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: EServiceDescriptorNotFound) =>
         logger.error(ex.getMessage)
         getEService404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) => internalServerError
+      case Failure(ex) => internalServerError(s"Error while getting eservice - ${ex.getMessage}")
     }
   }
 
@@ -174,7 +176,7 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error("Error while getting organization {}: {}", organizationId, ex.getMessage)
         getOrganization404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) => internalServerError
+      case Failure(ex) => internalServerError(s"Error while getting organization - ${ex.getMessage}")
     }
   }
 
@@ -211,7 +213,8 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error("Error while getting attributes for agreement {}: {}", agreementId, ex.getMessage)
         getAgreementAttributes404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) => internalServerError
+      case Failure(ex) =>
+        internalServerError(s"Error while getting attributes for agreement $agreementId - ${ex.getMessage}")
     }
   }
 
@@ -238,7 +241,8 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error("Error while getting the requested agreement for purpose {} : {}", purposeId, ex.getMessage)
         getAgreementByPurpose404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(_) => internalServerError
+      case Failure(ex) =>
+        internalServerError(s"Error while getting the requested agreement for purpose $purposeId - ${ex.getMessage}")
     }
   }
 
@@ -279,12 +283,13 @@ final case class GatewayApiServiceImpl(
         logger.error("The user has no access to the requested purpose {}", purposeId)
         getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting the requested agreement for purpose {} : {}", purposeId, ex.getMessage)
+        logger.error("Error while getting the requested purpose {} : {}", purposeId, ex.getMessage)
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(e: MissingActivePurposeVersion) =>
         logger.error("Unable to find an active version of purpose {}", purposeId)
         getPurpose404(problemOf(StatusCodes.NotFound, e))
-      case Failure(_) => internalServerError
+      case Failure(ex) =>
+        internalServerError(s"Error while getting the requested purpose $purposeId - ${ex.getMessage}")
     }
   }
 
@@ -320,7 +325,8 @@ final case class GatewayApiServiceImpl(
           agreementId
         )
         getAgreementPurposes404(problemOf(StatusCodes.NotFound, e))
-      case Failure(_) => internalServerError
+      case Failure(ex) =>
+        internalServerError(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")
     }
   }
 }
