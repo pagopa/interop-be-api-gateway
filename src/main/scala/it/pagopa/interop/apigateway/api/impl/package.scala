@@ -107,10 +107,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedPurposeVersionState(private val state: PurposeVersionState) extends AnyVal {
     def toModel: PurposeState = state match {
-      case PurposeVersionState.ACTIVE    => PurposeState.ACTIVE
-      case DRAFT                         => PurposeState.DRAFT
-      case ARCHIVED                      => PurposeState.ARCHIVED
-      case WAITING_FOR_APPROVAL          => PurposeState.WAITING_FOR_APPROVAL
+      case PurposeVersionState.ACTIVE  => PurposeState.ACTIVE
+      case PurposeVersionState.DRAFT  => PurposeState.DRAFT
+      case PurposeVersionState.ARCHIVED => PurposeState.ARCHIVED
+      case PurposeVersionState.WAITING_FOR_APPROVAL  => PurposeState.WAITING_FOR_APPROVAL
       case PurposeVersionState.SUSPENDED => PurposeState.SUSPENDED
     }
   }
