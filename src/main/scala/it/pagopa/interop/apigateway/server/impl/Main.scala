@@ -157,21 +157,20 @@ object Main
     Kamon.init()
 
     locally {
-      val _ = AkkaManagement.get(classicActorSystem).start()
+      AkkaManagement.get(classicActorSystem).start()
     }
 
     val authApiService: AuthApiService =
-      new AuthApiServiceImpl(authorizationManagementService, clientAssertionValidator, pdndTokenGenerator)
+      AuthApiServiceImpl(authorizationManagementService, clientAssertionValidator, pdndTokenGenerator)
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
-    val gatewayApiService: GatewayApiService =
-      new GatewayApiServiceImpl(
-        partyManagementService,
-        agreementManagementService,
-        catalogManagementService,
-        attributeRegistryManagementService,
-        purposeManagementService
-      )
+    val gatewayApiService: GatewayApiService = GatewayApiServiceImpl(
+      partyManagementService,
+      agreementManagementService,
+      catalogManagementService,
+      attributeRegistryManagementService,
+      purposeManagementService
+    )
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
     val authApi: AuthApi = new AuthApi(
