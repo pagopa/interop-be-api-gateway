@@ -27,7 +27,8 @@ object GatewayErrors {
   final case class PurposeNotFound(clientId: UUID, purposeId: UUID)
       extends ComponentError("0009", s"Purpose $purposeId not found for client $clientId")
 
-  final case class InactiveClient(clientId: UUID) extends ComponentError("0010", s"Client $clientId is inactive")
+  final case class InactiveClient(clientId: UUID, errorMessages: List[String])
+      extends ComponentError("0010", s"Client $clientId is inactive: ${errorMessages.mkString(", ")}")
 
   final case object CreateTokenRequestError
       extends ComponentError("0011", "Error while creating a token for this request")
@@ -37,4 +38,8 @@ object GatewayErrors {
 
   final case class MissingActivePurposesVersions(purposesIds: Seq[UUID])
       extends ComponentError("0013", s"There is no active version for purposes ${purposesIds.mkString(", ")}")
+
+  final case class InactivePurpose(state: String)   extends ComponentError("0014", s"Purpose is in state $state")
+  final case class InactiveEservice(state: String)  extends ComponentError("0015", s"E-Service is in state $state")
+  final case class InactiveAgreement(state: String) extends ComponentError("0016", s"Agreement is in state $state")
 }

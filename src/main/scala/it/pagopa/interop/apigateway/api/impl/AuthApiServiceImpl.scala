@@ -4,6 +4,8 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.Route
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.{NonEmptyList, Validated}
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.api.AuthApiService
@@ -23,6 +25,7 @@ import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, PDN
 import it.pagopa.pdnd.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
+import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
@@ -104,23 +107,34 @@ final case class AuthApiServiceImpl(
   }
 
   private def checkClientValidity(client: Client, purposeUUID: UUID): Future[(Seq[String], Int)] = {
-    def checkPurposeState(statesChain: ClientStatesChain): Future[Boolean] =
-      Future.successful(
-        statesChain.purpose.state == ClientComponentState.ACTIVE &&
-          statesChain.eservice.state == ClientComponentState.ACTIVE &&
-          statesChain.agreement.state == ClientComponentState.ACTIVE
-      )
+    def checkClientStates(statesChain: ClientStatesChain): Future[(Seq[String], Int)] = {
+
+      def validate(
+        state: ClientComponentState,
+        error: ComponentError
+      ): Validated[NonEmptyList[ComponentError], ClientComponentState] =
+        Validated.validNel(state).ensureOr(_ => NonEmptyList.one(error))(_ == ClientComponentState.ACTIVE)
+
+      val validation
+        : Validated[NonEmptyList[ComponentError], (ClientComponentState, ClientComponentState, ClientComponentState)] =
+        (
+          validate(statesChain.purpose.state, InactivePurpose(statesChain.purpose.state.toString)),
+          validate(statesChain.eservice.state, InactiveEservice(statesChain.eservice.state.toString)),
+          validate(statesChain.agreement.state, InactiveAgreement(statesChain.agreement.state.toString))
+        ).tupled
+
+      validation match {
+        case Invalid(e) => Future.failed(InactiveClient(client.id, e.map(_.getMessage).toList))
+        case Valid(_)   => Future.successful((statesChain.eservice.audience, statesChain.eservice.voucherLifespan))
+      }
+
+    }
 
     client.kind match {
       case ClientKind.CONSUMER =>
         for {
-          purpose <- client.purposes.find(_.purposeId == purposeUUID).toFuture(PurposeNotFound(client.id, purposeUUID))
-          eservice = purpose.states.eservice
-          checkState <- checkPurposeState(purpose.states)
-            .ifM(
-              Future.successful((eservice.audience, eservice.voucherLifespan)),
-              Future.failed(InactiveClient(client.id))
-            )
+          purpose    <- client.purposes.find(_.purposeId == purposeUUID).toFuture(PurposeNotFound(client.id, purposeUUID))
+          checkState <- checkClientStates(purpose.states)
         } yield checkState
       case ClientKind.API =>
         Future.successful((ApplicationConfiguration.pdndAudience.toSeq, ApplicationConfiguration.pdndTokenDuration))
