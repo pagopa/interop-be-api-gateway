@@ -23,6 +23,10 @@ import it.pagopa.interop.apigateway.common.system.{classicActorSystem, execution
 import it.pagopa.interop.apigateway.server.Controller
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.apigateway.service.impl._
+import it.pagopa.interop.authorizationmanagement.client.api.{
+  ClientApi => AuthorizationClientApi,
+  KeyApi => AuthorizationKeyApi
+}
 import it.pagopa.pdnd.interop.commons.jwt._
 import it.pagopa.pdnd.interop.commons.jwt.service.impl.{
   DefaultClientAssertionValidator,
@@ -40,10 +44,6 @@ import it.pagopa.pdnd.interop.commons.vault.service.impl.{DefaultVaultClient, De
 import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
 import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
-import it.pagopa.interop.authorizationmanagement.client.api.{
-  ClientApi => AuthorizationClientApi,
-  KeyApi => AuthorizationKeyApi
-}
 import it.pagopa.pdnd.interop.uservice.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
@@ -136,7 +136,7 @@ object Main
       override val RSAPrivateKeyset: Map[KID, SerializedKey] =
         vaultService.readBase64EncodedData(ApplicationConfiguration.rsaPrivatePath)
       override val ECPrivateKeyset: Map[KID, SerializedKey] =
-        vaultService.readBase64EncodedData(ApplicationConfiguration.ecPrivatePath)
+        Map.empty
     }
   } yield (jwtReader, clientAssertionValidator, pdndTokenGenerator)
 

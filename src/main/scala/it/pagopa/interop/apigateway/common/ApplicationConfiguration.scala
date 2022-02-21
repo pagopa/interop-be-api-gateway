@@ -23,9 +23,6 @@ object ApplicationConfiguration {
   def rsaPrivatePath =
     s"${vaultSecretsRootPath}/${config.getString("interop-api-gateway.rsa-private-path").stripPrefix("/")}"
 
-  def ecPrivatePath =
-    s"${vaultSecretsRootPath}/${config.getString("interop-api-gateway.ec-private-path").stripPrefix("/")}"
-
   lazy val pdndAudience: Set[String] = config.getStringList("interop-api-gateway.jwt.audience").asScala.toSet
   lazy val pdndTokenDuration: Int    = config.getInt("interop-api-gateway.jwt.duration-seconds")
 }
