@@ -78,13 +78,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       )
     )
 
-  private val descendingOffsetDateTimeOrdering: Ordering[OffsetDateTime] = implicitly[Ordering[OffsetDateTime]].reverse
-
   implicit class EnrichedPurpose(private val purpose: PurposeManagementApiPurpose) extends AnyVal {
     def toModel: Try[Purpose] =
       purpose.versions
-        .sortBy(_.createdAt)(descendingOffsetDateTimeOrdering)
-        .find(p => p.state == PurposeVersionState.ACTIVE && p.state == PurposeVersionState.SUSPENDED)
+        .sortBy(_.createdAt)
+        .find(p => p.state == PurposeVersionState.ACTIVE || p.state == PurposeVersionState.SUSPENDED)
         .toTry(MissingActivePurposeVersion(purpose.id))
         .map(version => Purpose(id = purpose.id, throughput = version.dailyCalls, state = version.state.toModel))
   }
