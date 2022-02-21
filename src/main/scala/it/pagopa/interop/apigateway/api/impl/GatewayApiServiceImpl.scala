@@ -24,7 +24,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class GatewayApiServiceImpl(
+final case class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
   agreementManagementService: AgreementManagementService,
   catalogManagementService: CatalogManagementService,
