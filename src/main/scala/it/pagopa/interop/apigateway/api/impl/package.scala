@@ -169,10 +169,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       .map(uuid =>
         verifiedFromAgreement
           .find(_.id == uuid)
-          .fold(AttributeValidityState(uuid.toString, AttributeValidity.INVALID))(attr =>
+          .fold(AttributeValidityState(uuid, AttributeValidity.INVALID))(attr =>
             if (isVerified(attr) && isInTimeRange(attr)) {
-              AttributeValidityState(uuid.toString, AttributeValidity.VALID)
-            } else AttributeValidityState(uuid.toString, AttributeValidity.INVALID)
+              AttributeValidityState(uuid, AttributeValidity.VALID)
+            } else AttributeValidityState(uuid, AttributeValidity.INVALID)
           )
       )
 
@@ -193,7 +193,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
-    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = attribute.kind.toModel)
+    def toModel: Try[Attribute] = for {
+      attributeId <- attribute.id.toUUID
+    } yield Attribute(id = attributeId, name = attribute.name, kind = attribute.kind.toModel)
   }
 
   implicit class EnrichedAttributeKind(private val kind: AttributeRegistryManagementApiAttributeKind) extends AnyVal {

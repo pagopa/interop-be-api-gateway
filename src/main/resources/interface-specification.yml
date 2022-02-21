@@ -667,6 +667,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         name:
           type: string
           pattern: '[a-z0-9 \-]{,48}'
@@ -695,6 +696,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         validity:
           $ref: '#/components/schemas/AttributeValidity'
       required:

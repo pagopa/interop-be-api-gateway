@@ -121,7 +121,8 @@ final case class GatewayApiServiceImpl(
       bearerToken   <- getFutureBearer(contexts)
       attributeUUID <- attributeId.toFutureUUID
       rawAttribute  <- attributeRegistryManagementService.getAttributeById(attributeUUID)(bearerToken)
-    } yield rawAttribute.toModel
+      attribute     <- rawAttribute.toModel.toFuture
+    } yield attribute
 
     onComplete(result) {
       case Success(attribute) =>
