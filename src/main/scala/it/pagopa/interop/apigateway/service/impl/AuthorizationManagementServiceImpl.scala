@@ -21,7 +21,7 @@ class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker
   }
 
   override def getClient(clientId: UUID)(bearer: String): Future[Client] = {
-    val request: ApiRequest[Client] = clientApi.getClient(clientId.toString)(BearerToken(bearer))
+    val request: ApiRequest[Client] = clientApi.getClient(clientId)(BearerToken(bearer))
     invoker.invoke(request, "Client retrieval", handleCommonErrors(s"client $clientId"))
   }
 

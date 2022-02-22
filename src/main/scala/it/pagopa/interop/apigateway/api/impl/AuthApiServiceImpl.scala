@@ -54,7 +54,7 @@ final case class AuthApiServiceImpl(
     toEntityMarshallerClientCredentialsResponse: ToEntityMarshaller[ClientCredentialsResponse],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val tokenAndCheckerF: Try[(String, ClientAssertionChecker)] = for {
+    val tokenAndChecker: Try[(String, ClientAssertionChecker)] = for {
       m2mToken <- pdndTokenGenerator.generateInternalToken(
         jwtAlgorithmType = RSA,
         subject = jwtConfig.subject,
@@ -73,7 +73,7 @@ final case class AuthApiServiceImpl(
     } yield (m2mToken, checker)
 
     val result: Future[ClientCredentialsResponse] = for {
-      (m2mToken, checker) <- tokenAndCheckerF.toFuture
+      (m2mToken, checker) <- tokenAndChecker.toFuture
       subjectUUID         <- checker.subject.toFutureUUID
       publicKey <- authorizationManagementService
         .getKey(subjectUUID, checker.kid)(m2mToken)
