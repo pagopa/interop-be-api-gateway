@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Interoperability API Gateway Micro Service
-  description: defines the persistence operations for the agreement
+  description: exposes the API for interacting with interoperability features
   version: '0.1.0'
   contact:
     name: API Support
@@ -11,10 +11,10 @@ info:
   x-api-id: an x-api-id
   x-summary: an x-summary
 servers:
-  - url: 'https://interop.pagopa.it/interop-api-gateway/0.1.0'
-    description: This service is the interoperability api gateway
+  - url: '/api-gateway/{{version}}'
+    description: This service is the interoperability API gateway
 tags:
-  - name: api
+  - name: gateway
     description: Everything about your APIs
     externalDocs:
       description: Find out more
@@ -24,12 +24,17 @@ tags:
     externalDocs:
       description: Find out more
       url: http://swagger.io
+  - name: health
+    description: Verify service status
+    externalDocs:
+      description: Find out more
+      url: http://swagger.io
 security:
-  - bearerAuth: [ ]
+  - bearerAuth: []
 paths:
   '/as/token.oauth2':
     post:
-      security: [ { } ]
+      security: [{}]
       tags:
         - auth
       summary: Create a new access token
@@ -42,7 +47,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AccessTokenRequest'
       responses:
-        "200":
+        '200':
           description: |-
             an Access token
           headers:
@@ -56,14 +61,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientCredentialsResponse'
-        "401":
+        '401':
           description: Unauthorized
           x-noqa: RFC6749
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "400":
+        '400':
           description: Bad request
           x-noqa: RFC6749
           content:
@@ -73,12 +78,12 @@ paths:
   '/agreements/{agreementId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an agreement
       description: Retrieve an agreement using an agreement identifier
       operationId: getAgreement
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: agreementId
           in: path
@@ -100,8 +105,14 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -115,7 +126,7 @@ paths:
   '/purposes/{purposeId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an purpose
       description: Retrieve a purpose using a purpose identifier
       operationId: getPurpose
@@ -139,8 +150,14 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -154,12 +171,12 @@ paths:
   '/purposes/{purposeId}/agreement':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an agreement by purposeId
       description: Retrieve the agreement associated to a purpose
       operationId: getAgreementByPurpose
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: purposeId
           in: path
@@ -180,8 +197,14 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
@@ -195,12 +218,12 @@ paths:
   '/attributes/{attributeId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an attribute
       description: Retrieve an attribute using an attribute identifier
       operationId: getAttribute
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: attributeId
           in: path
@@ -221,31 +244,44 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '404':
-          description: Agreement not found
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/eservices/{eserviceId}':
+        '404':
+          description: Attribute not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/eservices/{eserviceId}/descriptors/{descriptorId}':
     get:
       tags:
-        - api
+        - gateway
       summary: Get an eService
       description: Retrieve an eService by identifier
       operationId: getEService
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: eserviceId
           in: path
           description: the eservice Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: descriptorId
+          in: path
+          description: the eservice descriptor Id
           required: true
           schema:
             type: string
@@ -263,14 +299,68 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
-          description: Agreement not found
+          description: EService not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/organizations/{organizationId}':
+    get:
+      tags:
+        - gateway
+      summary: Get an organization
+      description: Retrieve an organization by identifier
+      operationId: getOrganization
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: organizationId
+          in: path
+          description: the organization Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Organization retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Organization not found
           content:
             application/problem+json:
               schema:
@@ -278,7 +368,7 @@ paths:
   /agreements:
     get:
       tags:
-        - api
+        - gateway
       summary: Retrieve a list of agreement
       description: |
         It is mandatory to insert either the producerId field or the consumerId field.
@@ -317,13 +407,13 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "401":
+        '401':
           description: Unauthorized
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        "403":
+        '403':
           description: Forbidden
           content:
             application/problem+json:
@@ -331,19 +421,108 @@ paths:
                 $ref: '#/components/schemas/Problem'
   /status:
     get:
-      summary: Ritorna lo stato dell'applicazione.
+      summary: Returns the application status
       description: |
-        Ritorna lo stato dell'applicazione. A scopo
-        di test, su base randomica puo' ritornare
-        un errore.
+        Returns the application status. For testing purposes, it might randomly reply with an error.
       operationId: get_status
       tags:
-        - api
+        - health
       responses:
         '200':
           description: |
-            Il server ha ritornato lo status. In caso di problemi
-            ritorna sempre un problem+json.
+            This is the valid status from the server.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/purposes':
+    get:
+      tags:
+        - gateway
+      summary: Get an purpose
+      description: Retrieve purposes of the agreement
+      operationId: getAgreementPurposes
+      parameters:
+        - name: agreementId
+          in: path
+          description: the agreement identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Purposes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purposes'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Purposes not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/attributes':
+    get:
+      tags:
+        - gateway
+      summary: Get agreement attributes
+      description: Retrieve attributes of the agreement
+      operationId: getAgreementAttributes
+      parameters:
+        - name: agreementId
+          in: path
+          description: the agreement identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attributes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attributes'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Purposes not found
           content:
             application/problem+json:
               schema:
@@ -359,7 +538,6 @@ components:
       properties:
         client_id:
           type: string
-          format: uuid
           example: e58035ce-c753-4f72-b613-46f8a17b71cc
         client_assertion:
           type: string
@@ -392,7 +570,7 @@ components:
           type: integer
           format: int32
           maximum: 600
-    Subscriber:
+    Organization:
       type: object
       additionalProperties: false
       properties:
@@ -407,14 +585,15 @@ components:
         - id
         - name
         - category
-    EServiceState:
+    EServiceDescriptorState:
       type: string
       description: EService State
       enum:
-        - ACTIVE
-        - PENDING
+        - DRAFT
+        - PUBLISHED
+        - DEPRECATED
         - SUSPENDED
-        - INACTIVE
+        - ARCHIVED
     EService:
       type: object
       additionalProperties: false
@@ -425,9 +604,16 @@ components:
         name:
           type: string
           pattern: /^[a-zA-Z]/s+$/
+        version:
+          type: string
+          pattern: ^[0-9]{1,4}$
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
       required:
         - id
         - name
+        - version
+        - state
     PurposeState:
       type: string
       description: Purpose State
@@ -454,9 +640,25 @@ components:
         - throughput
         - state
     Purposes:
-      type: array
-      items:
-        $ref: '#/components/schemas/Purpose'
+      type: object
+      properties:
+        purposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purpose'
+      required:
+        - purposes
+    AttributeKind:
+      type: string
+      enum:
+        - CERTIFIED
+        - DECLARED
+        - VERIFIED
+    AttributeValidity:
+      type: string
+      enum:
+        - VALID
+        - INVALID
     Attribute:
       type: object
       additionalProperties: false
@@ -471,20 +673,35 @@ components:
           pattern: '[a-z0-9 \-]{,48}'
           maxLength: 48
         kind:
-          type: string
-          enum:
-            - CERTIFIED
-            - DECLARED
-            - VERIFIED
+          $ref: '#/components/schemas/AttributeKind'
       required:
         - id
         - name
         - kind
     Attributes:
-      type: array
-      items:
-        type: string
-        format: uuid
+      type: object
+      properties:
+        attributes:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AttributeValidityState'
+      required:
+        - attributes
+    AttributeValidityState:
+      type: object
+      additionalProperties: false
+      title: AttributeValidityState
+      description: represents the validity of a specified attribute
+      properties:
+        id:
+          type: string
+          format: uuid
+        validity:
+          $ref: '#/components/schemas/AttributeValidity'
+      required:
+        - id
+        - validity
     AgreementState:
       type: string
       description: Agreement State
@@ -501,35 +718,34 @@ components:
           type: string
           format: uuid
         eserviceId:
-          $ref: '#/components/schemas/EService'
+          type: string
+          format: uuid
         descriptorId:
           type: string
           format: uuid
-        producer:
-          $ref: '#/components/schemas/Subscriber'
-        consumer:
-          $ref: '#/components/schemas/Subscriber'
+        producerId:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
         state:
           $ref: '#/components/schemas/AgreementState'
-        attributes:
-          $ref: '#/components/schemas/Attributes'
-        purposes:
-          $ref: '#/components/schemas/Purposes'
       required:
         - id
         - eserviceId
         - descriptorId
-        - producer
-        - consumer
+        - producerId
+        - consumerId
         - state
-        - attributes
-        - purpose
       description: business representation of an agreement
     Agreements:
       type: object
       properties:
         agreements:
-          $ref: '#/components/schemas/Agreement'
+          type: array
+          items:
+            $ref: '#/components/schemas/Agreement'
       required:
         - agreements
     Problem:

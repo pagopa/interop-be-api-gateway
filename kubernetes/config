@@ -12,16 +12,20 @@ repository=$DOCKER_REPO
 
 agreementManagementVersion="0.1"
 catalogManagementVersion="0.1"
-keyManagementVersion="0.1"
+authorizationManagementVersion="0.1"
 partyManagementVersion="0.1"
 userRegistryManagementVersion="0.1"
+attributeRegistryManagementVersion="0.1"
+purposeManagementVersion="0.1"
 wellKnownURL=$WELL_KNOWN_URL
 
 agreementManagementUrl="http://pdnd-interop-uservice-agreement-management.pdnd-interop-uservice-agreement-management.svc.cluster.local:8088/pdnd-interop-uservice-agreement-management/"$agreementManagementVersion
 catalogManagementUrl="http://pdnd-interop-uservice-catalog-management.pdnd-interop-uservice-catalog-management.svc.cluster.local:8088/pdnd-interop-uservice-catalog-management/"$catalogManagementVersion
-keyManagementUrl="http://pdnd-interop-uservice-key-management.pdnd-interop-uservice-key-management.svc.cluster.local:8088/pdnd-interop-uservice-key-management/"$keyManagementVersion
+authorizationManagementUrl="http://interop-be-authorization-management.interop-be-authorization-management.svc.cluster.local:8088/interop-be-authorization-management/"$authorizationManagementVersion
 partyManagementUrl="http://pdnd-interop-uservice-party-management.pdnd-interop-uservice-party-management.svc.cluster.local:8088/pdnd-interop-uservice-party-management/"$partyManagementVersion
 userRegistryManagementUrl="http://pdnd-interop-uservice-user-registry-management.pdnd-interop-uservice-user-registry-management.svc.cluster.local:8088/pdnd-interop-uservice-user-registry-management/"$userRegistryManagementVersion
+attributeRegistryManagementUrl="http://pdnd-interop-uservice-attribute-registry-management.pdnd-interop-uservice-attribute-registry-management.svc.cluster.local:8088/pdnd-interop-uservice-attribute-registry-management/"attributeRegistryManagementVersion
+purposeManagementUrl="http://pdnd-interop-uservice-purpose-management.pdnd-interop-uservice-purpose-management.svc.cluster.local:8088/pdnd-interop-uservice-purpose-management/"purposeManagementVersion
 
 name=$(cat $SCRIPT_PATH/../build.sbt | grep "name :=" | awk -F:= '{ print $2 }' | sed 's/\"//' | sed 's/\",//' | sed 's/ //' | tr '[:upper:]' '[:lower:]' | grep -v client)
 
