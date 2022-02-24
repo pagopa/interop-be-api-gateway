@@ -1,6 +1,6 @@
 package it.pagopa.interop.apigateway.error
 
-import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.commons.utils.errors.ComponentError
 
 import java.util.UUID
 

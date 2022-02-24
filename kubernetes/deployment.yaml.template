@@ -66,16 +66,11 @@ spec:
                 secretKeyRef:
                   name: aws
                   key: AWS_SECRET_ACCESS_KEY
-            - name: PDND_INTEROP_KEYS
+            - name: INTEROP_KEYS
               valueFrom:
                 secretKeyRef:
                   name: key-paths
-                  key: PDND_INTEROP_KEYS
-            - name: USER_REGISTRY_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: user-registry-api-key
-                  key: USER_REGISTRY_API_KEY
+                  key: INTEROP_KEYS
             - name: AGREEMENT_MANAGEMENT_URL
               value: "{{agreementManagementUrl}}"
             - name: CATALOG_MANAGEMENT_URL

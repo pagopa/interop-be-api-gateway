@@ -58,7 +58,7 @@ pipeline {
         CASSANDRA_HOST = 'cluster1-dc1-service.cassandra-operator.svc.cluster.local:9042'
         VAULT_ADDR = credentials('vault-addr')
         VAULT_TOKEN = credentials('vault-token')
-        PDND_INTEROP_KEYS = credentials('pdnd-interop-keys')
+        INTEROP_KEYS = credentials('pdnd-interop-keys')
         USER_REGISTRY_API_KEY = credentials('userRegistryApiKey')
         DOCKER_REPO = 'gateway.interop.pdnd.dev'
         //REPLICAS_NR = 1
