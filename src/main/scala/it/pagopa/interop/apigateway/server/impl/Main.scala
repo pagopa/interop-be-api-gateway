@@ -27,25 +27,25 @@ import it.pagopa.interop.authorizationmanagement.client.api.{
   ClientApi => AuthorizationClientApi,
   KeyApi => AuthorizationKeyApi
 }
-import it.pagopa.pdnd.interop.commons.jwt._
-import it.pagopa.pdnd.interop.commons.jwt.service.impl.{
+import it.pagopa.interop.commons.jwt._
+import it.pagopa.interop.commons.jwt.service.impl.{
   DefaultClientAssertionValidator,
   DefaultJWTReader,
-  DefaultPDNDTokenGenerator,
+  DefaultInteropTokenGenerator,
   getClaimsVerifier
 }
-import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, PDNDTokenGenerator}
-import it.pagopa.pdnd.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
-import it.pagopa.pdnd.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
-import it.pagopa.pdnd.interop.commons.utils.{CORSSupport, OpenapiUtils}
-import it.pagopa.pdnd.interop.commons.vault.service.VaultService
-import it.pagopa.pdnd.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.api.{PartyApi => PartyManagementApi}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
+import it.pagopa.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, InteropTokenGenerator}
+import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
+import it.pagopa.interop.commons.utils.TypeConversions.TryOps
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
+import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
+import it.pagopa.interop.commons.vault.service.VaultService
+import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
+import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
+import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
+import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
+import it.pagopa.interop.partymanagement.client.api.{PartyApi => PartyManagementApi}
+import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
 
 import scala.concurrent.Future
@@ -120,29 +120,29 @@ object Main
     with AttributeRegistryManagementDependency
     with PurposeManagementDependency {
 
-  val dependenciesLoaded: Future[(JWTReader, ClientAssertionValidator, PDNDTokenGenerator)] = for {
+  val dependenciesLoaded: Future[(JWTReader, ClientAssertionValidator, InteropTokenGenerator)] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
     jwtReader = new DefaultJWTReader with PublicKeysHolder {
       var publicKeyset: Map[KID, SerializedKey] = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
-        getClaimsVerifier(audience = ApplicationConfiguration.pdndAudience)
+        getClaimsVerifier(audience = ApplicationConfiguration.interopAudience)
     }
     clientAssertionValidator = new DefaultClientAssertionValidator with PublicKeysHolder {
       var publicKeyset: Map[KID, SerializedKey] = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
-        getClaimsVerifier(audience = ApplicationConfiguration.pdndAudience)
+        getClaimsVerifier(audience = ApplicationConfiguration.interopAudience)
     }
-    pdndTokenGenerator = new DefaultPDNDTokenGenerator with PrivateKeysHolder {
+    interopTokenGenerator = new DefaultInteropTokenGenerator with PrivateKeysHolder {
       override val RSAPrivateKeyset: Map[KID, SerializedKey] =
         vaultService.readBase64EncodedData(ApplicationConfiguration.rsaPrivatePath)
       override val ECPrivateKeyset: Map[KID, SerializedKey] =
         Map.empty
     }
-  } yield (jwtReader, clientAssertionValidator, pdndTokenGenerator)
+  } yield (jwtReader, clientAssertionValidator, interopTokenGenerator)
 
   dependenciesLoaded.transformWith {
-    case Success((jwtReader, clientAssertionValidator, pdndTokenGenerator)) =>
-      launchApp(jwtReader, clientAssertionValidator, pdndTokenGenerator)
+    case Success((jwtReader, clientAssertionValidator, interopTokenGenerator)) =>
+      launchApp(jwtReader, clientAssertionValidator, interopTokenGenerator)
     case Failure(ex) =>
       classicActorSystem.log.error(s"Startup error: ${ex.getMessage}")
       classicActorSystem.log.error(s"${ex.getStackTrace.mkString("\n")}")
@@ -152,7 +152,7 @@ object Main
   private def launchApp(
     jwtReader: JWTReader,
     clientAssertionValidator: ClientAssertionValidator,
-    pdndTokenGenerator: PDNDTokenGenerator
+    interopTokenGenerator: InteropTokenGenerator
   ): Future[Http.ServerBinding] = {
     Kamon.init()
 
@@ -161,7 +161,7 @@ object Main
     }
 
     val authApiService: AuthApiService =
-      AuthApiServiceImpl(authorizationManagementService, clientAssertionValidator, pdndTokenGenerator)
+      AuthApiServiceImpl(authorizationManagementService, clientAssertionValidator, interopTokenGenerator)
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
     val gatewayApiService: GatewayApiService = GatewayApiServiceImpl(

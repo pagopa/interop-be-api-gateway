@@ -10,14 +10,12 @@ import it.pagopa.interop.apigateway.api.GatewayApiService
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
-import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.pdnd.interop.commons.utils.AkkaUtils._
-import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
-  AgreementState => AgreementManagementApiAgreementState
-}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.AkkaUtils._
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.agreementmanagement.client.model.{AgreementState => AgreementManagementApiAgreementState}
+import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import org.slf4j.LoggerFactory
 
 import java.util.UUID

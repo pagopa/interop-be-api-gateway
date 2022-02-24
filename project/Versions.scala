@@ -15,7 +15,7 @@ object Versions {
   lazy val scalatestVersion         = "3.2.10"
 }
 
-object PDNDVersions {
+object PagopaVersions {
   lazy val agreementManagementVersion         = "0.1.1-SNAPSHOT"
   lazy val attributeRegistryManagementVersion = "0.1.1-SNAPSHOT"
   lazy val authorizationManagementVersion     = "0.1.1-SNAPSHOT"
