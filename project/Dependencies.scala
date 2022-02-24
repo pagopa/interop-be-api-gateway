@@ -1,4 +1,4 @@
-import PDNDVersions._
+import PagopaVersions._
 import Versions._
 import sbt._
 
@@ -31,22 +31,22 @@ object Dependencies {
       namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
 
     lazy val agreementManagement =
-      namespace %% "pdnd-interop-uservice-agreement-management-client" % agreementManagementVersion
+      namespace %% "interop-be-agreement-management-client" % agreementManagementVersion
 
     lazy val catalogManagement =
-      namespace %% "pdnd-interop-uservice-catalog-management-client" % catalogManagementVersion
+      namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
     lazy val partyManagement =
-      namespace %% "pdnd-interop-uservice-party-management-client" % partyManagementVersion
+      namespace %% "interop-be-party-management-client" % partyManagementVersion
 
     lazy val attributeRegistryManagement =
-      namespace %% "pdnd-interop-uservice-attribute-registry-management-client" % attributeRegistryManagementVersion
+      namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryManagementVersion
 
     lazy val purposeManagement =
-      namespace %% "pdnd-interop-uservice-purpose-management-client" % purposeManagementVersion
+      namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
 
-    lazy val commons = namespace %% "pdnd-interop-commons-utils" % commonsVersion
-    lazy val jwt     = namespace %% "pdnd-interop-commons-jwt"   % commonsVersion
-    lazy val vault   = namespace %% "pdnd-interop-commons-vault" % commonsVersion
+    lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
+    lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
+    lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
   }
 
   private[this] object scalpb {

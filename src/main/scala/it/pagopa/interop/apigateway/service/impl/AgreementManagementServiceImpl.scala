@@ -1,10 +1,10 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{AgreementManagementInvoker, AgreementManagementService}
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.api.AgreementApi
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{Agreement, AgreementState}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.agreementmanagement.client.api.AgreementApi
+import it.pagopa.interop.agreementmanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.agreementmanagement.client.model.{Agreement, AgreementState}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID

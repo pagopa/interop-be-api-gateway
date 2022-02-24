@@ -18,9 +18,7 @@ kubectl create secret generic vault --from-literal=VAULT_ADDR=$VAULT_ADDR --from
 
 kubectl create secret generic aws --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -n $NAMESPACE
 
-kubectl create secret generic user-registry-api-key --from-literal=USER_REGISTRY_API_KEY=$USER_REGISTRY_API_KEY -n $NAMESPACE
-
-kubectl create secret generic key-paths --from-literal=PDND_INTEROP_KEYS=$PDND_INTEROP_KEYS -n $NAMESPACE
+kubectl create secret generic key-paths --from-literal=INTEROP_KEYS=$INTEROP_KEYS -n $NAMESPACE
 
 $SCRIPT_PATH/templater.sh $SCRIPT_PATH/deployment.yaml.template -s -f $SCRIPT_PATH/config > $SCRIPT_PATH/deployment.yaml
 

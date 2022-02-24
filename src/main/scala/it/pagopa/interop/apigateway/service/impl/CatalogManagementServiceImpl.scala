@@ -1,10 +1,10 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{CatalogManagementInvoker, CatalogManagementService}
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.api.EServiceApi
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.EService
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
+import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.catalogmanagement.client.model.EService
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID

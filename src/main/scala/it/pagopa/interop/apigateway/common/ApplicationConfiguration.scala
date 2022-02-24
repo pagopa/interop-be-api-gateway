@@ -16,13 +16,13 @@ object ApplicationConfiguration {
   def attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
   def purposeManagementURL: String           = config.getString("services.purpose-management")
 
-  def pdndIdIssuer: String = config.getString("interop-api-gateway.issuer")
+  def interopIdIssuer: String = config.getString("interop-api-gateway.issuer")
 
   def vaultSecretsRootPath: String = config.getString("interop-api-gateway.vault-root-path").stripSuffix("/")
 
   def rsaPrivatePath =
     s"${vaultSecretsRootPath}/${config.getString("interop-api-gateway.rsa-private-path").stripPrefix("/")}"
 
-  lazy val pdndAudience: Set[String] = config.getStringList("interop-api-gateway.jwt.audience").asScala.toSet
-  lazy val pdndTokenDuration: Int    = config.getInt("interop-api-gateway.jwt.duration-seconds")
+  lazy val interopAudience: Set[String] = config.getStringList("interop-api-gateway.jwt.audience").asScala.toSet
+  lazy val interopTokenDuration: Int    = config.getInt("interop-api-gateway.jwt.duration-seconds")
 }

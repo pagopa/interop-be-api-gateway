@@ -34,18 +34,23 @@ pipeline {
     stage('Test and Deploy µservice') {
       agent { label 'sbt-template' }
       environment {
-        NEXUS = 'gateway.interop.pdnd.dev'
-        DOCKER_REPO = 'gateway.interop.pdnd.dev'
-        MAVEN_REPO = 'gateway.interop.pdnd.dev'
+        NEXUS = "${env.NEXUS}"
         NEXUS_CREDENTIALS = credentials('pdnd-nexus')
+        DOCKER_REPO = "${env.DOCKER_REPO}"
+        MAVEN_REPO = "${env.MAVEN_REPO}"
+        ECR_RW = credentials('ecr-rw')
         PDND_TRUST_STORE_PSW = credentials('pdnd-interop-trust-psw')
       }
       steps {
         container('sbt-container') {
           unstash "pdnd_trust_store"
           script {
-            sh '''docker login $NEXUS -u $NEXUS_CREDENTIALS_USR -p $NEXUS_CREDENTIALS_PSW'''
-            sbtAction 'test docker:publish'
+            sh '''
+            export AWS_ACCESS_KEY_ID=$ECR_RW_USR
+            export AWS_SECRET_ACCESS_KEY=$ECR_RW_PSW
+            aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin $DOCKER_REPO
+            '''
+            sbtAction 'test docker:publish "project client" publish'
           }
         }
       }
@@ -54,14 +59,12 @@ pipeline {
     stage('Apply Kubernetes files') {
       agent { label 'sbt-template' }
       environment {
-        CASSANDRA = credentials('cassandra-db')
-        CASSANDRA_HOST = 'cluster1-dc1-service.cassandra-operator.svc.cluster.local:9042'
         VAULT_ADDR = credentials('vault-addr')
         VAULT_TOKEN = credentials('vault-token')
-        PDND_INTEROP_KEYS = credentials('pdnd-interop-keys')
-        USER_REGISTRY_API_KEY = credentials('userRegistryApiKey')
-        DOCKER_REPO = 'gateway.interop.pdnd.dev'
-        //REPLICAS_NR = 1
+        INTEROP_KEYS = credentials('pdnd-interop-keys')
+        DOCKER_REPO = "${env.DOCKER_REPO}"
+//         MAIN_AUDIENCE = "" TODO add audience
+        REPLICAS_NR = 1
       }
       steps {
         container('sbt-container') {
