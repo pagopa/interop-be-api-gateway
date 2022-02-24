@@ -6,26 +6,26 @@ import cats.data.Validated
 import cats.implicits._
 import it.pagopa.interop.apigateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
 import it.pagopa.interop.apigateway.model._
-import it.pagopa.pdnd.interop.commons.utils.SprayCommonFormats.uuidFormat
-import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
-import it.pagopa.pdnd.interop.uservice.agreementmanagement.client.model.{
+import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
   AgreementState => AgreementManagementApiAgreementState,
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.{
+import it.pagopa.interop.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
   AttributeKind => AttributeRegistryManagementApiAttributeKind
 }
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.model.{
+import it.pagopa.interop.catalogmanagement.client.model.{
   Attribute => CatalogManagementApiAttribute,
   EService => CatalogManagementApiEService,
   EServiceDescriptor => CatalogManagementApiDescriptor,
   EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{
+import it.pagopa.interop.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
+import it.pagopa.interop.purposemanagement.client.model.{
   PurposeVersionState,
   Purpose => PurposeManagementApiPurpose,
   Purposes => PurposeManagementApiPurposes

@@ -1,10 +1,10 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{PartyManagementInvoker, PartyManagementService}
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.api.PartyApi
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.model._
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.partymanagement.client.api.PartyApi
+import it.pagopa.interop.partymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.partymanagement.client.model._
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID

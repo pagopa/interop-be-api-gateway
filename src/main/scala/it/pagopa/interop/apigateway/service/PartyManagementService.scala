@@ -1,6 +1,6 @@
 package it.pagopa.interop.apigateway.service
 
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
+import it.pagopa.interop.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
 
 import java.util.UUID
 import scala.concurrent.Future

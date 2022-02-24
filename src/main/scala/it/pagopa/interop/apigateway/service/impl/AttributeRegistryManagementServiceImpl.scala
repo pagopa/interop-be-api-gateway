@@ -1,10 +1,10 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
-import it.pagopa.pdnd.interop.uservice.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
+import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
