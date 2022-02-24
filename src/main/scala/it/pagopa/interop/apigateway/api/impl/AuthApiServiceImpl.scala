@@ -20,12 +20,12 @@ import it.pagopa.interop.authorizationmanagement.client.model.{
   ClientKind,
   ClientStatesChain
 }
-import it.pagopa.pdnd.interop.commons.jwt.model.{ClientAssertionChecker, RSA, ValidClientAssertionRequest}
-import it.pagopa.pdnd.interop.commons.jwt.service.{ClientAssertionValidator, PDNDTokenGenerator}
-import it.pagopa.pdnd.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
-import it.pagopa.pdnd.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.pdnd.interop.commons.utils.TypeConversions._
-import it.pagopa.pdnd.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.commons.jwt.model.{ClientAssertionChecker, RSA, ValidClientAssertionRequest}
+import it.pagopa.interop.commons.jwt.service.{ClientAssertionValidator, InteropTokenGenerator}
+import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.ComponentError
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
@@ -35,7 +35,7 @@ import scala.util.{Failure, Success, Try}
 final case class AuthApiServiceImpl(
   authorizationManagementService: AuthorizationManagementService,
   jwtValidator: ClientAssertionValidator,
-  pdndTokenGenerator: PDNDTokenGenerator
+  interopTokenGenerator: InteropTokenGenerator
 )(implicit ec: ExecutionContext)
     extends AuthApiService {
 
@@ -55,7 +55,7 @@ final case class AuthApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val tokenAndChecker: Try[(String, ClientAssertionChecker)] = for {
-      m2mToken <- pdndTokenGenerator.generateInternalToken(
+      m2mToken <- interopTokenGenerator.generateInternalToken(
         jwtAlgorithmType = RSA,
         subject = jwtConfig.subject,
         audience = jwtConfig.audience.toList,
@@ -82,12 +82,12 @@ final case class AuthApiServiceImpl(
       purposeUUID               <- checker.purposeId.toFutureUUID
       client                    <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
       (audience, tokenDuration) <- checkClientValidity(client, purposeUUID)
-      token <- pdndTokenGenerator
+      token <- interopTokenGenerator
         .generate(
           clientAssertion,
           audience = audience.toList,
           customClaims = Map.empty,
-          tokenIssuer = ApplicationConfiguration.pdndIdIssuer,
+          tokenIssuer = ApplicationConfiguration.interopIdIssuer,
           validityDurationInSeconds = tokenDuration.toLong
         )
         .toFuture
@@ -137,7 +137,9 @@ final case class AuthApiServiceImpl(
           checkState <- checkClientStates(purpose.states)
         } yield checkState
       case ClientKind.API =>
-        Future.successful((ApplicationConfiguration.pdndAudience.toSeq, ApplicationConfiguration.pdndTokenDuration))
+        Future.successful(
+          (ApplicationConfiguration.interopAudience.toSeq, ApplicationConfiguration.interopTokenDuration)
+        )
     }
   }
 

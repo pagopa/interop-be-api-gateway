@@ -4,7 +4,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="it.pagopa.pdnd.interop.commons.logging.LoggerLayout"/>
+            <layout class="it.pagopa.interop.commons.logging.LoggerLayout"/>
         </encoder>
     </appender>
 

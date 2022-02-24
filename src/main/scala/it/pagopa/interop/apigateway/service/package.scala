@@ -1,11 +1,10 @@
 package it.pagopa.interop.apigateway
 
 import akka.actor.ActorSystem
-import it.pagopa.pdnd.interop.uservice._
 import it.pagopa.interop._
 import it.pagopa.interop.authorizationmanagement.client.model.Key
-import it.pagopa.pdnd.interop.uservice.catalogmanagement.client.invoker.Serializers
-import org.json4s.DefaultFormats
+import it.pagopa.interop.catalogmanagement.client.invoker.Serializers
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.jackson.Serialization
 
 package object service {
@@ -36,9 +35,9 @@ package object service {
       authorizationmanagement.client.invoker.ApiInvoker(authorizationmanagement.client.api.EnumsSerializers.all)
     }
 
-    private def serializationFormats =
+    private def serializationFormats: Formats =
       DefaultFormats ++ Serializers.all ++ authorizationmanagement.client.api.EnumsSerializers.all
-    def serializeKey(key: Key) = Serialization.write(key)(serializationFormats)
+    def serializeKey(key: Key): String = Serialization.write(key)(serializationFormats)
   }
 
   object AttributeRegistryManagementInvoker {

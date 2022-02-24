@@ -8,9 +8,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 import org.slf4j.{Logger, LoggerFactory}
 import ch.qos.logback.classic.LoggerContext
-import it.pagopa.pdnd.interop.commons.logging.ContextFieldsToLog
-import it.pagopa.pdnd.interop.commons.utils.UID
-import it.pagopa.pdnd.interop.commons.utils.CORRELATION_ID_HEADER
+import it.pagopa.interop.commons.logging.ContextFieldsToLog
+import it.pagopa.interop.commons.utils.UID
+import it.pagopa.interop.commons.utils.CORRELATION_ID_HEADER
 {{^pathMatcherPatterns.isEmpty}}import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
 {{/pathMatcherPatterns.isEmpty}}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller

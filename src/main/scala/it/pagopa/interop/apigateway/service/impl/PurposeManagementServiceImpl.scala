@@ -2,11 +2,11 @@ package it.pagopa.interop.apigateway.service.impl
 
 import cats.implicits._
 import it.pagopa.interop.apigateway.service.{PurposeManagementInvoker, PurposeManagementService}
-import it.pagopa.pdnd.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.pdnd.interop.uservice.partymanagement.client.invoker.ApiError
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.api.PurposeApi
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.invoker.{ApiRequest, BearerToken}
-import it.pagopa.pdnd.interop.uservice.purposemanagement.client.model.{Purpose, Purposes}
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.partymanagement.client.invoker.ApiError
+import it.pagopa.interop.purposemanagement.client.api.PurposeApi
+import it.pagopa.interop.purposemanagement.client.invoker.{ApiRequest, BearerToken}
+import it.pagopa.interop.purposemanagement.client.model.{Purpose, Purposes}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
