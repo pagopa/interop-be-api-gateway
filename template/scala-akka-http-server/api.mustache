@@ -10,6 +10,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import ch.qos.logback.classic.LoggerContext
 import it.pagopa.interop.commons.logging.ContextFieldsToLog
 import it.pagopa.interop.commons.utils.UID
+import it.pagopa.interop.commons.utils.SUB
 import it.pagopa.interop.commons.utils.CORRELATION_ID_HEADER
 {{^pathMatcherPatterns.isEmpty}}import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
 {{/pathMatcherPatterns.isEmpty}}
@@ -48,8 +49,9 @@ import akka.http.scaladsl.server.directives.FileInfo
 
    private def logHttp(ctxs: Seq[(String, String)]): Directive0 = {
        val contexts = ctxs.toMap
+       val subject   = contexts.get(UID).filterNot(_.isBlank).orElse(contexts.get(SUB))
        val context =
-         s"""[${contexts.get(UID).getOrElse("")}] [${contexts.get(CORRELATION_ID_HEADER).getOrElse("")}]"""
+         s"""[${subject.getOrElse("")}] [${contexts.get(CORRELATION_ID_HEADER).getOrElse("")}]"""
        def logWithoutBody(req: HttpRequest): RouteResult => Option[LogEntry] = {
          case RouteResult.Complete(res) =>
            Some(LogEntry(s"${context} - Request ${req.uri} - Response ${res.status}", Logging.InfoLevel))
