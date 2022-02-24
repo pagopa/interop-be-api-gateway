@@ -49,7 +49,7 @@ import akka.http.scaladsl.server.directives.FileInfo
 
    private def logHttp(ctxs: Seq[(String, String)]): Directive0 = {
        val contexts = ctxs.toMap
-       val subject   = contexts.get(UID).filter(!_.isBlank).orElse(contexts.get(SUB))
+       val subject   = contexts.get(UID).filterNot(_.isBlank).orElse(contexts.get(SUB))
        val context =
          s"""[${subject.getOrElse("")}] [${contexts.get(CORRELATION_ID_HEADER).getOrElse("")}]"""
        def logWithoutBody(req: HttpRequest): RouteResult => Option[LogEntry] = {
