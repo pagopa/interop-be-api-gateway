@@ -63,7 +63,7 @@ pipeline {
         VAULT_TOKEN = credentials('vault-token')
         INTEROP_KEYS = credentials('pdnd-interop-keys')
         DOCKER_REPO = "${env.DOCKER_REPO}"
-//         MAIN_AUDIENCE = "" TODO add audience
+        MAIN_AUDIENCE = "${INTEROP_JWT_DURATION}"
         REPLICAS_NR = 1
       }
       steps {
