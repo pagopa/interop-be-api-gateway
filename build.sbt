@@ -15,7 +15,7 @@ ThisBuild / version := ComputeVersion.version
 ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://gateway.interop.pdnd.dev/nexus/repository/maven-snapshots/"
 ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://gateway.interop.pdnd.dev/nexus/repository/maven-releases/"
 
-credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 lazy val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
 
