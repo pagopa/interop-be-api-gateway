@@ -96,10 +96,10 @@ final case class AuthApiServiceImpl(
     onComplete(result) {
       case Success(token) => createToken200(token)
       case Failure(ex: PurposeNotFound) =>
-        logger.error("Purpose not found for this client - {}", ex.getMessage)
+        logger.error(s"Purpose not found for this client - ${ex.getMessage}")
         createToken400(problemOf(StatusCodes.BadRequest, ex))
       case Failure(ex: InactiveClient) =>
-        logger.error("The client performing this request is not active - {}", ex.getMessage)
+        logger.error(s"The client performing this request is not active - ${ex.getMessage}")
         createToken400(problemOf(StatusCodes.BadRequest, ex))
       case Failure(_) =>
         complete(StatusCodes.InternalServerError, problemOf(StatusCodes.InternalServerError, CreateTokenRequestError))
