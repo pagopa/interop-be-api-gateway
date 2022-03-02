@@ -58,10 +58,10 @@ final case class GatewayApiServiceImpl(
       case Success(agr) =>
         getAgreement200(agr)
       case Failure(Forbidden) =>
-        logger.error("The user has no access to the requested agreement: {}", agreementId)
+        logger.error(s"The user has no access to the requested agreement ${agreementId}")
         getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting agreement {}: {}", agreementId, ex.getMessage)
+        logger.error(s"Error while getting agreement $agreementId - ${ex.getMessage}")
         getAgreement404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) => internalServerError(s"Error while getting agreement - ${ex.getMessage}")
     }
@@ -101,7 +101,7 @@ final case class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(agreements) => getAgreements200(agreements)
       case Failure(InvalidAgreementsInput) =>
-        logger.error("Error while getting agreements: {}", InvalidAgreementsInput.getMessage)
+        logger.error(s"Error while getting agreements - ${InvalidAgreementsInput.getMessage}")
         getAgreements400(problemOf(StatusCodes.BadRequest, InvalidAgreementsInput))
       case Failure(Forbidden) =>
         logger.error("The user has no access to the requested agreements")
@@ -126,7 +126,7 @@ final case class GatewayApiServiceImpl(
       case Success(attribute) =>
         getAttribute200(attribute)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting attribute {}: {}", attributeId, ex.getMessage)
+        logger.error(s"Error while getting attribute $attributeId - ${ex.getMessage}")
         getAttribute404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) => internalServerError(s"Error while getting attribute - ${ex.getMessage}")
     }
@@ -150,7 +150,7 @@ final case class GatewayApiServiceImpl(
       case Success(eservice) =>
         getEService200(eservice)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting eservice {}: {}", eserviceId, ex.getMessage)
+        logger.error(s"Error while getting eservice $eserviceId - ${ex.getMessage}")
         getEService404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex: EServiceDescriptorNotFound) =>
         logger.error(ex.getMessage)
@@ -173,7 +173,7 @@ final case class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(organization) => getOrganization200(organization)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting organization {}: {}", organizationId, ex.getMessage)
+        logger.error(s"Error while getting organization $organizationId - ${ex.getMessage}")
         getOrganization404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) => internalServerError(s"Error while getting organization - ${ex.getMessage}")
     }
@@ -207,10 +207,10 @@ final case class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(agr) => getAgreementAttributes200(agr)
       case Failure(Forbidden) =>
-        logger.error("The user has no access to the requested attributes for agreement: {}", agreementId)
+        logger.error(s"The user has no access to the requested attributes for agreement $agreementId")
         getAgreementAttributes403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting attributes for agreement {}: {}", agreementId, ex.getMessage)
+        logger.error(s"Error while getting attributes for agreement $agreementId - ${ex.getMessage}")
         getAgreementAttributes404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) =>
         internalServerError(s"Error while getting attributes for agreement $agreementId - ${ex.getMessage}")
@@ -235,10 +235,10 @@ final case class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(agreement) => getAgreementByPurpose200(agreement)
       case Failure(Forbidden) =>
-        logger.error("The user has no access to the requested agreement for purpose {}", purposeId)
+        logger.error(s"The user has no access to the requested agreement for purpose $purposeId")
         getAgreementByPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting the requested agreement for purpose {} : {}", purposeId, ex.getMessage)
+        logger.error(s"Error while getting the requested agreement for purpose $purposeId - ${ex.getMessage}")
         getAgreementByPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) =>
         internalServerError(s"Error while getting the requested agreement for purpose $purposeId - ${ex.getMessage}")
@@ -279,13 +279,13 @@ final case class GatewayApiServiceImpl(
     onComplete(result) {
       case Success(agr) => getPurpose200(agr)
       case Failure(Forbidden) =>
-        logger.error("The user has no access to the requested purpose {}", purposeId)
+        logger.error(s"The user has no access to the requested purpose $purposeId")
         getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting the requested purpose {} : {}", purposeId, ex.getMessage)
+        logger.error(s"Error while getting the requested purpose $purposeId - ${ex.getMessage}")
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(e: MissingActivePurposeVersion) =>
-        logger.error("Unable to find an active version of purpose {}", purposeId)
+        logger.error(s"Unable to find an active version of purpose $purposeId")
         getPurpose404(problemOf(StatusCodes.NotFound, e))
       case Failure(ex) =>
         internalServerError(s"Error while getting the requested purpose $purposeId - ${ex.getMessage}")
@@ -313,16 +313,14 @@ final case class GatewayApiServiceImpl(
       case Success(purposes) => getAgreementPurposes200(purposes)
       case Failure(e: MissingActivePurposesVersions) =>
         logger.error(
-          "Unable to find active or suspended versions for purposes {} in the agreement {}",
-          e.purposesIds.mkString(", "),
-          agreementId
+          s"Unable to find active or suspended versions for purposes ${e.purposesIds.mkString(", ")} in the agreement $agreementId"
         )
         getAgreementPurposes200(Purposes(purposes = Seq.empty))
       case Failure(Forbidden) =>
-        logger.error("The user has no access to the requested agreement {}", agreementId)
+        logger.error(s"The user has no access to the requested agreement $agreementId")
         getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error("Error while getting the requested purposes for agreement {} : {}", agreementId, ex.getMessage)
+        logger.error(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) =>
         internalServerError(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")

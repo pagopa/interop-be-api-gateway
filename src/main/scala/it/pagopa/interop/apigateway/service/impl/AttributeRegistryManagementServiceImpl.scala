@@ -30,10 +30,10 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
   ): (Logger, String) => PartialFunction[Throwable, Future[T]] = { (logger, msg) =>
     {
       case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message", ex)
+        logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")
         Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
       case ex =>
-        logger.error(s"$msg. Error: ${ex.getMessage}", ex)
+        logger.error(s"$msg. Error: ${ex.getMessage}")
         Future.failed(ex)
     }
   }
