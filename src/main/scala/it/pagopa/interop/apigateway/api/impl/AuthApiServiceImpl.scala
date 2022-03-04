@@ -79,9 +79,9 @@ final case class AuthApiServiceImpl(
         .getKey(subjectUUID, checker.kid)(m2mToken)
         .map(k => AuthorizationManagementInvoker.serializeKey(k.key))
       _                         <- checker.verify(publicKey).toFuture
-      purposeUUID               <- checker.purposeId.toFutureUUID
+      purposeId                 <- checker.purposeId.traverse(_.toFutureUUID)
       client                    <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
-      (audience, tokenDuration) <- checkClientValidity(client, purposeUUID)
+      (audience, tokenDuration) <- checkClientValidity(client, purposeId)
       token <- interopTokenGenerator
         .generate(
           clientAssertion,
@@ -110,7 +110,7 @@ final case class AuthApiServiceImpl(
     }
   }
 
-  private def checkClientValidity(client: Client, purposeUUID: UUID): Future[(Seq[String], Int)] = {
+  private def checkClientValidity(client: Client, purposeId: Option[UUID]): Future[(Seq[String], Int)] = {
     def checkClientStates(statesChain: ClientStatesChain): Future[(Seq[String], Int)] = {
 
       def validate(
@@ -137,7 +137,10 @@ final case class AuthApiServiceImpl(
     client.kind match {
       case ClientKind.CONSUMER =>
         for {
-          purpose    <- client.purposes.find(_.purposeId == purposeUUID).toFuture(PurposeNotFound(client.id, purposeUUID))
+          purposeUUID <- purposeId.toFuture(PurposeIdNotProvided)
+          purpose <- client.purposes
+            .find(_.purposeId == purposeUUID)
+            .toFuture(PurposeNotFound(client.id, purposeUUID))
           checkState <- checkClientStates(purpose.states)
         } yield checkState
       case ClientKind.API =>

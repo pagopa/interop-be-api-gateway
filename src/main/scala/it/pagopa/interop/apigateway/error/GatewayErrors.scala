@@ -42,4 +42,8 @@ object GatewayErrors {
   final case class InactivePurpose(state: String)   extends ComponentError("0014", s"Purpose is in state $state")
   final case class InactiveEservice(state: String)  extends ComponentError("0015", s"E-Service is in state $state")
   final case class InactiveAgreement(state: String) extends ComponentError("0016", s"Agreement is in state $state")
+
+  final case object PurposeIdNotProvided
+      extends ComponentError("0017", "purposeId claim does not exist in this assertion")
+
 }
