@@ -101,8 +101,12 @@ final case class AuthApiServiceImpl(
       case Failure(ex: InactiveClient) =>
         logger.error(s"The client performing this request is not active - ${ex.getMessage}")
         createToken400(problemOf(StatusCodes.BadRequest, ex))
-      case Failure(_) =>
-        complete(StatusCodes.InternalServerError, problemOf(StatusCodes.InternalServerError, CreateTokenRequestError))
+      case Failure(ex) =>
+        logger.error(s"Error while creating a token for this request - ${ex.getMessage}")
+        complete(
+          StatusCodes.InternalServerError,
+          problemOf(StatusCodes.InternalServerError, CreateTokenRequestError(ex.getMessage))
+        )
     }
   }
 

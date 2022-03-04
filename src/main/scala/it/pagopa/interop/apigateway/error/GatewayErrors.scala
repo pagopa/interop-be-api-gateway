@@ -30,8 +30,8 @@ object GatewayErrors {
   final case class InactiveClient(clientId: UUID, errorMessages: List[String])
       extends ComponentError("0010", s"Client $clientId is inactive: ${errorMessages.mkString(", ")}")
 
-  final case object CreateTokenRequestError
-      extends ComponentError("0011", "Error while creating a token for this request")
+  final case class CreateTokenRequestError(error: String)
+      extends ComponentError("0011", s"Error while creating a token for this request - $error")
 
   final case class MissingActivePurposeVersion(purposeId: UUID)
       extends ComponentError("0012", s"There is no active version for purpose $purposeId")
