@@ -12,8 +12,8 @@ ThisBuild / libraryDependencies := Dependencies.Jars.`server`.map(m =>
 ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
 ThisBuild / version := ComputeVersion.version
 
-ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://gateway.interop.pdnd.dev/nexus/repository/maven-snapshots/"
-ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://gateway.interop.pdnd.dev/nexus/repository/maven-releases/"
+ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-snapshots/"
+ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-releases/"
 
 ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
