@@ -84,7 +84,8 @@ final case class AuthApiServiceImpl(
       (audience, tokenDuration) <- checkClientValidity(client, purposeId)
       token <- interopTokenGenerator
         .generate(
-          clientAssertion,
+          clientAssertion = clientAssertion,
+          subject = client.consumerId.toString,
           audience = audience.toList,
           customClaims = Map.empty,
           tokenIssuer = ApplicationConfiguration.interopIdIssuer,
