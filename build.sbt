@@ -1,4 +1,5 @@
 import ProjectSettings.ProjectFrom
+import com.typesafe.sbt.packager.docker.Cmd
 
 ThisBuild / scalaVersion := "2.13.5"
 ThisBuild / organization := "it.pagopa"
@@ -86,7 +87,6 @@ lazy val client = project
     name := "interop-be-api-gateway-client",
     scalacOptions := Seq(),
     scalafmtOnCompile := true,
-    version := (ThisBuild / version).value,
     libraryDependencies := Dependencies.Jars.client.map(m =>
       if (scalaVersion.value.startsWith("3.0"))
         m.withDottyCompat(scalaVersion.value)
@@ -94,6 +94,7 @@ lazy val client = project
         m
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
+    Docker / publish := {},
     publishTo := {
       val nexus = s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/"
 
@@ -108,14 +109,16 @@ lazy val root = (project in file("."))
   .settings(
     name := "interop-be-api-gateway",
     Test / parallelExecution := false,
+    scalafmtOnCompile := true,
     dockerBuildOptions ++= Seq("--network=host"),
     dockerRepository := Some(System.getenv("DOCKER_REPO")),
     dockerBaseImage := "adoptopenjdk:11-jdk-hotspot",
     daemonUser := "daemon",
-    Docker / version := (ThisBuild / version).value.replaceAll("-SNAPSHOT", "-latest").toLowerCase,
+    Docker / version := (ThisBuild / version).value.replace("-SNAPSHOT", "-latest").toLowerCase,
     Docker / packageName := s"${name.value}",
     Docker / dockerExposedPorts := Seq(8080),
-    scalafmtOnCompile := true
+    Docker / maintainer := "https://pagopa.it",
+    dockerCommands += Cmd("LABEL", s"org.opencontainers.image.source https://github.com/pagopa/${name.value}")
   )
   .aggregate(client)
   .dependsOn(generated)
