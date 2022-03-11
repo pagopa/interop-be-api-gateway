@@ -62,6 +62,7 @@ generateCode := {
 }
 
 (Compile / compile) := ((Compile / compile) dependsOn generateCode).value
+(Test / test) := ((Test / test) dependsOn generateCode).value
 
 Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "protobuf")
 
@@ -110,15 +111,8 @@ lazy val root = (project in file("."))
     dockerBuildOptions ++= Seq("--network=host"),
     dockerRepository := Some(System.getenv("DOCKER_REPO")),
     dockerBaseImage := "adoptopenjdk:11-jdk-hotspot",
-    dockerUpdateLatest := true,
     daemonUser := "daemon",
-    Docker / version := s"${
-      val buildVersion = (ThisBuild / version).value
-      if (buildVersion == "latest")
-        buildVersion
-      else
-        s"$buildVersion"
-    }".toLowerCase,
+    Docker / version := (ThisBuild / version).value.replaceAll("-SNAPSHOT", "-latest").toLowerCase,
     Docker / packageName := s"${name.value}",
     Docker / dockerExposedPorts := Seq(8080),
     scalafmtOnCompile := true
