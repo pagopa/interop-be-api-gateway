@@ -4,27 +4,26 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import cats.data.Validated
 import cats.implicits._
-import it.pagopa.interop.apigateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
-import it.pagopa.interop.apigateway.model._
-import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
-import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
   AgreementState => AgreementManagementApiAgreementState,
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
+import it.pagopa.interop.apigateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
+import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
   AttributeKind => AttributeRegistryManagementApiAttributeKind
 }
 import it.pagopa.interop.catalogmanagement.client.model.{
-  AttributeValue,
   Attribute => CatalogManagementApiAttribute,
   EService => CatalogManagementApiEService,
   EServiceDescriptor => CatalogManagementApiDescriptor,
   EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
+import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
 import it.pagopa.interop.purposemanagement.client.model.{
   PurposeVersionState,
@@ -143,14 +142,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     def toModel(descriptor: CatalogManagementApiDescriptor): EService =
       EService(eservice.id, eservice.name, version = descriptor.version, state = descriptor.state.toModel)
 
-    private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
-      def flattenGroup(group: Option[Seq[AttributeValue]]): Option[Seq[String]] = group.map(_.map(_.id))
-      val flattenAttributes                                                     = attribute.single.fold(flattenGroup(attribute.group))(a => Some(Seq(a.id)))
-
-      flattenAttributes
-        .fold(List.empty[UUID])(ids => ids.toList.traverse(_.toUUID).getOrElse(List.empty))
-        .toSet
-    }
+    private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] =
+      (attribute.group.sequence :+ attribute.single).flatten.traverse(_.id.toUUID).getOrElse(List.empty).toSet
 
     def isVerified(attribute: AgreementManagementApiVerifiedAttribute): Boolean = attribute.verified.contains(true)
 
