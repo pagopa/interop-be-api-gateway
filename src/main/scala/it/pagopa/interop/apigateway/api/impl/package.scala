@@ -19,6 +19,7 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.{
   AttributeKind => AttributeRegistryManagementApiAttributeKind
 }
 import it.pagopa.interop.catalogmanagement.client.model.{
+  AttributeValue,
   Attribute => CatalogManagementApiAttribute,
   EService => CatalogManagementApiEService,
   EServiceDescriptor => CatalogManagementApiDescriptor,
@@ -143,10 +144,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       EService(eservice.id, eservice.name, version = descriptor.version, state = descriptor.state.toModel)
 
     private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
-      val flattenAttributes: Option[Seq[String]] = for {
-        single <- attribute.single.map(_.id)
-        group  <- attribute.group
-      } yield group.map(_.id).appended(single)
+      def flattenGroup(group: Option[Seq[AttributeValue]]): Option[Seq[String]] = group.map(_.map(_.id))
+      val flattenAttributes                                                     = attribute.single.fold(flattenGroup(attribute.group))(a => Some(Seq(a.id)))
 
       flattenAttributes
         .fold(List.empty[UUID])(ids => ids.toList.traverse(_.toUUID).getOrElse(List.empty))
