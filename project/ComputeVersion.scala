@@ -13,11 +13,11 @@ object ComputeVersion {
   private val shortCommitHash: String  = "git rev-parse --short HEAD"
   private val gitOutput: String        = (thisCommitTag #|| branchNameIfHead #|| shortCommitHash).lineStream_!.head
 
-  private val tag: Regex = "([0-9]+)\\.([0-9]+)\\.([0-9]+)".r
+  val tag: Regex = "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$".r
 
-  val version = gitOutput match {
+  val version: String = gitOutput match {
     case tag(major, minor, patch) => s"$major.$minor.$patch"
-    case x                        => s"${x}-SNAPSHOT"
+    case x                        => s"$x-SNAPSHOT"
   }
 
 }
