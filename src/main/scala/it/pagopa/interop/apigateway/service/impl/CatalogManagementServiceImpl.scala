@@ -33,7 +33,7 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
       case ex @ ApiError(code, message, _, _, _) if code == 404 =>
         logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")
         Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-      case ex =>
+      case ex                                                   =>
         logger.error(s"$msg. Error: ${ex.getMessage}")
         Future.failed(ex)
     }

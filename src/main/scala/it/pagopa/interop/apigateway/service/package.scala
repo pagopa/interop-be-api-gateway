@@ -37,7 +37,7 @@ package object service {
 
     private def serializationFormats: Formats =
       DefaultFormats ++ Serializers.all ++ authorizationmanagement.client.api.EnumsSerializers.all
-    def serializeKey(key: Key): String = Serialization.write(key)(serializationFormats)
+    def serializeKey(key: Key): String        = Serialization.write(key)(serializationFormats)
   }
 
   object AttributeRegistryManagementInvoker {

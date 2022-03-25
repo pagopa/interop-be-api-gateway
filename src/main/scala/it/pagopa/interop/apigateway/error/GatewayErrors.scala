@@ -6,7 +6,7 @@ import java.util.UUID
 
 object GatewayErrors {
 
-  final case object Forbidden           extends ComponentError("0001", s"The user has no access to the requested resource")
+  final case object Forbidden extends ComponentError("0001", s"The user has no access to the requested resource")
   final case object InternalServerError extends ComponentError("0002", "There was an internal server error")
 
   final case object InvalidAgreementsInput

@@ -78,10 +78,10 @@ trait AuthorizationManagementDependency {
   val authorizationManagementClientApi: AuthorizationClientApi = AuthorizationClientApi(
     ApplicationConfiguration.authorizationManagementURL
   )
-  val authorizationManagementKeyApi: AuthorizationKeyApi = AuthorizationKeyApi(
+  val authorizationManagementKeyApi: AuthorizationKeyApi       = AuthorizationKeyApi(
     ApplicationConfiguration.authorizationManagementURL
   )
-  val authorizationManagementService =
+  val authorizationManagementService                           =
     new AuthorizationManagementServiceImpl(
       AuthorizationManagementInvoker(),
       authorizationManagementKeyApi,
@@ -122,20 +122,20 @@ object Main
 
   val dependenciesLoaded: Future[(JWTReader, ClientAssertionValidator, InteropTokenGenerator)] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
-    jwtReader = new DefaultJWTReader with PublicKeysHolder {
-      var publicKeyset: Map[KID, SerializedKey] = keyset
+    jwtReader                = new DefaultJWTReader with PublicKeysHolder {
+      var publicKeyset: Map[KID, SerializedKey]                                        = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
         getClaimsVerifier(audience = ApplicationConfiguration.interopAudience)
     }
     clientAssertionValidator = new DefaultClientAssertionValidator with PublicKeysHolder {
-      var publicKeyset: Map[KID, SerializedKey] = keyset
+      var publicKeyset: Map[KID, SerializedKey]                                        = keyset
       override protected val claimsVerifier: DefaultJWTClaimsVerifier[SecurityContext] =
         getClaimsVerifier(audience = ApplicationConfiguration.interopAudience)
     }
-    interopTokenGenerator = new DefaultInteropTokenGenerator with PrivateKeysHolder {
+    interopTokenGenerator    = new DefaultInteropTokenGenerator with PrivateKeysHolder {
       override val RSAPrivateKeyset: Map[KID, SerializedKey] =
         vaultService.readBase64EncodedData(ApplicationConfiguration.rsaPrivatePath)
-      override val ECPrivateKeyset: Map[KID, SerializedKey] =
+      override val ECPrivateKeyset: Map[KID, SerializedKey]  =
         Map.empty
     }
   } yield (jwtReader, clientAssertionValidator, interopTokenGenerator)
@@ -143,7 +143,7 @@ object Main
   dependenciesLoaded.transformWith {
     case Success((jwtReader, clientAssertionValidator, interopTokenGenerator)) =>
       launchApp(jwtReader, clientAssertionValidator, interopTokenGenerator)
-    case Failure(ex) =>
+    case Failure(ex)                                                           =>
       classicActorSystem.log.error(s"Startup error: ${ex.getMessage}")
       classicActorSystem.log.error(s"${ex.getStackTrace.mkString("\n")}")
       CoordinatedShutdown(classicActorSystem).run(StartupErrorShutdown)
@@ -160,11 +160,11 @@ object Main
       AkkaManagement.get(classicActorSystem).start()
     }
 
-    val authApiService: AuthApiService =
+    val authApiService: AuthApiService       =
       AuthApiServiceImpl(authorizationManagementService, clientAssertionValidator, interopTokenGenerator)
     val authApiMarshaller: AuthApiMarshaller = AuthApiMarshallerImpl
 
-    val gatewayApiService: GatewayApiService = GatewayApiServiceImpl(
+    val gatewayApiService: GatewayApiService       = GatewayApiServiceImpl(
       partyManagementService,
       agreementManagementService,
       catalogManagementService,
@@ -173,7 +173,7 @@ object Main
     )
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
-    val authApi: AuthApi = new AuthApi(
+    val authApi: AuthApi       = new AuthApi(
       authApiService,
       authApiMarshaller,
       SecurityDirectives.authenticateOAuth2("SecurityRealm", PassThroughAuthenticator)

@@ -55,34 +55,34 @@ final case class AuthApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val tokenAndChecker: Try[(String, ClientAssertionChecker)] = for {
-      m2mToken <- interopTokenGenerator.generateInternalToken(
+      m2mToken               <- interopTokenGenerator.generateInternalToken(
         jwtAlgorithmType = RSA,
         subject = jwtConfig.subject,
         audience = jwtConfig.audience.toList,
         tokenIssuer = jwtConfig.issuer,
         secondsDuration = jwtConfig.durationInSeconds
       )
-      clientUUID <- clientId.traverse(_.toUUID)
+      clientUUID             <- clientId.traverse(_.toUUID)
       clientAssertionRequest <- ValidClientAssertionRequest.from(
         clientAssertion,
         clientAssertionType,
         grantType,
         clientUUID
       )
-      checker <- jwtValidator.extractJwtInfo(clientAssertionRequest)
+      checker                <- jwtValidator.extractJwtInfo(clientAssertionRequest)
     } yield (m2mToken, checker)
 
     val result: Future[ClientCredentialsResponse] = for {
-      (m2mToken, checker) <- tokenAndChecker.toFuture
-      subjectUUID         <- checker.subject.toFutureUUID
-      publicKey <- authorizationManagementService
+      (m2mToken, checker)       <- tokenAndChecker.toFuture
+      subjectUUID               <- checker.subject.toFutureUUID
+      publicKey                 <- authorizationManagementService
         .getKey(subjectUUID, checker.kid)(m2mToken)
         .map(k => AuthorizationManagementInvoker.serializeKey(k.key))
       _                         <- checker.verify(publicKey).toFuture
       purposeId                 <- checker.purposeId.traverse(_.toFutureUUID)
       client                    <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
       (audience, tokenDuration) <- checkClientValidity(client, purposeId)
-      token <- interopTokenGenerator
+      token                     <- interopTokenGenerator
         .generate(
           clientAssertion = clientAssertion,
           subject = client.consumerId.toString,
@@ -95,14 +95,14 @@ final case class AuthApiServiceImpl(
     } yield ClientCredentialsResponse(access_token = token, token_type = Bearer, expires_in = tokenDuration)
 
     onComplete(result) {
-      case Success(token) => createToken200(token)
+      case Success(token)               => createToken200(token)
       case Failure(ex: PurposeNotFound) =>
         logger.error(s"Purpose not found for this client - ${ex.getMessage}")
         createToken400(problemOf(StatusCodes.BadRequest, ex))
-      case Failure(ex: InactiveClient) =>
+      case Failure(ex: InactiveClient)  =>
         logger.error(s"The client performing this request is not active - ${ex.getMessage}")
         createToken400(problemOf(StatusCodes.BadRequest, ex))
-      case Failure(ex) =>
+      case Failure(ex)                  =>
         logger.error(s"Error while creating a token for this request - ${ex.getMessage}")
         complete(
           StatusCodes.InternalServerError,
@@ -139,12 +139,12 @@ final case class AuthApiServiceImpl(
       case ClientKind.CONSUMER =>
         for {
           purposeUUID <- purposeId.toFuture(PurposeIdNotProvided)
-          purpose <- client.purposes
+          purpose     <- client.purposes
             .find(_.purposeId == purposeUUID)
             .toFuture(PurposeNotFound(client.id, purposeUUID))
-          checkState <- checkClientStates(purpose.states)
+          checkState  <- checkClientStates(purpose.states)
         } yield checkState
-      case ClientKind.API =>
+      case ClientKind.API      =>
         Future.successful(
           (ApplicationConfiguration.interopAudience.toSeq, ApplicationConfiguration.interopTokenDuration)
         )

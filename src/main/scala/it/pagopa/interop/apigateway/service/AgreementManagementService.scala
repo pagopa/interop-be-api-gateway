@@ -32,14 +32,14 @@ trait AgreementManagementService {
       agreements
         .filter(a => a.state == AgreementState.ACTIVE || a.state == AgreementState.SUSPENDED) match {
         case head :: Nil => Future.successful(head)
-        case Nil =>
+        case Nil         =>
           Future.failed(
             GenericComponentErrors
               .ResourceNotFoundError(s"agreement on (consumer, eservice): ($consumerUUID, $eserviceUUID)")
           )
         // This is the case that "should never happen" in whom the tuple (consumerUUID, eserviceUUID)
         // is no more exaustive in identifying a unique active/suspended agreement
-        case _ => Future.failed(GatewayErrors.InternalServerError)
+        case _           => Future.failed(GatewayErrors.InternalServerError)
       }
     )
   }

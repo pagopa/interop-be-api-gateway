@@ -48,16 +48,16 @@ final case class GatewayApiServiceImpl(
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
       agreementUUID  <- agreementId.toFutureUUID
-      agreement <-
+      agreement      <-
         agreementManagementService
           .getAgreementById(agreementUUID)(bearerToken)
           .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
     } yield agreement.toModel
 
     onComplete(result) {
-      case Success(agr) =>
+      case Success(agr)                                              =>
         getAgreement200(agr)
-      case Failure(Forbidden) =>
+      case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested agreement ${agreementId}")
         getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
@@ -81,32 +81,32 @@ final case class GatewayApiServiceImpl(
     val result: Future[Agreements] = for {
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts)
-      params <- (producerId, consumerId) match {
+      params         <- (producerId, consumerId) match {
         case (producer @ Some(_), None)                   => Future.successful((producer, Some(organizationId)))
         case (None, consumer @ Some(_))                   => Future.successful((Some(organizationId), consumer))
         case (Some(`organizationId`), consumer @ Some(_)) => Future.successful((Some(organizationId), consumer))
         case (producer @ Some(_), Some(`organizationId`)) => Future.successful((producer, Some(organizationId)))
         case (None, None)                                 => Future.failed(InvalidAgreementsInput)
-        //TODO! case (Some(x), Some(y)) if x === y
-        case _ => Future.failed(Forbidden)
+        // TODO! case (Some(x), Some(y)) if x === y
+        case _                                            => Future.failed(Forbidden)
       }
       (prod, cons) = params
       agreementState <- state.traverse(AgreementManagementApiAgreementState.fromValue(_).toFuture)
-      rawAgreements <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementState)(
+      rawAgreements  <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementState)(
         bearerToken
       )
       agreements = rawAgreements.map(_.toModel)
     } yield Agreements(agreements)
 
     onComplete(result) {
-      case Success(agreements) => getAgreements200(agreements)
+      case Success(agreements)             => getAgreements200(agreements)
       case Failure(InvalidAgreementsInput) =>
         logger.error(s"Error while getting agreements - ${InvalidAgreementsInput.getMessage}")
         getAgreements400(problemOf(StatusCodes.BadRequest, InvalidAgreementsInput))
-      case Failure(Forbidden) =>
+      case Failure(Forbidden)              =>
         logger.error("The user has no access to the requested agreements")
         getAgreements403(problemOf(StatusCodes.Forbidden, Forbidden))
-      case Failure(ex) => internalServerError(s"Error while getting agreements - ${ex.getMessage}")
+      case Failure(ex)                     => internalServerError(s"Error while getting agreements - ${ex.getMessage}")
     }
   }
 
@@ -123,7 +123,7 @@ final case class GatewayApiServiceImpl(
     } yield attribute
 
     onComplete(result) {
-      case Success(attribute) =>
+      case Success(attribute)                                        =>
         getAttribute200(attribute)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting attribute $attributeId - ${ex.getMessage}")
@@ -141,18 +141,18 @@ final case class GatewayApiServiceImpl(
       bearerToken  <- getFutureBearer(contexts)
       eserviceUUID <- eserviceId.toFutureUUID
       eservice     <- catalogManagementService.getEService(eserviceUUID)(bearerToken)
-      descriptor <- eservice.descriptors
+      descriptor   <- eservice.descriptors
         .find(_.id.toString == descriptorId)
         .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
     } yield eservice.toModel(descriptor)
 
     onComplete(result) {
-      case Success(eservice) =>
+      case Success(eservice)                                         =>
         getEService200(eservice)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting eservice $eserviceId - ${ex.getMessage}")
         getEService404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex: EServiceDescriptorNotFound) =>
+      case Failure(ex: EServiceDescriptorNotFound)                   =>
         logger.error(ex.getMessage)
         getEService404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) => internalServerError(s"Error while getting eservice - ${ex.getMessage}")
@@ -171,7 +171,7 @@ final case class GatewayApiServiceImpl(
     } yield organization.toModel
 
     onComplete(result) {
-      case Success(organization) => getOrganization200(organization)
+      case Success(organization)                                     => getOrganization200(organization)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting organization $organizationId - ${ex.getMessage}")
         getOrganization404(problemOf(StatusCodes.NotFound, ex))
@@ -189,7 +189,7 @@ final case class GatewayApiServiceImpl(
       bearerToken    <- getFutureBearer(contexts)
       organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
       agreementUUID  <- agreementId.toFutureUUID
-      rawAgreement <-
+      rawAgreement   <-
         agreementManagementService
           .getAgreementById(agreementUUID)(bearerToken)
           .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
@@ -205,14 +205,14 @@ final case class GatewayApiServiceImpl(
     } yield Attributes(attributeValidityStates)
 
     onComplete(result) {
-      case Success(agr) => getAgreementAttributes200(agr)
-      case Failure(Forbidden) =>
+      case Success(agr)                                              => getAgreementAttributes200(agr)
+      case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested attributes for agreement $agreementId")
         getAgreementAttributes403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting attributes for agreement $agreementId - ${ex.getMessage}")
         getAgreementAttributes404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex) =>
+      case Failure(ex)                                               =>
         internalServerError(s"Error while getting attributes for agreement $agreementId - ${ex.getMessage}")
     }
   }
@@ -227,20 +227,20 @@ final case class GatewayApiServiceImpl(
       subjectUUID <- getSubFuture(contexts).flatMap(_.toFutureUUID)
       purposeUUID <- purposeId.toFutureUUID
       purpose     <- purposeManagementService.getPurpose(purposeUUID)(bearerToken)
-      agreement <- agreementManagementService
+      agreement   <- agreementManagementService
         .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)(bearerToken)
         .ensure(Forbidden)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
     } yield agreement.toModel
 
     onComplete(result) {
-      case Success(agreement) => getAgreementByPurpose200(agreement)
-      case Failure(Forbidden) =>
+      case Success(agreement)                                        => getAgreementByPurpose200(agreement)
+      case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested agreement for purpose $purposeId")
         getAgreementByPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting the requested agreement for purpose $purposeId - ${ex.getMessage}")
         getAgreementByPurpose404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex) =>
+      case Failure(ex)                                               =>
         internalServerError(s"Error while getting the requested agreement for purpose $purposeId - ${ex.getMessage}")
     }
   }
@@ -277,17 +277,17 @@ final case class GatewayApiServiceImpl(
     } yield actualPurposeVersion
 
     onComplete(result) {
-      case Success(agr) => getPurpose200(agr)
-      case Failure(Forbidden) =>
+      case Success(agr)                                              => getPurpose200(agr)
+      case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested purpose $purposeId")
         getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting the requested purpose $purposeId - ${ex.getMessage}")
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(e: MissingActivePurposeVersion) =>
+      case Failure(e: MissingActivePurposeVersion)                   =>
         logger.error(s"Unable to find an active version of purpose $purposeId")
         getPurpose404(problemOf(StatusCodes.NotFound, e))
-      case Failure(ex) =>
+      case Failure(ex)                                               =>
         internalServerError(s"Error while getting the requested purpose $purposeId - ${ex.getMessage}")
     }
   }
@@ -299,10 +299,10 @@ final case class GatewayApiServiceImpl(
   ): Route = {
 
     val result: Future[Purposes] = for {
-      bearerToken   <- getFutureBearer(contexts)
-      subjectUUID   <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-      agreementUUID <- agreementId.toFutureUUID
-      agreement <- agreementManagementService
+      bearerToken    <- getFutureBearer(contexts)
+      subjectUUID    <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      agreementUUID  <- agreementId.toFutureUUID
+      agreement      <- agreementManagementService
         .getAgreementById(agreementUUID)(bearerToken)
         .ensure(Forbidden)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
       clientPurposes <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(bearerToken)
@@ -310,19 +310,19 @@ final case class GatewayApiServiceImpl(
     } yield purposes
 
     onComplete(result) {
-      case Success(purposes) => getAgreementPurposes200(purposes)
-      case Failure(e: MissingActivePurposesVersions) =>
+      case Success(purposes)                                         => getAgreementPurposes200(purposes)
+      case Failure(e: MissingActivePurposesVersions)                 =>
         logger.error(
           s"Unable to find active or suspended versions for purposes ${e.purposesIds.mkString(", ")} in the agreement $agreementId"
         )
         getAgreementPurposes200(Purposes(purposes = Seq.empty))
-      case Failure(Forbidden) =>
+      case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested agreement $agreementId")
         getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex) =>
+      case Failure(ex)                                               =>
         internalServerError(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")
     }
   }

@@ -153,9 +153,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       }
 
     def attributeUUIDSummary(
-      @nowarn certifiedFromParty: Set[UUID], //TODO replace with the correct model once it's created
+      @nowarn certifiedFromParty: Set[UUID],   // TODO replace with the correct model once it's created
       verifiedFromAgreement: Set[AgreementManagementApiVerifiedAttribute],
-      @nowarn declaredFromAgreement: Set[UUID] //TODO replace with the correct model once it's created
+      @nowarn declaredFromAgreement: Set[UUID] // TODO replace with the correct model once it's created
     ): Set[AttributeValidityState] = eservice.attributes.verified.toSet
       .flatMap(flatAttributes)
       .map(uuid =>
@@ -180,7 +180,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         name = organization.description,
         category = organization.attributes.headOption
           .map(_.description)
-          .getOrElse("UNKOWN") //TODO, hey Jude consider to make this retrieval better
+          .getOrElse("UNKOWN") // TODO, hey Jude consider to make this retrieval better
       )
   }
 
