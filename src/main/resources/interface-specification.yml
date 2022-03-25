@@ -76,6 +76,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -124,6 +127,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/purposes/{purposeId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -169,6 +175,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/purposes/{purposeId}/agreement':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -216,6 +225,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/attributes/{attributeId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -263,6 +275,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}/descriptors/{descriptorId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -318,6 +333,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/organizations/{organizationId}':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -366,6 +384,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   /agreements:
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -436,6 +457,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}/purposes':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -482,6 +506,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}/attributes':
+    parameters:
+      - $ref: '#/components/parameters/CorrelationIdHeader'
+      - $ref: '#/components/parameters/IpAddress'
     get:
       tags:
         - gateway
@@ -528,6 +555,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 components:
+  parameters:
+    CorrelationIdHeader:
+      in: header
+      name: X-Correlation-Id
+      required: true
+      schema:
+        type: string
+    IpAddress:
+      in: header
+      name: X-Forwarded-For
+      schema:
+        type: string
   schemas:
     AccessTokenRequest:
       type: object

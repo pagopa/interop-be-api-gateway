@@ -1,28 +1,35 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.extractHeaders
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)
-    extends AttributeRegistryManagementService {
+class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)(implicit
+  ec: ExecutionContext
+) extends AttributeRegistryManagementService {
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def getAttributeById(attributeId: UUID)(bearerToken: String): Future[Attribute] = {
-    val request: ApiRequest[Attribute] =
-      api.getAttributeById(attributeId = attributeId)(BearerToken(bearerToken))
-    invoker.invoke(
-      request,
-      s"Retrieving attribute by id ${attributeId.toString}",
-      handleCommonErrors(s"attribute $attributeId")
-    )
+  override def getAttributeById(attributeId: UUID)(contexts: Seq[(String, String)]): Future[Attribute] = {
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
+        BearerToken(bearerToken)
+      )
+      result <- invoker.invoke(
+        request,
+        s"Retrieving attribute by id ${attributeId.toString}",
+        handleCommonErrors(s"attribute $attributeId")
+      )
+    } yield result
   }
 
   private[service] def handleCommonErrors[T](

@@ -15,12 +15,12 @@ trait AgreementManagementService {
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
     state: Option[AgreementState] = None
-  )(bearerToken: String): Future[Seq[Agreement]]
+  )(contexts: Seq[(String, String)]): Future[Seq[Agreement]]
 
-  def getAgreementById(agreementId: UUID)(bearerToken: String): Future[Agreement]
+  def getAgreementById(agreementId: UUID)(contexts: Seq[(String, String)]): Future[Agreement]
 
   def getActiveOrSuspendedAgreementByConsumerAndEserviceId(consumerUUID: UUID, eserviceUUID: UUID)(
-    bearerToken: String
+    contexts: Seq[(String, String)]
   )(implicit ec: ExecutionContext): Future[Agreement] = {
     getAgreements(
       producerId = None,
@@ -28,7 +28,7 @@ trait AgreementManagementService {
       eserviceId = Some(eserviceUUID.toString),
       descriptorId = None,
       state = None
-    )(bearerToken).flatMap(agreements =>
+    )(contexts).flatMap(agreements =>
       agreements
         .filter(a => a.state == AgreementState.ACTIVE || a.state == AgreementState.SUSPENDED) match {
         case head :: Nil => Future.successful(head)
