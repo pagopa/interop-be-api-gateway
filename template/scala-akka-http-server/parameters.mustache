@@ -1,0 +1,12 @@
+{{^formParams.isEmpty}}
+    {{#formParams}}{{paramName}} = {{paramName}}, {{/formParams}}
+{{/formParams.isEmpty}}
+{{^queryParams.isEmpty}}
+    {{#queryParams}}{{paramName}} = {{paramName}}, {{/queryParams}}
+{{/queryParams.isEmpty}}
+{{^pathParams.isEmpty}}
+    {{#pathParams}}{{paramName}} = {{paramName}}, {{/pathParams}}
+{{/pathParams.isEmpty}}
+{{^bodyParam.isEmpty}}
+    {{#bodyParam}}{{paramName}} = {{paramName}}, {{/bodyParam}}
+{{/bodyParam.isEmpty}}

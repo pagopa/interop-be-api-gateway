@@ -57,8 +57,8 @@ import akka.http.scaladsl.server.directives.FileInfo
             {{#headerParams}}{{#required}}headerValueByName{{/required}}{{^required}}optionalHeaderValueByName{{/required}}("{{baseName}}") { {{paramName}} => {{/headerParams}}{{/headerParams.isEmpty}}{{^cookieParams.isEmpty}}
             {{#cookieParams}}{{#required}}cookie({{/required}}{{^required}}optionalCookie({{/required}}"{{baseName}}"){ {{paramName}} => {{/cookieParams}}{{/cookieParams.isEmpty}}{{#isMultipart}}
             {{> multipart}}{{/isMultipart}}{{^isMultipart}}{{> noMultipart}}{{/isMultipart}}{{^cookieParams.isEmpty}}
-            }{{/cookieParams.isEmpty}}{{^headerParams.isEmpty}}
-            }{{/headerParams.isEmpty}}{{^queryParams.isEmpty}}
+            }{{/cookieParams.isEmpty}}{{#headerParams}}
+            }{{/headerParams}}{{^queryParams.isEmpty}}
             }{{/queryParams.isEmpty}}
             }
           }

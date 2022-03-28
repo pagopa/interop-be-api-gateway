@@ -26,6 +26,7 @@ import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
@@ -45,10 +46,10 @@ final case class AuthApiServiceImpl(
   lazy val jwtConfig: JWTInternalTokenConfig = JWTConfiguration.jwtInternalTokenConfig
 
   override def createToken(
+    clientId: Option[String],
     clientAssertion: String,
     clientAssertionType: String,
-    grantType: String,
-    clientId: Option[String]
+    grantType: String
   )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerClientCredentialsResponse: ToEntityMarshaller[ClientCredentialsResponse],
@@ -73,14 +74,15 @@ final case class AuthApiServiceImpl(
     } yield (m2mToken, checker)
 
     val result: Future[ClientCredentialsResponse] = for {
-      (m2mToken, checker)       <- tokenAndChecker.toFuture
+      (m2mToken, checker) <- tokenAndChecker.toFuture
+      m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken)
       subjectUUID               <- checker.subject.toFutureUUID
       publicKey                 <- authorizationManagementService
-        .getKey(subjectUUID, checker.kid)(m2mToken)
+        .getKey(subjectUUID, checker.kid)(m2mContexts)
         .map(k => AuthorizationManagementInvoker.serializeKey(k.key))
       _                         <- checker.verify(publicKey).toFuture
       purposeId                 <- checker.purposeId.traverse(_.toFutureUUID)
-      client                    <- authorizationManagementService.getClient(subjectUUID)(m2mToken)
+      client                    <- authorizationManagementService.getClient(subjectUUID)(m2mContexts)
       (audience, tokenDuration) <- checkClientValidity(client, purposeId)
       token                     <- interopTokenGenerator
         .generate(

@@ -1,0 +1,12 @@
+{{^formParams.isEmpty}}
+    {{#formParams}}{{paramName}}: {{#isFile}}(FileInfo, File){{/isFile}}{{^isFile}}{{^required}}{{^vendorExtensions.x-has-default-value}}Option[{{/vendorExtensions.x-has-default-value}}{{/required}}{{dataType}}{{^required}}{{^vendorExtensions.x-has-default-value}}]{{/vendorExtensions.x-has-default-value}}{{/required}}{{/isFile}}, {{/formParams}}
+{{/formParams.isEmpty}}
+{{^queryParams.isEmpty}}
+    {{#queryParams}}{{paramName}}: {{#isFile}}(FileInfo, File){{/isFile}}{{^isFile}}{{^required}}{{^vendorExtensions.x-has-default-value}}Option[{{/vendorExtensions.x-has-default-value}}{{/required}}{{dataType}}{{^required}}{{^vendorExtensions.x-has-default-value}}]{{/vendorExtensions.x-has-default-value}}{{/required}}{{/isFile}}, {{/queryParams}}
+{{/queryParams.isEmpty}}
+{{^pathParams.isEmpty}}
+    {{#pathParams}}{{paramName}}: {{#isFile}}(FileInfo, File){{/isFile}}{{^isFile}}{{^required}}{{^vendorExtensions.x-has-default-value}}Option[{{/vendorExtensions.x-has-default-value}}{{/required}}{{dataType}}{{^required}}{{^vendorExtensions.x-has-default-value}}]{{/vendorExtensions.x-has-default-value}}{{/required}}{{/isFile}}, {{/pathParams}}
+{{/pathParams.isEmpty}}
+{{^bodyParam.isEmpty}}
+    {{#bodyParam}}{{paramName}}: {{#isFile}}(FileInfo, File){{/isFile}}{{^isFile}}{{^required}}{{^vendorExtensions.x-has-default-value}}Option[{{/vendorExtensions.x-has-default-value}}{{/required}}{{dataType}}{{^required}}{{^vendorExtensions.x-has-default-value}}]{{/vendorExtensions.x-has-default-value}}{{/required}}{{/isFile}}, {{/bodyParam}}
+{{/bodyParam.isEmpty}}
