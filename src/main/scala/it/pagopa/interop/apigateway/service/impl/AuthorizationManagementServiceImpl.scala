@@ -5,8 +5,6 @@ import it.pagopa.interop.authorizationmanagement.client.api.{ClientApi, KeyApi}
 import it.pagopa.interop.authorizationmanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.authorizationmanagement.client.model._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.commons.utils.extractHeaders
-import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
@@ -20,7 +18,7 @@ class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker
 
   override def getKey(clientId: UUID, kid: String)(contexts: Seq[(String, String)]): Future[ClientKey] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
       request = keyApi.getClientKeyById(xCorrelationId = correlationId, clientId, kid, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
@@ -31,7 +29,7 @@ class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker
   override def getClient(clientId: UUID)(contexts: Seq[(String, String)]): Future[Client] = {
 
     for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
       request = clientApi.getClient(xCorrelationId = correlationId, clientId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
