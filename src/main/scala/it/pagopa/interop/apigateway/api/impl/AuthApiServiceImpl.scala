@@ -76,8 +76,8 @@ final case class AuthApiServiceImpl(
     val result: Future[ClientCredentialsResponse] = for {
       (m2mToken, checker) <- tokenAndChecker.toFuture
       m2mContexts = Seq(CORRELATION_ID_HEADER -> UUID.randomUUID().toString, BEARER -> m2mToken)
-      clientUUID         <- checker.subject.toFutureUUID
-      publicKey <- authorizationManagementService
+      clientUUID                <- checker.subject.toFutureUUID
+      publicKey                 <- authorizationManagementService
         .getKey(clientUUID, checker.kid)(m2mContexts)
         .map(k => AuthorizationManagementInvoker.serializeKey(k.key))
       _                         <- checker.verify(publicKey).toFuture
