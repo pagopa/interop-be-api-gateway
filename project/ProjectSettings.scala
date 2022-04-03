@@ -10,7 +10,7 @@ import scala.util.Try
   */
 object ProjectSettings {
 
-  //TODO since Git 2.22 we could use the following command instead: git branch --show-current
+  // TODO since Git 2.22 we could use the following command instead: git branch --show-current
   private val currentBranch: Option[String] = Try(
     Process(s"git rev-parse --abbrev-ref HEAD").lineStream_!.head
   ).toOption
@@ -22,7 +22,7 @@ object ProjectSettings {
     case _                                   => "0.0"
   }
 
-  //lifts some useful data in BuildInfo instance
+  // lifts some useful data in BuildInfo instance
   val buildInfoExtra: Seq[BuildInfoKey] = Seq[BuildInfoKey](
     "ciBuildNumber"    -> sys.env.get("BUILD_NUMBER"),
     "commitSha"        -> commitSha,
