@@ -5,6 +5,7 @@ object Versions {
   lazy val akkaPersistenceS3Version = "1.0.16"
   lazy val akkaVersion              = "2.6.17"
   lazy val catsVersion              = "2.7.0"
+  lazy val dynamoDBVersion          = "2.17.160"
   lazy val jacksonVersion   = "2.11.4" // This cannot be updated yet because akka-serialization use 2.11.x version
   lazy val json4sVersion    = "4.0.4"
   lazy val kamonVersion     = "2.5.0"
@@ -13,6 +14,7 @@ object Versions {
   lazy val mustacheVersion  = "0.9.10"
   lazy val scalaMockVersion = "5.2.0"
   lazy val scalatestVersion = "3.2.11"
+  lazy val scanamoVersion   = "1.0.0-M19"
 }
 
 object PagopaVersions {

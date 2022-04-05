@@ -49,6 +49,14 @@ object Dependencies {
     lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
   }
 
+  private[this] object aws {
+    lazy val dynamoDB = "software.amazon.awssdk" % "dynamodb" % dynamoDBVersion
+  }
+
+  private[this] object scanamo {
+    lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
+  }
+
   private[this] object scalpb {
     lazy val namespace = "com.thesamet.scalapb"
     lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
@@ -106,9 +114,9 @@ object Dependencies {
         jackson.databind    % Compile,
         jackson.scalaModule % Compile
       )
-    lazy val `server`: Seq[ModuleID] = Seq(
+    lazy val `server`: Seq[ModuleID]  = Seq(
       // For making Java 12 happy
-      "javax.annotation" % "javax.annotation-api" % "1.3.2" % "compile",
+      "javax.annotation"                 % "javax.annotation-api" % "1.3.2" % "compile",
       //
       akka.actor                         % Compile,
       akka.actorTyped                    % Compile,
@@ -120,6 +128,7 @@ object Dependencies {
       akka.serialization                 % Compile,
       akka.slf4j                         % Compile,
       akka.stream                        % Compile,
+      aws.dynamoDB                       % Compile,
       cats.core                          % Compile,
       kamon.bundle                       % Compile,
       kamon.prometheus                   % Compile,
@@ -134,14 +143,14 @@ object Dependencies {
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
       pagopa.vault                       % Compile,
-      scalpb.core                        % "protobuf",
+      scanamo.scanamo                    % Compile,
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
       akka.testkit                       % Test,
       scalatest.core                     % Test,
       scalamock.core                     % Test
     )
-    lazy val client: Seq[ModuleID] =
+    lazy val client: Seq[ModuleID]    =
       Seq(
         akka.stream     % Compile,
         akka.http       % Compile,
