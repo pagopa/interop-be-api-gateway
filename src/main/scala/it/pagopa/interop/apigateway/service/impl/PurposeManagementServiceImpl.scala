@@ -2,7 +2,9 @@ package it.pagopa.interop.apigateway.service.impl
 
 import cats.implicits._
 import it.pagopa.interop.apigateway.service.{PurposeManagementInvoker, PurposeManagementService}
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.partymanagement.client.invoker.ApiError
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.purposemanagement.client.invoker.BearerToken
@@ -19,7 +21,7 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
 
   override def getPurpose(purposeId: UUID)(contexts: Seq[(String, String)]): Future[Purpose] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(BearerToken(bearerToken))
       result <- invoker.invoke(request, "Invoking getPurpose", handleCommonErrors(s"purpose $purposeId"))
     } yield result
@@ -27,7 +29,7 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
 
   override def getPurposes(eserviceId: UUID, consumerId: UUID)(contexts: Seq[(String, String)]): Future[Purposes] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getPurposes(
         xCorrelationId = correlationId,
         xForwardedFor = ip,
