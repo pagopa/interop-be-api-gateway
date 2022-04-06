@@ -164,7 +164,7 @@ final case class GatewayApiServiceImpl(
     val result: Future[Organization] = for {
       bearerToken      <- getFutureBearer(contexts)
       organizationUUID <- organizationId.toFutureUUID
-      organization     <- partyManagementService.getOrganization(organizationUUID)(bearerToken)
+      organization     <- partyManagementService.getInstitution(organizationUUID)(bearerToken)
     } yield organization.toModel
 
     onComplete(result) {
