@@ -15,6 +15,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.agreementmanagement.client.model.{AgreementState => AgreementManagementApiAgreementState}
+import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import org.slf4j.LoggerFactory
 
@@ -45,7 +46,7 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
   ): Route = {
     val result: Future[Agreement] = for {
-      organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
       agreementUUID  <- agreementId.toFutureUUID
       agreement      <-
         agreementManagementService
@@ -78,7 +79,7 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Agreements] = for {
-      organizationId <- getSubFuture(contexts)
+      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM)
       params         <- (producerId, consumerId) match {
         case (producer @ Some(_), None)                   => Future.successful((producer, Some(organizationId)))
         case (None, consumer @ Some(_))                   => Future.successful((Some(organizationId), consumer))
@@ -182,7 +183,7 @@ final case class GatewayApiServiceImpl(
   ): Route = {
 
     val result: Future[Attributes] = for {
-      organizationId <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
       agreementUUID  <- agreementId.toFutureUUID
       rawAgreement   <-
         agreementManagementService
@@ -218,12 +219,12 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
   ): Route = {
     val result: Future[Agreement] = for {
-      subjectUUID <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-      purposeUUID <- purposeId.toFutureUUID
-      purpose     <- purposeManagementService.getPurpose(purposeUUID)(contexts)
-      agreement   <- agreementManagementService
+      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
+      purposeUUID    <- purposeId.toFutureUUID
+      purpose        <- purposeManagementService.getPurpose(purposeUUID)(contexts)
+      agreement      <- agreementManagementService
         .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)(contexts)
-        .ensure(Forbidden)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
+        .ensure(Forbidden)(a => a.consumerId == organizationId || a.producerId == organizationId)
     } yield agreement.toModel
 
     onComplete(result) {
@@ -254,18 +255,18 @@ final case class GatewayApiServiceImpl(
         .map(_.producerId == subject)
         .ifM(Future.successful(purpose), Future.failed(Forbidden))
 
-    def getPurposeIfAuthorized(subject: UUID, purposeUUID: UUID): Future[PurposeManagementApiPurpose] =
+    def getPurposeIfAuthorized(organizationId: UUID, purposeId: UUID): Future[PurposeManagementApiPurpose] =
       purposeManagementService
-        .getPurpose(purposeUUID)(contexts)
+        .getPurpose(purposeId)(contexts)
         .flatMap(purpose =>
-          if (purpose.consumerId == subject) Future.successful(purpose)
-          else validatePurposeIfSubjectIsProducer(subject, purpose)
+          if (purpose.consumerId == organizationId) Future.successful(purpose)
+          else validatePurposeIfSubjectIsProducer(organizationId, purpose)
         )
 
     val result: Future[Purpose] = for {
-      subjectUUID          <- getSubFuture(contexts).flatMap(_.toFutureUUID)
+      organizationUUID     <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
       purposeUUID          <- purposeId.toFutureUUID
-      purpose              <- getPurposeIfAuthorized(subjectUUID, purposeUUID)
+      purpose              <- getPurposeIfAuthorized(organizationUUID, purposeUUID)
       actualPurposeVersion <- purpose.toModel.toFuture
     } yield actualPurposeVersion
 
@@ -292,13 +293,13 @@ final case class GatewayApiServiceImpl(
   ): Route = {
 
     val result: Future[Purposes] = for {
-      subjectUUID    <- getSubFuture(contexts).flatMap(_.toFutureUUID)
-      agreementUUID  <- agreementId.toFutureUUID
-      agreement      <- agreementManagementService
+      organizationUUID <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
+      agreementUUID    <- agreementId.toFutureUUID
+      agreement        <- agreementManagementService
         .getAgreementById(agreementUUID)(contexts)
-        .ensure(Forbidden)(a => a.consumerId == subjectUUID || a.producerId == subjectUUID)
-      clientPurposes <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(contexts)
-      purposes       <- clientPurposes.toModel.toFuture
+        .ensure(Forbidden)(a => a.consumerId == organizationUUID || a.producerId == organizationUUID)
+      clientPurposes   <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(contexts)
+      purposes         <- clientPurposes.toModel.toFuture
     } yield purposes
 
     onComplete(result) {
