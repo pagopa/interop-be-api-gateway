@@ -24,7 +24,7 @@ import it.pagopa.interop.catalogmanagement.client.model.{
 import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.partymanagement.client.model.{Organization => PartyManagementApiOrganization}
+import it.pagopa.interop.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
 import it.pagopa.interop.purposemanagement.client.model.{
   PurposeVersionState,
   Purpose => PurposeManagementApiPurpose,
@@ -173,12 +173,12 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         .flatMap(flatAttributes)
   }
 
-  implicit class EnrichedOrganization(private val organization: PartyManagementApiOrganization) extends AnyVal {
+  implicit class EnrichedInstitution(private val institution: PartyManagementApiInstitution) extends AnyVal {
     def toModel: Organization =
       Organization(
-        id = organization.id,
-        name = organization.description,
-        category = organization.attributes.headOption
+        id = institution.id,
+        name = institution.description,
+        category = institution.attributes.headOption
           .map(_.description)
           .getOrElse("UNKOWN") // TODO, hey Jude consider to make this retrieval better
       )
