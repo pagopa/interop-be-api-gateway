@@ -31,8 +31,6 @@ import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
-import it.pagopa.interop.commons.vault.service.VaultService
-import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, DefaultVaultService}
 import it.pagopa.interop.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
@@ -63,10 +61,6 @@ trait PartyManagementDependency {
   )
 }
 
-trait VaultServiceDependency {
-  val vaultService: VaultService = new DefaultVaultService with DefaultVaultClient.DefaultClientInstance
-}
-
 trait AttributeRegistryManagementDependency {
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
     ApplicationConfiguration.attributeRegistryManagementURL
@@ -86,7 +80,6 @@ trait PurposeManagementDependency {
 object Main
     extends App
     with CORSSupport
-    with VaultServiceDependency
     with AgreementManagementDependency
     with CatalogManagementDependency
     with PartyManagementDependency

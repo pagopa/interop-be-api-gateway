@@ -43,7 +43,6 @@ object Dependencies {
 
     lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
-    lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
   }
 
   private[this] object scalpb {
@@ -129,7 +128,6 @@ object Dependencies {
       pagopa.jwt                         % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
-      pagopa.vault                       % Compile,
       scalpb.core                        % "protobuf",
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
