@@ -14,9 +14,9 @@ class PartyManagementServiceImpl(invoker: PartyManagementInvoker, api: PartyApi)
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def getOrganization(organizationId: UUID)(bearerToken: String): Future[Organization] = {
-    val request: ApiRequest[Organization] = api.getOrganizationById(organizationId)(BearerToken(bearerToken))
-    invoker.invoke(request, "Retrieve Organization", handleCommonErrors(s"organization $organizationId"))
+  override def getInstitution(institutionId: UUID)(bearerToken: String): Future[Institution] = {
+    val request: ApiRequest[Institution] = api.getInstitutionById(institutionId)(BearerToken(bearerToken))
+    invoker.invoke(request, "Retrieve Institution", handleCommonErrors(s"institution $institutionId"))
   }
 
   private[service] def handleCommonErrors[T](

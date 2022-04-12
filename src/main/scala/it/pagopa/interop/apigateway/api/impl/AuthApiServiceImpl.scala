@@ -26,7 +26,7 @@ import it.pagopa.interop.commons.jwt.{JWTConfiguration, JWTInternalTokenConfig}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
-import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER}
+import it.pagopa.interop.commons.utils.{BEARER, CORRELATION_ID_HEADER, PURPOSE_ID_CLAIM, ORGANIZATION_ID_CLAIM}
 import org.slf4j.LoggerFactory
 
 import java.util.UUID
@@ -84,11 +84,12 @@ final case class AuthApiServiceImpl(
       purposeId                 <- checker.purposeId.traverse(_.toFutureUUID)
       client                    <- authorizationManagementService.getClient(clientUUID)(m2mContexts)
       (audience, tokenDuration) <- checkClientValidity(client, purposeId)
+      customClaims              <- getCustomClaims(client, purposeId)
       token                     <- interopTokenGenerator
         .generate(
           clientAssertion = clientAssertion,
           audience = audience.toList,
-          customClaims = Map.empty,
+          customClaims = customClaims,
           tokenIssuer = ApplicationConfiguration.interopIdIssuer,
           validityDurationInSeconds = tokenDuration.toLong
         )
@@ -151,5 +152,11 @@ final case class AuthApiServiceImpl(
         )
     }
   }
+
+  private def getCustomClaims(client: Client, purposeId: Option[UUID]): Future[Map[String, String]] =
+    client.kind match {
+      case ClientKind.CONSUMER => purposeId.toFuture(PurposeIdNotProvided).map(p => Map(PURPOSE_ID_CLAIM -> p.toString))
+      case ClientKind.API      => Future.successful(Map(ORGANIZATION_ID_CLAIM -> client.consumerId.toString))
+    }
 
 }

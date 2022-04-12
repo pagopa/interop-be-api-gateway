@@ -15,6 +15,7 @@ object ApplicationConfiguration {
   def partyManagementURL: String             = config.getString("services.party-management")
   def attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
   def purposeManagementURL: String           = config.getString("services.purpose-management")
+  def notifierURL: String                    = config.getString("services.notifier")
 
   def interopIdIssuer: String = config.getString("interop-api-gateway.issuer")
 

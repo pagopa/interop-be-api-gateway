@@ -419,50 +419,38 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/notifications':
+  '/events':
     get:
       tags:
         - gateway
-      summary: Get list of notifications
-      description: Retrieves the list of notifications sent to the caller
-      operationId: getNotificationsFromId
+      summary: Get list of events
+      description: Retrieves the list of events sent to the caller
+      operationId: getEventsFromId
       security:
         - bearerAuth: [ ]
       parameters:
         - name: lastEventId
           in: query
-          description: returns received notification starting from this id
+          description: returns organization events starting from this id
+          required: true
           schema:
             type: string
         - name: limit
           in: query
-          description: the number of notifications returned by this response
+          description: the number of events returned by this response
           schema:
             type: integer
             format: int32
             minimum: 1
             maximum: 500
             default: 100
-        - name: offset
-          in: query
-          description: the offset for paging this response
-          schema:
-            type: integer
-            format: int32
       responses:
         '200':
-          description: Notifications
+          description: Messages
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Notifications'
-          links:
-            GetNotifications:
-              operationId: getNotificationsFromId
-              parameters:
-                lastEventId: '$responde.body#/lastEventId'
-                limit: '$response.body#/limit'
-                offset: '$response.body#/offset'
+                $ref: '#/components/schemas/Messages'
         '400':
           description: Bad request
           content:
@@ -475,14 +463,8 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
         '404':
-          description: Notifications not found
+          description: Events not found
           content:
             application/problem+json:
               schema:
@@ -816,25 +798,27 @@ components:
             $ref: '#/components/schemas/Agreement'
       required:
         - agreements
-    Notifications:
+    Messages:
       type: object
       properties:
         limit:
           type: integer
           format: int32
-        start:
-          type: integer
-          format: int32
         size:
           type: integer
           format: int32
-        notifications:
+        nextId:
+          type: string
+        messages:
           type: array
           items:
-            $ref: '#/components/schemas/Notification'
+            $ref: '#/components/schemas/Message'
       required:
-        - notification
-    Notification:
+        - messages
+        - size
+        - nextId
+        - limit
+    Message:
       properties:
         eventId:
           type: string

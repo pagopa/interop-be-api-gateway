@@ -44,22 +44,12 @@ object Dependencies {
     lazy val purposeManagement =
       namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
 
+    lazy val notifier =
+      namespace %% "interop-be-notifier-client" % notifierVersion
+
     lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
     lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
-  }
-
-  private[this] object aws {
-    lazy val dynamoDB = "software.amazon.awssdk" % "dynamodb" % dynamoDBVersion
-  }
-
-  private[this] object scanamo {
-    lazy val scanamo = "org.scanamo" %% "scanamo" % scanamoVersion
-  }
-
-  private[this] object scalpb {
-    lazy val namespace = "com.thesamet.scalapb"
-    lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
   }
 
   private[this] object cats {
@@ -128,7 +118,6 @@ object Dependencies {
       akka.serialization                 % Compile,
       akka.slf4j                         % Compile,
       akka.stream                        % Compile,
-      aws.dynamoDB                       % Compile,
       cats.core                          % Compile,
       kamon.bundle                       % Compile,
       kamon.prometheus                   % Compile,
@@ -140,10 +129,10 @@ object Dependencies {
       pagopa.catalogManagement           % Compile,
       pagopa.jwt                         % Compile,
       pagopa.authorizationManagement     % Compile,
+      pagopa.notifier                    % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
       pagopa.vault                       % Compile,
-      scanamo.scanamo                    % Compile,
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
       akka.testkit                       % Test,

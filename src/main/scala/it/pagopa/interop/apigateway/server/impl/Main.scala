@@ -30,11 +30,11 @@ import it.pagopa.interop.authorizationmanagement.client.api.{
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.impl.{
   DefaultClientAssertionValidator,
-  DefaultJWTReader,
   DefaultInteropTokenGenerator,
+  DefaultJWTReader,
   getClaimsVerifier
 }
-import it.pagopa.interop.commons.jwt.service.{ClientAssertionValidator, JWTReader, InteropTokenGenerator}
+import it.pagopa.interop.commons.jwt.service.{ClientAssertionValidator, InteropTokenGenerator, JWTReader}
 import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
@@ -44,6 +44,7 @@ import it.pagopa.interop.commons.vault.service.impl.{DefaultVaultClient, Default
 import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
+import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
@@ -72,6 +73,10 @@ trait PartyManagementDependency {
     PartyManagementInvoker(),
     PartyManagementApi(ApplicationConfiguration.partyManagementURL)
   )
+}
+
+trait NotifierDependency {
+  val notifierService = new NotifierServiceImpl(NotifierInvoker(), EventsApi(ApplicationConfiguration.notifierURL))
 }
 
 trait AuthorizationManagementDependency {
@@ -118,7 +123,8 @@ object Main
     with CatalogManagementDependency
     with PartyManagementDependency
     with AttributeRegistryManagementDependency
-    with PurposeManagementDependency {
+    with PurposeManagementDependency
+    with NotifierDependency {
 
   val dependenciesLoaded: Future[(JWTReader, ClientAssertionValidator, InteropTokenGenerator)] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
@@ -169,7 +175,8 @@ object Main
       agreementManagementService,
       catalogManagementService,
       attributeRegistryManagementService,
-      purposeManagementService
+      purposeManagementService,
+      notifierService
     )
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 
