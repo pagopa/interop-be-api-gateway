@@ -17,7 +17,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   override def getEvents(lastEventId: String, limit: Int)(contexts: Seq[(String, String)]): Future[Messages] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getEventsFromId(
         lastEventId,
         xCorrelationId = Some(correlationId),
