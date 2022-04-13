@@ -424,7 +424,7 @@ paths:
       tags:
         - gateway
       summary: Get list of events
-      description: Retrieves the list of events sent to the caller
+      description: Retrieves the list of events for the caller
       operationId: getEventsFromId
       security:
         - bearerAuth: [ ]
