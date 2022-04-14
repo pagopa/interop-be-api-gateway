@@ -4,8 +4,11 @@ import it.pagopa.interop.apigateway.service.{CatalogManagementInvoker, CatalogMa
 import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.catalogmanagement.client.model.EService
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.extractHeaders
 import org.slf4j.{Logger, LoggerFactory}
+
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,7 +25,7 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
     */
   override def getEService(eServiceId: UUID)(contexts: Seq[(String, String)]): Future[EService] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getEService(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )

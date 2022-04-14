@@ -4,7 +4,9 @@ import it.pagopa.interop.agreementmanagement.client.api.AgreementApi
 import it.pagopa.interop.agreementmanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.agreementmanagement.client.model.{Agreement, AgreementState}
 import it.pagopa.interop.apigateway.service.{AgreementManagementInvoker, AgreementManagementService}
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.extractHeaders
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
@@ -18,7 +20,7 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
 
   override def getAgreementById(agreementId: UUID)(contexts: Seq[(String, String)]): Future[Agreement] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getAgreement(xCorrelationId = correlationId, agreementId.toString, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )
@@ -39,7 +41,7 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
   )(contexts: Seq[(String, String)]): Future[Seq[Agreement]] = {
 
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getAgreements(
         xCorrelationId = correlationId,
         xForwardedFor = ip,
