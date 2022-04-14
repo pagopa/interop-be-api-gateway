@@ -424,20 +424,21 @@ paths:
       tags:
         - gateway
       summary: Get list of events
-      description: Retrieves the list of events for the caller
+      description: Retrieves the list of events for the caller's institution
       operationId: getEventsFromId
       security:
         - bearerAuth: [ ]
       parameters:
         - name: lastEventId
           in: query
-          description: returns organization events starting from this id
+          description: last event identifier already processed by the caller
           required: true
           schema:
             type: string
+            default: '0'
         - name: limit
           in: query
-          description: the number of events returned by this response
+          description: the maximum number of events returned by this response
           schema:
             type: integer
             format: int32
@@ -464,7 +465,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Events not found
+          description: Institution not found
           content:
             application/problem+json:
               schema:
@@ -801,13 +802,7 @@ components:
     Messages:
       type: object
       properties:
-        limit:
-          type: integer
-          format: int32
-        size:
-          type: integer
-          format: int32
-        nextId:
+        lastEventId:
           type: string
         messages:
           type: array
@@ -815,9 +810,7 @@ components:
             $ref: '#/components/schemas/Message'
       required:
         - messages
-        - size
-        - nextId
-        - limit
+        - lastEventId
     Message:
       properties:
         eventId:

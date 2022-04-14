@@ -58,7 +58,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val attributeFormat: RootJsonFormat[Attribute] = jsonFormat3(Attribute)
 
   implicit val messageFormat: RootJsonFormat[Message]   = jsonFormat4(Message)
-  implicit val messagesFormat: RootJsonFormat[Messages] = jsonFormat4(Messages)
+  implicit val messagesFormat: RootJsonFormat[Messages] = jsonFormat2(Messages)
 
   implicit val attributeValidityStateFormat: RootJsonFormat[AttributeValidityState] = jsonFormat2(
     AttributeValidityState
@@ -204,16 +204,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedMessage(private val messages: NotifierApiMessages) extends AnyVal {
     def toModel: Try[Messages] =
-      Success(
-        Messages(
-          limit = messages.limit,
-          size = messages.size,
-          nextId = messages.nextId,
-          messages = messages.messages.map(toMessageModel)
-        )
-      )
+      Success(Messages(lastEventId = messages.nextId, messages = messages.messages.map(toMessageModel)))
 
-    def toMessageModel(message: NotifierApiMessage): Message = Message(
+    private[this] def toMessageModel(message: NotifierApiMessage): Message = Message(
       eventId = message.eventId,
       eventType = message.eventType,
       objectType = message.objectType,

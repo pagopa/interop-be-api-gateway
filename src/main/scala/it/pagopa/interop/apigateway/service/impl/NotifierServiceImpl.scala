@@ -2,6 +2,8 @@ package it.pagopa.interop.apigateway.service.impl
 
 import it.pagopa.interop.apigateway.service.{NotifierInvoker, NotifierService}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.extractHeaders
+import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.notifier.client.invoker.BearerToken
 import it.pagopa.interop.notifier.client.model.Messages
