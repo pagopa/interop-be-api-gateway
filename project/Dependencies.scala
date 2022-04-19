@@ -29,7 +29,8 @@ object Dependencies {
 
     lazy val agreementManagement =
       namespace %% "interop-be-agreement-management-client" % agreementManagementVersion
-
+    lazy val authorizationManagement =
+      namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
     lazy val catalogManagement =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
     lazy val partyManagement =
@@ -122,6 +123,7 @@ object Dependencies {
       logback.classic                    % Compile,
       mustache.mustache                  % Compile,
       pagopa.agreementManagement         % Compile,
+      pagopa.authorizationManagement     % Compile,
       pagopa.attributeRegistryManagement % Compile,
       pagopa.commons                     % Compile,
       pagopa.catalogManagement           % Compile,
