@@ -5,8 +5,8 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pagopa.interop.apigateway.api.impl.GatewayApiServiceImpl
 import it.pagopa.interop.apigateway.service._
-import it.pagopa.interop.authorizationmanagement.client.model.Client
 import it.pagopa.interop.authorizationmanagement.client.{model => AuthorizationManagement}
+import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.commons.utils.service.{OffsetDateTimeSupplier, UUIDSupplier}
 import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
@@ -49,9 +49,18 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
 
   def mockClientRetrieve(clientId: UUID, result: AuthorizationManagement.Client)(implicit
     contexts: Seq[(String, String)]
-  ): CallHandler2[UUID, Seq[(String, String)], Future[Client]] =
+  ): CallHandler2[UUID, Seq[(String, String)], Future[AuthorizationManagement.Client]] =
     (mockAuthorizationManagementService
       .getClientById(_: UUID)(_: Seq[(String, String)]))
+      .expects(clientId, contexts)
+      .returning(Future.successful(result))
+      .once()
+
+  def mockEServiceRetrieve(clientId: UUID, result: CatalogManagement.EService)(implicit
+    contexts: Seq[(String, String)]
+  ): CallHandler2[UUID, Seq[(String, String)], Future[CatalogManagement.EService]] =
+    (mockCatalogManagementService
+      .getEService(_: UUID)(_: Seq[(String, String)]))
       .expects(clientId, contexts)
       .returning(Future.successful(result))
       .once()
