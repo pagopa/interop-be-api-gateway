@@ -14,7 +14,7 @@
         <appender-ref ref="CONSOLE" />
     </appender>
 
-    <root level="ERROR">
+    <root level="OFF">
         <appender-ref ref="ASYNC"/>
     </root>
 

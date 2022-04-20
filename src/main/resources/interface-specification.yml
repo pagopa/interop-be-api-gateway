@@ -214,6 +214,54 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/clients/{clientId}':
+    get:
+      tags:
+        - gateway
+      summary: Get a client
+      description: Retrieve a client using a client identifier
+      operationId: getClient
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: clientId
+          in: path
+          description: the client Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Client not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}/descriptors/{descriptorId}':
     get:
       tags:
@@ -481,6 +529,19 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
+    Client:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
+      required:
+        - id
+        - consumerId
     Organization:
       type: object
       additionalProperties: false

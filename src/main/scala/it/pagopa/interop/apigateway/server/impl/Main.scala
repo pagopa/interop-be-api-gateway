@@ -9,6 +9,7 @@ import akka.management.scaladsl.AkkaManagement
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
+import it.pagopa.interop.authorizationmanagement.client.api.{ClientApi => AuthorizationManagementApi}
 import it.pagopa.interop.apigateway.api._
 import it.pagopa.interop.apigateway.api.impl.{
   GatewayApiMarshallerImpl,
@@ -47,6 +48,13 @@ trait AgreementManagementDependency {
   )
 }
 
+trait AuthorizationManagementDependency {
+  val authorizationManagementService = new AuthorizationManagementServiceImpl(
+    AuthorizationManagementInvoker(),
+    AuthorizationManagementApi(ApplicationConfiguration.authorizationManagementURL)
+  )
+}
+
 trait CatalogManagementDependency {
   val catalogManagementService = new CatalogManagementServiceImpl(
     CatalogManagementInvoker(),
@@ -81,6 +89,7 @@ object Main
     extends App
     with CORSSupport
     with AgreementManagementDependency
+    with AuthorizationManagementDependency
     with CatalogManagementDependency
     with PartyManagementDependency
     with AttributeRegistryManagementDependency
@@ -114,6 +123,7 @@ object Main
     val gatewayApiService: GatewayApiService       = GatewayApiServiceImpl(
       partyManagementService,
       agreementManagementService,
+      authorizationManagementService,
       catalogManagementService,
       attributeRegistryManagementService,
       purposeManagementService
