@@ -24,5 +24,5 @@ object GatewayApiMarshallerImpl extends GatewayApiMarshaller {
   override implicit def toEntityMarshallerOrganization: ToEntityMarshaller[Organization] =
     sprayJsonMarshaller[Organization]
 
-  override implicit def toEntityMarshallerMessages: ToEntityMarshaller[Messages] = sprayJsonMarshaller[Messages]
+  override implicit def toEntityMarshallerEvents: ToEntityMarshaller[Events] = sprayJsonMarshaller[Events]
 }

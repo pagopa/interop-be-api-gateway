@@ -6,7 +6,7 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.notifier.client.invoker.BearerToken
-import it.pagopa.interop.notifier.client.model.Messages
+import it.pagopa.interop.notifier.client.model.Events
 import it.pagopa.interop.partymanagement.client.invoker.ApiError
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -17,7 +17,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def getEvents(lastEventId: String, limit: Int)(contexts: Seq[(String, String)]): Future[Messages] = {
+  override def getEvents(lastEventId: Long, limit: Int)(contexts: Seq[(String, String)]): Future[Events] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getEventsFromId(

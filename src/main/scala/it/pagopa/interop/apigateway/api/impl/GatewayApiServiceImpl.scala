@@ -327,15 +327,15 @@ final case class GatewayApiServiceImpl(
    * Code: 401, Message: Unauthorized, DataType: Problem
    * Code: 404, Message: Events not found, DataType: Problem
    */
-  override def getEventsFromId(lastEventId: String, limit: Int)(implicit
+  override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerMessages: ToEntityMarshaller[Messages]
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
-    val result: Future[Messages] = for {
-      messages        <- notifierService.getEvents(lastEventId, limit)(contexts)
-      gatewayMessages <- messages.toModel.toFuture
-    } yield gatewayMessages
+    val result: Future[Events] = for {
+      events        <- notifierService.getEvents(lastEventId, limit)(contexts)
+      gatewayEvents <- events.toModel.toFuture
+    } yield gatewayEvents
 
     onComplete(result) {
       case Success(messages)                                         => getEventsFromId200(messages)

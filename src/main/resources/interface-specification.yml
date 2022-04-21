@@ -434,8 +434,9 @@ paths:
           description: last event identifier already processed by the caller
           required: true
           schema:
-            type: string
-            default: '0'
+            type: integer
+            format: int64
+            default: 0
         - name: limit
           in: query
           description: the maximum number of events returned by this response
@@ -451,7 +452,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Messages'
+                $ref: '#/components/schemas/Events'
         '400':
           description: Bad request
           content:
@@ -799,22 +800,24 @@ components:
             $ref: '#/components/schemas/Agreement'
       required:
         - agreements
-    Messages:
+    Events:
       type: object
       properties:
         lastEventId:
-          type: string
-        messages:
+          type: integer
+          format: int64
+        events:
           type: array
           items:
-            $ref: '#/components/schemas/Message'
+            $ref: '#/components/schemas/Event'
       required:
-        - messages
+        - events
         - lastEventId
-    Message:
+    Event:
       properties:
         eventId:
-          type: string
+          type: integer
+          format: int64
         eventType:
           type: string
         objectType:
