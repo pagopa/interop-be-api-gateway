@@ -1,7 +1,6 @@
 package it.pagopa.interop.apigateway.common
 
 import com.typesafe.config.{Config, ConfigFactory}
-import scala.jdk.CollectionConverters.ListHasAsScala
 
 object ApplicationConfiguration {
 
