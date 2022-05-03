@@ -19,11 +19,6 @@ tags:
     externalDocs:
       description: Find out more
       url: 'http://swagger.io'
-  - name: auth
-    description: Get security information
-    externalDocs:
-      description: Find out more
-      url: http://swagger.io
   - name: health
     description: Verify service status
     externalDocs:
@@ -32,49 +27,6 @@ tags:
 security:
   - bearerAuth: []
 paths:
-  '/as/token.oauth2':
-    post:
-      security: [{}]
-      tags:
-        - auth
-      summary: Create a new access token
-      description: Return ok
-      operationId: createToken
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AccessTokenRequest'
-      responses:
-        '200':
-          description: |-
-            an Access token
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                default: no-cache, no-store
-              description: |-
-                no-cache, no-store
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClientCredentialsResponse'
-        '401':
-          description: Unauthorized
-          x-noqa: RFC6749
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad request
-          x-noqa: RFC6749
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}':
     get:
       tags:
@@ -258,6 +210,54 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Attribute not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/clients/{clientId}':
+    get:
+      tags:
+        - gateway
+      summary: Get a client
+      description: Retrieve a client using a client identifier
+      operationId: getClient
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: clientId
+          in: path
+          description: the client Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Client not found
           content:
             application/problem+json:
               schema:
@@ -581,47 +581,19 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
-    AccessTokenRequest:
+    Client:
       type: object
-      required:
-        - client_assertion
-        - client_assertion_type
-        - grant_type
+      additionalProperties: false
       properties:
-        client_id:
+        id:
           type: string
-          example: e58035ce-c753-4f72-b613-46f8a17b71cc
-        client_assertion:
+          format: uuid
+        consumerId:
           type: string
-          format: jws
-        client_assertion_type:
-          type: string
-          example: urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
-        grant_type:
-          type: string
-          enum:
-            - client_credentials
-    TokenType:
-      type: string
-      description: Represents the token type
-      enum:
-        - Bearer
-    ClientCredentialsResponse:
-      type: object
+          format: uuid
       required:
-        - access_token
-        - token_type
-        - expires_in
-      properties:
-        access_token:
-          type: string
-          format: jws
-        token_type:
-          $ref: '#/components/schemas/TokenType'
-        expires_in:
-          type: integer
-          format: int32
-          maximum: 600
+        - id
+        - consumerId
     Organization:
       type: object
       additionalProperties: false

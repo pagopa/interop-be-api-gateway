@@ -27,12 +27,10 @@ object Dependencies {
   private[this] object pagopa {
     lazy val namespace = "it.pagopa"
 
-    lazy val authorizationManagement =
-      namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
-
     lazy val agreementManagement =
       namespace %% "interop-be-agreement-management-client" % agreementManagementVersion
-
+    lazy val authorizationManagement =
+      namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
     lazy val catalogManagement =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
     lazy val partyManagement =
@@ -49,7 +47,6 @@ object Dependencies {
 
     lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
-    lazy val vault   = namespace %% "interop-commons-vault" % commonsVersion
   }
 
   private[this] object cats {
@@ -124,15 +121,14 @@ object Dependencies {
       logback.classic                    % Compile,
       mustache.mustache                  % Compile,
       pagopa.agreementManagement         % Compile,
+      pagopa.authorizationManagement     % Compile,
       pagopa.attributeRegistryManagement % Compile,
       pagopa.commons                     % Compile,
       pagopa.catalogManagement           % Compile,
       pagopa.jwt                         % Compile,
-      pagopa.authorizationManagement     % Compile,
       pagopa.notifier                    % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
-      pagopa.vault                       % Compile,
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
       akka.testkit                       % Test,

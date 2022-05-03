@@ -11,6 +11,7 @@ import it.pagopa.interop.apigateway.api.GatewayApiService
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
+import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
@@ -26,6 +27,7 @@ import scala.util.{Failure, Success}
 final case class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
   agreementManagementService: AgreementManagementService,
+  authorizationManagementService: AuthorizationManagementService,
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
   purposeManagementService: PurposeManagementService,
@@ -318,6 +320,46 @@ final case class GatewayApiServiceImpl(
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex)                                               =>
         internalServerError(s"Error while getting the requested purposes for agreement $agreementId - ${ex.getMessage}")
+    }
+  }
+
+  override def getClient(clientId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerClient: ToEntityMarshaller[Client]
+  ): Route = {
+
+    def isAllowed(client: AuthorizationManagementApiClient, organizationId: UUID): Future[Unit] = {
+      if (client.consumerId == organizationId)
+        Future.successful(())
+      else
+        client.purposes
+          .findM(purpose =>
+            catalogManagementService
+              .getEService(purpose.states.eservice.eserviceId)(contexts)
+              .map(_.producerId == organizationId)
+          )
+          .ensure(Forbidden)(_.nonEmpty)
+          .as(())
+    }
+
+    val result: Future[Client] = for {
+      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
+      clientUUID     <- clientId.toFutureUUID
+      client         <- authorizationManagementService.getClientById(clientUUID)(contexts)
+      _              <- isAllowed(client, organizationId)
+    } yield client.toModel
+
+    onComplete(result) {
+      case Success(client)                                           =>
+        getClient200(client)
+      case Failure(Forbidden)                                        =>
+        logger.error(s"The user has no access to the requested client $clientId")
+        getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while getting client $clientId - ${ex.getMessage}")
+        getAgreement404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex) => internalServerError(s"Error while getting client - ${ex.getMessage}")
     }
   }
 

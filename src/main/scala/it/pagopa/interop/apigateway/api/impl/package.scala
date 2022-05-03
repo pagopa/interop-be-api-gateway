@@ -15,6 +15,7 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
   AttributeKind => AttributeRegistryManagementApiAttributeKind
 }
+import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.catalogmanagement.client.model.{
   Attribute => CatalogManagementApiAttribute,
   EService => CatalogManagementApiEService,
@@ -42,10 +43,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)
 
-  implicit val clientCredentialsResponseFormat: RootJsonFormat[ClientCredentialsResponse] = jsonFormat3(
-    ClientCredentialsResponse
-  )
-
   implicit val purposeFormat: RootJsonFormat[Purpose]   = jsonFormat3(Purpose)
   implicit val purposesFormat: RootJsonFormat[Purposes] = jsonFormat1(Purposes)
 
@@ -56,6 +53,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
 
   implicit val attributeFormat: RootJsonFormat[Attribute] = jsonFormat3(Attribute)
+
+  implicit val clientFormat: RootJsonFormat[Client] = jsonFormat2(Client)
 
   implicit val messageFormat: RootJsonFormat[Event]   = jsonFormat4(Event)
   implicit val messagesFormat: RootJsonFormat[Events] = jsonFormat2(Events)
@@ -200,6 +199,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       case AttributeRegistryManagementApiAttributeKind.DECLARED  => AttributeKind.DECLARED
       case AttributeRegistryManagementApiAttributeKind.VERIFIED  => AttributeKind.VERIFIED
     }
+  }
+
+  implicit class EnrichedClient(private val client: AuthorizationManagementApiClient) extends AnyVal {
+    def toModel: Client = Client(id = client.id, consumerId = client.consumerId)
   }
 
   implicit class EnrichedEvent(private val events: NotifierApiEvents) extends AnyVal {

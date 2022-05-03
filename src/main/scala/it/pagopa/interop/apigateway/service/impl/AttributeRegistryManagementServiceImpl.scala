@@ -4,7 +4,9 @@ import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker,
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.extractHeaders
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util.UUID
@@ -18,7 +20,7 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
 
   override def getAttributeById(attributeId: UUID)(contexts: Seq[(String, String)]): Future[Attribute] = {
     for {
-      (bearerToken, correlationId, ip) <- extractHeadersWithOptionalCorrelationIdF(contexts)
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
         BearerToken(bearerToken)
       )

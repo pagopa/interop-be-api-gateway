@@ -1,26 +1,23 @@
 package it.pagopa.interop.apigateway.common
 
 import com.typesafe.config.{Config, ConfigFactory}
-import scala.jdk.CollectionConverters.ListHasAsScala
 
 object ApplicationConfiguration {
 
-  lazy val config: Config = ConfigFactory.load()
+  val config: Config = ConfigFactory.load()
 
-  def serverPort: Int = config.getInt("interop-api-gateway.port")
+  val serverPort: Int = config.getInt("interop-api-gateway.port")
 
-  def agreementManagementURL: String         = config.getString("services.agreement-management")
-  def authorizationManagementURL: String     = config.getString("services.authorization-management")
-  def catalogManagementURL: String           = config.getString("services.catalog-management")
-  def partyManagementURL: String             = config.getString("services.party-management")
-  def attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
-  def purposeManagementURL: String           = config.getString("services.purpose-management")
+  val agreementManagementURL: String         = config.getString("services.agreement-management")
+  val authorizationManagementURL: String     = config.getString("services.authorization-management")
+  val catalogManagementURL: String           = config.getString("services.catalog-management")
+  val partyManagementURL: String             = config.getString("services.party-management")
+  val attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
+  val purposeManagementURL: String           = config.getString("services.purpose-management")
   def notifierURL: String                    = config.getString("services.notifier")
 
-  def interopIdIssuer: String = config.getString("interop-api-gateway.issuer")
+  val interopAudience: Set[String] =
+    config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
-  def rsaPrivatePath: String = config.getString("interop-api-gateway.rsa-private-path")
-
-  lazy val interopAudience: Set[String] = config.getStringList("interop-api-gateway.jwt.audience").asScala.toSet
-  lazy val interopTokenDuration: Int    = config.getInt("interop-api-gateway.jwt.duration-seconds")
+  require(interopAudience.nonEmpty, "Audience cannot be empty")
 }
