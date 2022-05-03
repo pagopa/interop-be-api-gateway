@@ -14,6 +14,7 @@ object ApplicationConfiguration {
   val partyManagementURL: String             = config.getString("services.party-management")
   val attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
   val purposeManagementURL: String           = config.getString("services.purpose-management")
+  def notifierURL: String                    = config.getString("services.notifier")
 
   val interopAudience: Set[String] =
     config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)

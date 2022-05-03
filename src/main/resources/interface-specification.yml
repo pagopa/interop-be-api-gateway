@@ -419,6 +419,58 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/events':
+    get:
+      tags:
+        - gateway
+      summary: Get list of events
+      description: Retrieves the list of events for the caller's institution
+      operationId: getEventsFromId
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: lastEventId
+          in: query
+          description: last event identifier already processed by the caller
+          required: true
+          schema:
+            type: integer
+            format: int64
+            default: 0
+        - name: limit
+          in: query
+          description: the maximum number of events returned by this response
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Events'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Institution not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /status:
     get:
       summary: Returns the application status
@@ -720,6 +772,35 @@ components:
             $ref: '#/components/schemas/Agreement'
       required:
         - agreements
+    Events:
+      type: object
+      properties:
+        lastEventId:
+          type: integer
+          format: int64
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+      required:
+        - events
+    Event:
+      properties:
+        eventId:
+          type: integer
+          format: int64
+        eventType:
+          type: string
+        objectType:
+          type: string
+        objectId:
+          additionalProperties:
+            type: string
+      required:
+        - eventId
+        - eventType
+        - objectType
+        - objectId
     Problem:
       properties:
         type:

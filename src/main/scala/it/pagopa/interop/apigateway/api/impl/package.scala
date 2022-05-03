@@ -25,6 +25,7 @@ import it.pagopa.interop.catalogmanagement.client.model.{
 import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
+import it.pagopa.interop.notifier.client.model.{Event => NotifierApiEvent, Events => NotifierApiEvents}
 import it.pagopa.interop.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
 import it.pagopa.interop.purposemanagement.client.model.{
   PurposeVersionState,
@@ -55,6 +56,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val clientFormat: RootJsonFormat[Client] = jsonFormat2(Client)
 
+  implicit val messageFormat: RootJsonFormat[Event]   = jsonFormat4(Event)
+  implicit val messagesFormat: RootJsonFormat[Events] = jsonFormat2(Events)
+
   implicit val attributeValidityStateFormat: RootJsonFormat[AttributeValidityState] = jsonFormat2(
     AttributeValidityState
   )
@@ -64,7 +68,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   final val serviceErrorCodePrefix: String = "013"
   final val defaultProblemType: String     = "about:blank"
 
-  def problemOf(httpError: StatusCode, error: ComponentError, defaultMessage: String = "Unknown error"): Problem =
+  def problemOf(httpError: StatusCode, error: ComponentError, defaultEvent: String = "Unknown error"): Problem =
     Problem(
       `type` = defaultProblemType,
       status = httpError.intValue,
@@ -72,7 +76,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       errors = Seq(
         ProblemError(
           code = s"$serviceErrorCodePrefix-${error.code}",
-          detail = Option(error.getMessage).getOrElse(defaultMessage)
+          detail = Option(error.getMessage).getOrElse(defaultEvent)
         )
       )
     )
@@ -199,5 +203,17 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedClient(private val client: AuthorizationManagementApiClient) extends AnyVal {
     def toModel: Client = Client(id = client.id, consumerId = client.consumerId)
+  }
+
+  implicit class EnrichedEvent(private val events: NotifierApiEvents) extends AnyVal {
+    def toModel: Try[Events] =
+      Success(Events(lastEventId = events.lastEventId, events = events.events.map(toEventModel)))
+
+    private[this] def toEventModel(event: NotifierApiEvent): Event = Event(
+      eventId = event.eventId,
+      eventType = event.eventType,
+      objectType = event.objectType,
+      objectId = event.objectId
+    )
   }
 }

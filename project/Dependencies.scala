@@ -42,13 +42,11 @@ object Dependencies {
     lazy val purposeManagement =
       namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
 
+    lazy val notifier =
+      namespace %% "interop-be-notifier-client" % notifierVersion
+
     lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
-  }
-
-  private[this] object scalpb {
-    lazy val namespace = "com.thesamet.scalapb"
-    lazy val core      = namespace %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion
   }
 
   private[this] object cats {
@@ -128,9 +126,9 @@ object Dependencies {
       pagopa.commons                     % Compile,
       pagopa.catalogManagement           % Compile,
       pagopa.jwt                         % Compile,
+      pagopa.notifier                    % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
-      scalpb.core                        % "protobuf",
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
       akka.testkit                       % Test,

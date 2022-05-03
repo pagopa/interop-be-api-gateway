@@ -9,7 +9,6 @@ import akka.management.scaladsl.AkkaManagement
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
-import it.pagopa.interop.authorizationmanagement.client.api.{ClientApi => AuthorizationManagementApi}
 import it.pagopa.interop.apigateway.api._
 import it.pagopa.interop.apigateway.api.impl.{
   GatewayApiMarshallerImpl,
@@ -24,6 +23,7 @@ import it.pagopa.interop.apigateway.server.Controller
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.apigateway.service.impl._
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
+import it.pagopa.interop.authorizationmanagement.client.api.{ClientApi => AuthorizationManagementApi}
 import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
 import it.pagopa.interop.commons.jwt._
 import it.pagopa.interop.commons.jwt.service.JWTReader
@@ -32,6 +32,7 @@ import it.pagopa.interop.commons.utils.AkkaUtils.PassThroughAuthenticator
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
+import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
@@ -69,6 +70,10 @@ trait PartyManagementDependency {
   )
 }
 
+trait NotifierDependency {
+  val notifierService = new NotifierServiceImpl(NotifierInvoker(), EventsApi(ApplicationConfiguration.notifierURL))
+}
+
 trait AttributeRegistryManagementDependency {
   val attributeRegistryManagementApi: AttributeApi = AttributeApi(
     ApplicationConfiguration.attributeRegistryManagementURL
@@ -93,7 +98,8 @@ object Main
     with CatalogManagementDependency
     with PartyManagementDependency
     with AttributeRegistryManagementDependency
-    with PurposeManagementDependency {
+    with PurposeManagementDependency
+    with NotifierDependency {
 
   val dependenciesLoaded: Future[JWTReader] = for {
     keyset <- JWTConfiguration.jwtReader.loadKeyset().toFuture
@@ -126,7 +132,8 @@ object Main
       authorizationManagementService,
       catalogManagementService,
       attributeRegistryManagementService,
-      purposeManagementService
+      purposeManagementService,
+      notifierService
     )
     val gatewayApiMarshaller: GatewayApiMarshaller = GatewayApiMarshallerImpl
 

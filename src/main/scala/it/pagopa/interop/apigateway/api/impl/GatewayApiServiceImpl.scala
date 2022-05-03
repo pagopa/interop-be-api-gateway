@@ -6,17 +6,17 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.agreementmanagement.client.model.{AgreementState => AgreementManagementApiAgreementState}
 import it.pagopa.interop.apigateway.api.GatewayApiService
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
+import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
+import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.agreementmanagement.client.model.{AgreementState => AgreementManagementApiAgreementState}
-import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
-import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import org.slf4j.LoggerFactory
 
@@ -30,7 +30,8 @@ final case class GatewayApiServiceImpl(
   authorizationManagementService: AuthorizationManagementService,
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
-  purposeManagementService: PurposeManagementService
+  purposeManagementService: PurposeManagementService,
+  notifierService: NotifierService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
@@ -362,4 +363,29 @@ final case class GatewayApiServiceImpl(
     }
   }
 
+  /**
+   * Code: 200, Message: Messages, DataType: Messages
+   * Code: 400, Message: Bad request, DataType: Problem
+   * Code: 401, Message: Unauthorized, DataType: Problem
+   * Code: 404, Message: Events not found, DataType: Problem
+   */
+  override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[Events] = for {
+      events        <- notifierService.getEvents(lastEventId, limit)(contexts)
+      gatewayEvents <- events.toModel.toFuture
+    } yield gatewayEvents
+
+    onComplete(result) {
+      case Success(messages)                                         => getEventsFromId200(messages)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while getting the requested messages - ${ex.getMessage}")
+        getEventsFromId404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex)                                               =>
+        internalServerError(s"Error while getting the requested messages - ${ex.getMessage}")
+    }
+  }
 }
