@@ -7,6 +7,6 @@ import scala.concurrent.Future
 
 trait AttributeRegistryManagementService {
 
-  def getAttributeById(attributeId: UUID)(contexts: Seq[(String, String)]): Future[Attribute]
+  def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute]
 
 }

@@ -17,7 +17,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def getEvents(lastEventId: Long, limit: Int)(contexts: Seq[(String, String)]): Future[Events] = {
+  override def getEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getEventsFromId(

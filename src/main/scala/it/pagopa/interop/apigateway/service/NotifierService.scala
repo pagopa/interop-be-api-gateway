@@ -5,5 +5,5 @@ import it.pagopa.interop.notifier.client.model.Events
 import scala.concurrent.Future
 
 trait NotifierService {
-  def getEvents(lastEventId: Long, limit: Int)(contexts: Seq[(String, String)]): Future[Events]
+  def getEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
 }
