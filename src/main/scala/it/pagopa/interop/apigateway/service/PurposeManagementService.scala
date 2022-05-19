@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 trait PurposeManagementService {
 
-  def getPurpose(purposeId: UUID)(contexts: Seq[(String, String)]): Future[Purpose]
+  def getPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose]
 
-  def getPurposes(eserviceId: UUID, consumerId: UUID)(contexts: Seq[(String, String)]): Future[Purposes]
+  def getPurposes(eserviceId: UUID, consumerId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purposes]
 }
