@@ -1,12 +1,12 @@
 package it.pagopa.interop.apigateway.service
 
-import it.pagopa.interop.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
+import it.pagopa.interop.selfcare.partymanagement.client.model.Institution
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait PartyManagementService {
-  def getInstitution(institutionId: UUID)(bearerToken: String)(implicit
-    contexts: Seq[(String, String)]
-  ): Future[PartyManagementApiInstitution]
+  def getInstitution(
+    institutionId: UUID
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution]
 }

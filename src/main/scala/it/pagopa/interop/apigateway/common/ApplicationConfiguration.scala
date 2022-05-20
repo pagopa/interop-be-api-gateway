@@ -8,16 +8,20 @@ object ApplicationConfiguration {
 
   val serverPort: Int = config.getInt("interop-api-gateway.port")
 
-  val agreementManagementURL: String         = config.getString("services.agreement-management")
-  val authorizationManagementURL: String     = config.getString("services.authorization-management")
-  val catalogManagementURL: String           = config.getString("services.catalog-management")
-  val partyManagementURL: String             = config.getString("services.party-management")
-  val attributeRegistryManagementURL: String = config.getString("services.attribute-registry-management")
-  val purposeManagementURL: String           = config.getString("services.purpose-management")
-  def notifierURL: String                    = config.getString("services.notifier")
+  val agreementManagementURL: String         = config.getString("interop-api-gateway.services.agreement-management")
+  val authorizationManagementURL: String     = config.getString("interop-api-gateway.services.authorization-management")
+  val catalogManagementURL: String           = config.getString("interop-api-gateway.services.catalog-management")
+  val partyManagementURL: String             = config.getString("interop-api-gateway.services.party-management")
+  val attributeRegistryManagementURL: String =
+    config.getString("interop-api-gateway.services.attribute-registry-management")
+  val purposeManagementURL: String           = config.getString("interop-api-gateway.services.purpose-management")
+  val notifierURL: String                    = config.getString("interop-api-gateway.services.notifier")
+
+  val partyManagementApiKey: String = config.getString("interop-api-gateway.api-keys.party-management")
 
   val interopAudience: Set[String] =
     config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
   require(interopAudience.nonEmpty, "Audience cannot be empty")
+
 }

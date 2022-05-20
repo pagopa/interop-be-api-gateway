@@ -5,9 +5,8 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.notifier.client.api.EventsApi
-import it.pagopa.interop.notifier.client.invoker.BearerToken
+import it.pagopa.interop.notifier.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.notifier.client.model.Events
-import it.pagopa.interop.partymanagement.client.invoker.ApiError
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{ExecutionContext, Future}

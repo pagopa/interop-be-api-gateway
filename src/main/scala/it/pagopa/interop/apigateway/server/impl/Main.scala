@@ -33,7 +33,7 @@ import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.ValidationRequestError
 import it.pagopa.interop.commons.utils.{CORSSupport, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
-import it.pagopa.interop.partymanagement.client.api.{PartyApi => PartyManagementApi}
+import it.pagopa.interop.selfcare.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import kamon.Kamon
 
@@ -64,6 +64,8 @@ trait CatalogManagementDependency {
 }
 
 trait PartyManagementDependency {
+  implicit val partyManagementApiKeyValue: PartyManagementApiKeyValue = PartyManagementApiKeyValue()
+
   val partyManagementService = new PartyManagementServiceImpl(
     PartyManagementInvoker(),
     PartyManagementApi(ApplicationConfiguration.partyManagementURL)
