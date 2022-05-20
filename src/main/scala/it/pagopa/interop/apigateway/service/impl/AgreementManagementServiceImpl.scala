@@ -7,7 +7,8 @@ import it.pagopa.interop.apigateway.service.{AgreementManagementInvoker, Agreeme
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
-import org.slf4j.{Logger, LoggerFactory}
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,9 +17,10 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
   ec: ExecutionContext
 ) extends AgreementManagementService {
 
-  implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAgreementById(agreementId: UUID)(contexts: Seq[(String, String)]): Future[Agreement] = {
+  override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getAgreement(xCorrelationId = correlationId, agreementId.toString, xForwardedFor = ip)(
@@ -38,35 +40,32 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
     state: Option[AgreementState] = None
-  )(contexts: Seq[(String, String)]): Future[Seq[Agreement]] = {
-
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getAgreements(
-        xCorrelationId = correlationId,
-        xForwardedFor = ip,
-        producerId = producerId,
-        consumerId = consumerId,
-        eserviceId = eserviceId,
-        descriptorId = descriptorId,
-        state = state
-      )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, "Retrieving agreements")
-    } yield result
-
-  }
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getAgreements(
+      xCorrelationId = correlationId,
+      xForwardedFor = ip,
+      producerId = producerId,
+      consumerId = consumerId,
+      eserviceId = eserviceId,
+      descriptorId = descriptorId,
+      state = state
+    )(BearerToken(bearerToken))
+    result <- invoker.invoke(request, "Retrieving agreements")
+  } yield result
 
   private[service] def handleCommonErrors[T](
     resource: String
-  ): (Logger, String) => PartialFunction[Throwable, Future[T]] = { (logger, msg) =>
-    {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")
-        Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-      case ex                                                   =>
-        logger.error(s"$msg. Error: ${ex.getMessage}")
-        Future.failed(ex)
-    }
+  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] = {
+    (context, logger, msg) =>
+      {
+        case ex @ ApiError(code, message, _, _, _) if code == 404 =>
+          logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(context)
+          Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
+        case ex                                                   =>
+          logger.error(s"$msg. Error: ${ex.getMessage}")(context)
+          Future.failed(ex)
+      }
   }
 
 }

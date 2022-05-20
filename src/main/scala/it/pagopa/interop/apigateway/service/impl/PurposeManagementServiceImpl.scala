@@ -9,7 +9,8 @@ import it.pagopa.interop.partymanagement.client.invoker.ApiError
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.purposemanagement.client.invoker.BearerToken
 import it.pagopa.interop.purposemanagement.client.model.{Purpose, Purposes}
-import org.slf4j.{Logger, LoggerFactory}
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,9 +18,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: PurposeApi)(implicit ec: ExecutionContext)
     extends PurposeManagementService {
 
-  implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurpose(purposeId: UUID)(contexts: Seq[(String, String)]): Future[Purpose] = {
+  override def getPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(BearerToken(bearerToken))
@@ -27,7 +29,9 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
     } yield result
   }
 
-  override def getPurposes(eserviceId: UUID, consumerId: UUID)(contexts: Seq[(String, String)]): Future[Purposes] = {
+  override def getPurposes(eserviceId: UUID, consumerId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Purposes] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getPurposes(
@@ -47,15 +51,16 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
 
   private[service] def handleCommonErrors[T](
     resource: String
-  ): (Logger, String) => PartialFunction[Throwable, Future[T]] = { (logger, msg) =>
-    {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")
-        Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-      case ex                                                   =>
-        logger.error(s"$msg. Error: ${ex.getMessage}")
-        Future.failed(ex)
-    }
+  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] = {
+    (context, logger, msg) =>
+      {
+        case ex @ ApiError(code, message, _, _, _) if code == 404 =>
+          logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(context)
+          Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
+        case ex                                                   =>
+          logger.error(s"$msg. Error: ${ex.getMessage}")(context)
+          Future.failed(ex)
+      }
   }
 
 }

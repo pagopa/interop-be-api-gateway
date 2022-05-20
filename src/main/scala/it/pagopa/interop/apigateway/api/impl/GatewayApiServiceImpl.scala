@@ -226,7 +226,7 @@ final case class GatewayApiServiceImpl(
       purposeUUID    <- purposeId.toFutureUUID
       purpose        <- purposeManagementService.getPurpose(purposeUUID)(contexts)
       agreement      <- agreementManagementService
-        .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)(contexts)
+        .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)
         .ensure(Forbidden)(a => a.consumerId == organizationId || a.producerId == organizationId)
     } yield agreement.toModel
 

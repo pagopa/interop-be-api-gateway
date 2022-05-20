@@ -7,7 +7,8 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.Attribute
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
-import org.slf4j.{Logger, LoggerFactory}
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,9 +17,10 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
   ec: ExecutionContext
 ) extends AttributeRegistryManagementService {
 
-  implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAttributeById(attributeId: UUID)(contexts: Seq[(String, String)]): Future[Attribute] = {
+  override def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
@@ -34,14 +36,15 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
 
   private[service] def handleCommonErrors[T](
     resource: String
-  ): (Logger, String) => PartialFunction[Throwable, Future[T]] = { (logger, msg) =>
-    {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")
-        Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-      case ex                                                   =>
-        logger.error(s"$msg. Error: ${ex.getMessage}")
-        Future.failed(ex)
-    }
+  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] = {
+    (context, logger, msg) =>
+      {
+        case ex @ ApiError(code, message, _, _, _) if code == 404 =>
+          logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(context)
+          Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
+        case ex                                                   =>
+          logger.error(s"$msg. Error: ${ex.getMessage}")(context)
+          Future.failed(ex)
+      }
   }
 }

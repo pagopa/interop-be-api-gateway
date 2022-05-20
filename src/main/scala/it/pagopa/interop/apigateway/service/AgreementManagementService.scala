@@ -15,13 +15,14 @@ trait AgreementManagementService {
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
     state: Option[AgreementState] = None
-  )(contexts: Seq[(String, String)]): Future[Seq[Agreement]]
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]]
 
-  def getAgreementById(agreementId: UUID)(contexts: Seq[(String, String)]): Future[Agreement]
+  def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
 
-  def getActiveOrSuspendedAgreementByConsumerAndEserviceId(consumerUUID: UUID, eserviceUUID: UUID)(
-    contexts: Seq[(String, String)]
-  )(implicit ec: ExecutionContext): Future[Agreement] = {
+  def getActiveOrSuspendedAgreementByConsumerAndEserviceId(consumerUUID: UUID, eserviceUUID: UUID)(implicit
+    contexts: Seq[(String, String)],
+    ec: ExecutionContext
+  ): Future[Agreement] = {
     getAgreements(
       producerId = None,
       consumerId = Some(consumerUUID.toString),
