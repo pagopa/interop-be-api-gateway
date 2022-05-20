@@ -8,7 +8,8 @@ import it.pagopa.interop.authorizationmanagement.client.{model => AuthorizationM
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
 import it.pagopa.interop.apigateway.api.impl._
 import it.pagopa.interop.apigateway.model.Client
-import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
+import it.pagopa.interop.commons.jwt.M2M_ROLE
+import it.pagopa.interop.commons.utils.{ORGANIZATION_ID_CLAIM, USER_ROLES}
 import org.scalatest.matchers.should.Matchers._
 
 import java.util.UUID
@@ -31,13 +32,36 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
 
       val expectedClient: Client = Client(id = client.id, consumerId = client.consumerId)
 
-      implicit val contexts: Seq[(String, String)] = Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
+      implicit val contexts: Seq[(String, String)] =
+        Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString, USER_ROLES -> M2M_ROLE)
 
       mockClientRetrieve(clientId, client)(contexts)
 
       Get() ~> service.getClient(clientId.toString) ~> check {
         status shouldEqual StatusCodes.OK
         responseAs[Client] shouldEqual expectedClient
+      }
+
+    }
+
+    "fail if the requester does not have M2M role" in {
+      val requesterOrganizationId                = UUID.randomUUID()
+      val clientId                               = UUID.randomUUID()
+      val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
+        id = clientId,
+        consumerId = requesterOrganizationId,
+        name = "A Client",
+        description = Some("A Client Description"),
+        purposes = Seq.empty,
+        relationships = Set.empty,
+        kind = AuthorizationManagement.ClientKind.CONSUMER
+      )
+
+      implicit val contexts: Seq[(String, String)] = Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
+      mockClientRetrieve(clientId, client)(contexts)
+
+      Get() ~> service.getClient(clientId.toString) ~> check {
+        status shouldEqual StatusCodes.Forbidden
       }
 
     }
@@ -93,7 +117,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
 
       val expectedClient: Client = Client(id = client.id, consumerId = client.consumerId)
 
-      implicit val contexts: Seq[(String, String)] = Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
+      implicit val contexts: Seq[(String, String)] =
+        Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString, USER_ROLES -> M2M_ROLE)
 
       mockClientRetrieve(clientId, client)(contexts)
       mockEServiceRetrieve(eServiceId, eService)(contexts)
