@@ -44,17 +44,6 @@ generateCode := {
              |                               -p entityStrictnessTimeout=15
              |                               -o generated""".stripMargin).!!
 
-  Process(s"""openapi-generator-cli generate -t template/scala-akka-http-client
-             |                               -i src/main/resources/interface-specification.yml
-             |                               -g scala-akka
-             |                               -p projectName=${projectName.value}
-             |                               -p invokerPackage=it.pagopa.${packagePrefix.value}.client.invoker
-             |                               -p modelPackage=it.pagopa.${packagePrefix.value}.client.model
-             |                               -p apiPackage=it.pagopa.${packagePrefix.value}.client.api
-             |                               -p modelPropertyNaming=original
-             |                               -p dateLibrary=java8
-             |                               -o client""".stripMargin).!!
-
 }
 
 (Compile / compile) := ((Compile / compile) dependsOn generateCode).value
@@ -64,34 +53,11 @@ cleanFiles += baseDirectory.value / "generated" / "src"
 
 cleanFiles += baseDirectory.value / "generated" / "target"
 
-cleanFiles += baseDirectory.value / "client" / "src"
-
-cleanFiles += baseDirectory.value / "client" / "target"
-
 lazy val generated =
   project
     .in(file("generated"))
     .settings(scalacOptions := Seq(), scalafmtOnCompile := true)
     .setupBuildInfo
-
-lazy val client = project
-  .in(file("client"))
-  .settings(
-    name                := "interop-be-api-gateway-client",
-    scalacOptions       := Seq(),
-    scalafmtOnCompile   := true,
-    libraryDependencies := Dependencies.Jars.client,
-    updateOptions       := updateOptions.value.withGigahorse(false),
-    Docker / publish    := {},
-    publishTo           := {
-      val nexus = s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/"
-
-      if (isSnapshot.value)
-        Some("snapshots" at nexus + "maven-snapshots/")
-      else
-        Some("releases" at nexus + "maven-releases/")
-    }
-  )
 
 lazy val root = (project in file("."))
   .settings(
@@ -108,7 +74,6 @@ lazy val root = (project in file("."))
     Docker / maintainer         := "https://pagopa.it",
     dockerCommands += Cmd("LABEL", s"org.opencontainers.image.source https://github.com/pagopa/${name.value}")
   )
-  .aggregate(client)
   .dependsOn(generated)
   .enablePlugins(JavaAppPackaging, JavaAgent)
   .setupBuildInfo
