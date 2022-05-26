@@ -16,8 +16,8 @@ object ApplicationConfiguration {
   val purposeManagementURL: String           = config.getString("services.purpose-management")
   def notifierURL: String                    = config.getString("services.notifier")
 
-  val interopAudience: Set[String] =
+  val jwtAudience: Set[String] =
     config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
-  require(interopAudience.nonEmpty, "Audience cannot be empty")
+  require(jwtAudience.nonEmpty, "Audience cannot be empty")
 }

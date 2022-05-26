@@ -1,13 +1,13 @@
 package it.pagopa.interop.apigateway.server.impl
 
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.Future
 
 // Enabled in application.conf
 class HealthCheck() extends (() => Future[Boolean]) {
 
-  private val log = LoggerFactory.getLogger(getClass)
+  private val log = Logger(this.getClass)
 
   override def apply(): Future[Boolean] = {
     log.debug("HealthCheck called")
@@ -17,7 +17,7 @@ class HealthCheck() extends (() => Future[Boolean]) {
 
 class LiveCheck() extends (() => Future[Boolean]) {
 
-  private val log = LoggerFactory.getLogger(getClass)
+  private val log = Logger(this.getClass)
 
   override def apply(): Future[Boolean] = {
     log.debug("LiveCheck called")

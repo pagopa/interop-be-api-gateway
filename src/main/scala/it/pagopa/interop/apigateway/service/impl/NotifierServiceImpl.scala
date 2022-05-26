@@ -1,21 +1,21 @@
 package it.pagopa.interop.apigateway.service.impl
 
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.service.{NotifierInvoker, NotifierService}
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
-import it.pagopa.interop.commons.utils.TypeConversions.EitherOps
 import it.pagopa.interop.notifier.client.api.EventsApi
-import it.pagopa.interop.notifier.client.invoker.BearerToken
+import it.pagopa.interop.notifier.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.notifier.client.model.Events
-import it.pagopa.interop.partymanagement.client.invoker.ApiError
-import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{ExecutionContext, Future}
-
 class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec: ExecutionContext)
     extends NotifierService {
 
-  implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events] = {
     for {
@@ -36,15 +36,15 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   private[service] def handleCommonErrors[T](
     resource: String
-  ): (Logger, String) => PartialFunction[Throwable, Future[T]] = { (logger, msg) =>
-    {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")
+  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] =
+    (context, logger, message) => {
+      case ex @ ApiError(code, msg, _, _, _) if code == 404 =>
+        logger.error(s"$message. code > $code - message > $msg - ${ex.getMessage}")(context)
         Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-      case ex                                                   =>
-        logger.error(s"$msg. Error: ${ex.getMessage}")
+      case ex                                               =>
+        logger.error(s"$message. Error: ${ex.getMessage}")(context)
         Future.failed(ex)
     }
-  }
 
+  override def hashCode(): Int = super.hashCode()
 }
