@@ -19,9 +19,8 @@ object ApplicationConfiguration {
 
   val partyManagementApiKey: String = config.getString("interop-api-gateway.api-keys.party-management")
 
-  val interopAudience: Set[String] =
+  val jwtAudience: Set[String] =
     config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
-  require(interopAudience.nonEmpty, "Audience cannot be empty")
-
+  require(jwtAudience.nonEmpty, "Audience cannot be empty")
 }
