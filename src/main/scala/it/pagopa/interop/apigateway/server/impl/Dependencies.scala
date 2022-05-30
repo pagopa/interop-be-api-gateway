@@ -30,7 +30,7 @@ import it.pagopa.interop.commons.utils.TypeConversions.TryOps
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
-import it.pagopa.interop.partymanagement.client.api.{PartyApi => PartyManagementApi}
+import it.pagopa.interop.selfcare.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,7 +55,10 @@ trait Dependencies {
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
 
-  def partyManagementService()(implicit actorSystem: ActorSystem[_]) =
+  def partyManagementService()(implicit
+    actorSystem: ActorSystem[_],
+    partyManagementApiKeyValue: PartyManagementApiKeyValue
+  ) =
     new PartyManagementServiceImpl(
       PartyManagementInvoker()(actorSystem.classicSystem),
       PartyManagementApi(ApplicationConfiguration.partyManagementURL)
@@ -90,7 +93,11 @@ trait Dependencies {
       }
     )
 
-  def gatewayApi(jwtReader: JWTReader)(implicit actorSystem: ActorSystem[_], ec: ExecutionContext): GatewayApi =
+  def gatewayApi(jwtReader: JWTReader)(implicit
+    actorSystem: ActorSystem[_],
+    ec: ExecutionContext,
+    partyManagementApiKeyValue: PartyManagementApiKeyValue
+  ): GatewayApi =
     new GatewayApi(
       GatewayApiServiceImpl(
         partyManagementService(),

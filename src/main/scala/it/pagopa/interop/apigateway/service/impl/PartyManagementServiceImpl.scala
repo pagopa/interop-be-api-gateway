@@ -1,27 +1,31 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import it.pagopa.interop.apigateway.service.{PartyManagementInvoker, PartyManagementService}
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.partymanagement.client.api.PartyApi
-import it.pagopa.interop.partymanagement.client.invoker.{ApiError, ApiRequest, BearerToken}
-import it.pagopa.interop.partymanagement.client.model._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.apigateway.service.{PartyManagementApiKeyValue, PartyManagementInvoker, PartyManagementService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.AkkaUtils.getUidFuture
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.selfcare.partymanagement.client.api.PartyApi
+import it.pagopa.interop.selfcare.partymanagement.client.invoker.ApiError
+import it.pagopa.interop.selfcare.partymanagement.client.model._
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class PartyManagementServiceImpl(invoker: PartyManagementInvoker, api: PartyApi) extends PartyManagementService {
+class PartyManagementServiceImpl(invoker: PartyManagementInvoker, api: PartyApi)(implicit
+  partyManagementApiKeyValue: PartyManagementApiKeyValue
+) extends PartyManagementService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getInstitution(
     institutionId: UUID
-  )(bearerToken: String)(implicit contexts: Seq[(String, String)]): Future[Institution] = {
-    val request: ApiRequest[Institution] = api.getInstitutionById(institutionId)(BearerToken(bearerToken))
-    invoker.invoke(request, "Retrieve Institution", handleCommonErrors(s"institution $institutionId"))
-  }
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = for {
+    uid <- getUidFuture(contexts)
+    request = api.getInstitutionById(institutionId)(uid)
+    result <- invoker.invoke(request, "Retrieve Institution", handleCommonErrors(s"institution $institutionId"))
+  } yield result
 
   private[service] def handleCommonErrors[T](
     resource: String

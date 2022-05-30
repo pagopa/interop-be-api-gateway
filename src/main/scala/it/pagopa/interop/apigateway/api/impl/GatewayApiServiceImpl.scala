@@ -164,9 +164,8 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = {
     val result: Future[Organization] = for {
-      bearerToken      <- getFutureBearer(contexts)
       organizationUUID <- organizationId.toFutureUUID
-      organization     <- partyManagementService.getInstitution(organizationUUID)(bearerToken)
+      organization     <- partyManagementService.getInstitution(organizationUUID)
     } yield organization.toModel
 
     onComplete(result) {

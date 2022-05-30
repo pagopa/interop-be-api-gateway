@@ -46,5 +46,4 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
         Future.failed(ex)
     }
 
-  override def hashCode(): Int = super.hashCode()
 }

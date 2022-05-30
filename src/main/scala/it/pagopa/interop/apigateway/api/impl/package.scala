@@ -26,7 +26,7 @@ import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.client.model.{Event => NotifierApiEvent, Events => NotifierApiEvents}
-import it.pagopa.interop.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
+import it.pagopa.interop.selfcare.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
 import it.pagopa.interop.purposemanagement.client.model.{
   PurposeVersionState,
   Purpose => PurposeManagementApiPurpose,
