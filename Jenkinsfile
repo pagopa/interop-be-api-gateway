@@ -61,7 +61,7 @@ pipeline {
         container('sbt-container') {
           script {
             ecrLogin()
-            sbtAction 'docker:publish "project client" publish'
+            sbtAction 'docker:publish'
           }
         }
       }
