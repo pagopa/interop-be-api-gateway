@@ -34,14 +34,11 @@ object Dependencies {
     lazy val catalogManagement =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
     lazy val partyManagement =
-      namespace %% "interop-be-party-management-client" % partyManagementVersion
-
+      namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
     lazy val attributeRegistryManagement =
       namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryManagementVersion
-
     lazy val purposeManagement =
       namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
-
     lazy val notifier =
       namespace %% "interop-be-notifier-client" % notifierVersion
 

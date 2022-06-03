@@ -9,6 +9,7 @@ import cats.syntax.all._
 import com.typesafe.scalalogging.Logger
 import it.pagopa.interop.apigateway.common.ApplicationConfiguration
 import it.pagopa.interop.apigateway.server.Controller
+import it.pagopa.interop.apigateway.service.PartyManagementApiKeyValue
 import it.pagopa.interop.commons.logging.renderBuildInfo
 import it.pagopa.interop.commons.utils.CORSSupport
 import kamon.Kamon
@@ -26,6 +27,8 @@ object Main extends App with CORSSupport with Dependencies {
     Behaviors.setup[Nothing] { context =>
       implicit val actorSystem: ActorSystem[_]        = context.system
       implicit val executionContext: ExecutionContext = actorSystem.executionContext
+
+      implicit val partyManagementApiKeyValue: PartyManagementApiKeyValue = PartyManagementApiKeyValue()
 
       Kamon.init()
       AkkaManagement.get(actorSystem.classicSystem).start()

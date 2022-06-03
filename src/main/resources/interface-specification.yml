@@ -473,6 +473,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
   /status:
     get:
+      security: []
       summary: Returns the application status
       description: |
         Returns the application status. For testing purposes, it might randomly reply with an error.
