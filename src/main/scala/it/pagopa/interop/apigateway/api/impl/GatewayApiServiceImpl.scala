@@ -12,11 +12,13 @@ import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
+import it.pagopa.interop.commons.jwt.{M2M_ROLE, authorizeInterop, hasPermissions}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 
 import java.util.UUID
@@ -42,11 +44,18 @@ final case class GatewayApiServiceImpl(
   private val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
+  private[this] def authorize(
+    route: => Route
+  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route =
+    authorizeInterop(hasPermissions(M2M_ROLE), problemOf(StatusCodes.Forbidden, OperationForbidden)) {
+      route
+    }
+
   override def getAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[Agreement] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
       agreementUUID  <- agreementId.toFutureUUID
@@ -79,7 +88,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerAgreements: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[Agreements] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM)
       params         <- (producerId, consumerId) match {
@@ -115,7 +124,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[Attribute] = for {
       attributeUUID <- attributeId.toFutureUUID
       rawAttribute  <- attributeRegistryManagementService.getAttributeById(attributeUUID)(contexts)
@@ -136,7 +145,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerEService: ToEntityMarshaller[EService]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[EService] = for {
       eserviceUUID <- eserviceId.toFutureUUID
       eservice     <- catalogManagementService.getEService(eserviceUUID)(contexts)
@@ -162,7 +171,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerOrganization: ToEntityMarshaller[Organization],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[Organization] = for {
       organizationUUID <- organizationId.toFutureUUID
       organization     <- partyManagementService.getInstitution(organizationUUID)
@@ -181,7 +190,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerAttributes: ToEntityMarshaller[Attributes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
 
     val result: Future[Attributes] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
@@ -218,7 +227,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[Agreement] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
       purposeUUID    <- purposeId.toFutureUUID
@@ -245,7 +254,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerPurpose: ToEntityMarshaller[Purpose],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
 
     def validatePurposeIfSubjectIsProducer(
       subject: UUID,
@@ -291,7 +300,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
 
     val result: Future[Purposes] = for {
       organizationUUID <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
@@ -325,7 +334,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerClient: ToEntityMarshaller[Client]
-  ): Route = {
+  ): Route = authorize {
 
     def isAllowed(client: AuthorizationManagementApiClient, organizationId: UUID): Future[Unit] = {
       if (client.consumerId == organizationId)
@@ -371,7 +380,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route = {
+  ): Route = authorize {
     val result: Future[Events] = for {
       events        <- notifierService.getEvents(lastEventId, limit)(contexts)
       gatewayEvents <- events.toModel.toFuture
