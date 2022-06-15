@@ -5,6 +5,8 @@ import it.pagopa.interop._
 import it.pagopa.interop.apigateway.common.ApplicationConfiguration
 import it.pagopa.interop.selfcare._
 
+import scala.concurrent.ExecutionContext
+
 package object service {
   type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
   type PartyManagementInvoker             = partymanagement.client.invoker.ApiInvoker
@@ -27,7 +29,7 @@ package object service {
   }
 
   object AuthorizationManagementInvoker {
-    def apply()(implicit actorSystem: ActorSystem): AuthorizationManagementInvoker =
+    def apply()(implicit actorSystem: ActorSystem, blockingEc: ExecutionContext): AuthorizationManagementInvoker =
       authorizationmanagement.client.invoker.ApiInvoker(authorizationmanagement.client.api.EnumsSerializers.all)
   }
 
