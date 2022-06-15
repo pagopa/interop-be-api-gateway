@@ -43,9 +43,9 @@ trait Dependencies {
       AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
     )
 
-  def authorizationManagementService()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+  def authorizationManagementService()(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext) =
     new AuthorizationManagementServiceImpl(
-      AuthorizationManagementInvoker()(actorSystem.classicSystem),
+      AuthorizationManagementInvoker()(actorSystem.classicSystem, blockingEc),
       AuthorizationManagementApi(ApplicationConfiguration.authorizationManagementURL)
     )
 

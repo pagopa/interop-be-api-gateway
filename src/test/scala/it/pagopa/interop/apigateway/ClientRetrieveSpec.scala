@@ -71,6 +71,9 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
       val clientId                = UUID.randomUUID()
       val consumerId              = UUID.randomUUID()
       val eServiceId              = UUID.randomUUID()
+      val descriptorId            = UUID.randomUUID()
+      val agreementId             = UUID.randomUUID()
+      val versionId               = UUID.randomUUID()
       val purposeId               = UUID.randomUUID()
 
       val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
@@ -85,6 +88,7 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
               id = UUID.randomUUID(),
               eservice = AuthorizationManagement.ClientEServiceDetails(
                 eserviceId = eServiceId,
+                descriptorId = descriptorId,
                 state = AuthorizationManagement.ClientComponentState.ACTIVE,
                 audience = Seq("aud"),
                 voucherLifespan = 1
@@ -92,10 +96,12 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
               agreement = AuthorizationManagement.ClientAgreementDetails(
                 eserviceId = eServiceId,
                 consumerId = consumerId,
+                agreementId = agreementId,
                 state = AuthorizationManagement.ClientComponentState.ACTIVE
               ),
               purpose = AuthorizationManagement.ClientPurposeDetails(
                 purposeId = purposeId,
+                versionId = versionId,
                 state = AuthorizationManagement.ClientComponentState.ACTIVE
               )
             )
@@ -136,6 +142,9 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
       val consumerId              = UUID.randomUUID()
       val producerId              = UUID.randomUUID()
       val eServiceId              = UUID.randomUUID()
+      val descriptorId            = UUID.randomUUID()
+      val agreementId             = UUID.randomUUID()
+      val versionId               = UUID.randomUUID()
       val purposeId               = UUID.randomUUID()
 
       val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
@@ -150,6 +159,7 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
               id = UUID.randomUUID(),
               eservice = AuthorizationManagement.ClientEServiceDetails(
                 eserviceId = eServiceId,
+                descriptorId = descriptorId,
                 state = AuthorizationManagement.ClientComponentState.ACTIVE,
                 audience = Seq("aud"),
                 voucherLifespan = 1
@@ -157,10 +167,12 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
               agreement = AuthorizationManagement.ClientAgreementDetails(
                 eserviceId = eServiceId,
                 consumerId = consumerId,
+                agreementId = agreementId,
                 state = AuthorizationManagement.ClientComponentState.ACTIVE
               ),
               purpose = AuthorizationManagement.ClientPurposeDetails(
                 purposeId = purposeId,
+                versionId = versionId,
                 state = AuthorizationManagement.ClientComponentState.ACTIVE
               )
             )
