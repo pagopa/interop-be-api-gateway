@@ -123,7 +123,7 @@ lazy val routes: Route = accessoryRoutes ~ pathPrefix("api-gateway" / interfaceV
 toStrictEntity(strictnessTimeout) {
 extractRequest { request =>
 validationFunction(request) {
-gateway.route ~ health.route
+{{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}.route {{^-last}} ~ {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}
 }
 }
 }
