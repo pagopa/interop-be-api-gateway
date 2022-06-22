@@ -3,7 +3,6 @@ package it.pagopa.interop.apigateway.service.impl
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.service.{PartyManagementApiKeyValue, PartyManagementInvoker, PartyManagementService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.AkkaUtils.getUidFuture
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.selfcare.partymanagement.client.api.PartyApi
 import it.pagopa.interop.selfcare.partymanagement.client.invoker.{ApiError, ApiRequest}
