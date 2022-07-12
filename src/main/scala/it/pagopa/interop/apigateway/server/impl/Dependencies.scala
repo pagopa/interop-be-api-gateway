@@ -34,24 +34,31 @@ import it.pagopa.interop.selfcare.partymanagement.client.api.{PartyApi => PartyM
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContextExecutor
 
 trait Dependencies {
 
-  def agreementManagementService()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+  def agreementManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new AgreementManagementServiceImpl(
-      AgreementManagementInvoker()(actorSystem.classicSystem),
+      AgreementManagementInvoker(blockingEc)(actorSystem.classicSystem),
       AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
     )
 
-  def authorizationManagementService()(implicit actorSystem: ActorSystem[_], blockingEc: ExecutionContext) =
+  def authorizationManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new AuthorizationManagementServiceImpl(
-      AuthorizationManagementInvoker()(actorSystem.classicSystem, blockingEc),
+      AuthorizationManagementInvoker(blockingEc)(actorSystem.classicSystem),
       AuthorizationManagementApi(ApplicationConfiguration.authorizationManagementURL)
     )
 
-  def catalogManagementService()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+  def catalogManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new CatalogManagementServiceImpl(
-      CatalogManagementInvoker()(actorSystem.classicSystem),
+      CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
     )
 
@@ -64,20 +71,26 @@ trait Dependencies {
       PartyManagementApi(ApplicationConfiguration.partyManagementURL)
     )
 
-  def notifierService()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) = new NotifierServiceImpl(
-    NotifierInvoker()(actorSystem.classicSystem),
+  def notifierService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) = new NotifierServiceImpl(
+    NotifierInvoker(blockingEc)(actorSystem.classicSystem),
     EventsApi(ApplicationConfiguration.notifierURL)
   )
 
-  def attributeRegistryManagementService()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+  def attributeRegistryManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new AttributeRegistryManagementServiceImpl(
-      AttributeRegistryManagementInvoker()(actorSystem.classicSystem),
+      AttributeRegistryManagementInvoker(blockingEc)(actorSystem.classicSystem),
       AttributeApi(ApplicationConfiguration.attributeRegistryManagementURL)
     )
 
-  def purposeManagementService()(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+  def purposeManagementService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new PurposeManagementServiceImpl(
-      PurposeManagementInvoker()(actorSystem.classicSystem),
+      PurposeManagementInvoker(blockingEc)(actorSystem.classicSystem),
       PurposeApi(ApplicationConfiguration.purposeManagementURL)
     )
 
@@ -93,7 +106,7 @@ trait Dependencies {
       }
     )
 
-  def gatewayApi(jwtReader: JWTReader)(implicit
+  def gatewayApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
     actorSystem: ActorSystem[_],
     ec: ExecutionContext,
     partyManagementApiKeyValue: PartyManagementApiKeyValue
@@ -101,12 +114,12 @@ trait Dependencies {
     new GatewayApi(
       GatewayApiServiceImpl(
         partyManagementService(),
-        agreementManagementService(),
-        authorizationManagementService(),
-        catalogManagementService(),
-        attributeRegistryManagementService(),
-        purposeManagementService(),
-        notifierService()
+        agreementManagementService(blockingEc),
+        authorizationManagementService(blockingEc),
+        catalogManagementService(blockingEc),
+        attributeRegistryManagementService(blockingEc),
+        purposeManagementService(blockingEc),
+        notifierService(blockingEc)
       ),
       GatewayApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts
