@@ -82,9 +82,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "A Client",
         description = Some("A Client Description"),
         purposes = Seq(
-          AuthorizationManagement.Purpose(
-            purposeId = purposeId,
-            states = AuthorizationManagement.ClientStatesChain(
+          AuthorizationManagement.Purpose(states =
+            AuthorizationManagement.ClientStatesChain(
               id = UUID.randomUUID(),
               eservice = AuthorizationManagement.ClientEServiceDetails(
                 eserviceId = eServiceId,
@@ -153,9 +152,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "A Client",
         description = Some("A Client Description"),
         purposes = Seq(
-          AuthorizationManagement.Purpose(
-            purposeId = purposeId,
-            states = AuthorizationManagement.ClientStatesChain(
+          AuthorizationManagement.Purpose(states =
+            AuthorizationManagement.ClientStatesChain(
               id = UUID.randomUUID(),
               eservice = AuthorizationManagement.ClientEServiceDetails(
                 eserviceId = eServiceId,
