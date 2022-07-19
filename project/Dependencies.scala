@@ -62,12 +62,6 @@ object Dependencies {
     lazy val classic   = namespace % "logback-classic" % logbackVersion
   }
 
-  private[this] object kamon {
-    lazy val namespace  = "io.kamon"
-    lazy val bundle     = namespace %% "kamon-bundle"     % kamonVersion
-    lazy val prometheus = namespace %% "kamon-prometheus" % kamonVersion
-  }
-
   private[this] object mustache {
     lazy val mustache = "com.github.spullara.mustache.java" % "compiler" % mustacheVersion
   }
@@ -113,8 +107,6 @@ object Dependencies {
       akka.slf4j                         % Compile,
       akka.stream                        % Compile,
       cats.core                          % Compile,
-      kamon.bundle                       % Compile,
-      kamon.prometheus                   % Compile,
       logback.classic                    % Compile,
       mustache.mustache                  % Compile,
       pagopa.agreementManagement         % Compile,
