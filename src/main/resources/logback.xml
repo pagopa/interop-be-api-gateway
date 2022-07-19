@@ -13,7 +13,6 @@
         <appender-ref ref="CONSOLE"/>
     </appender>
 
-    <logger name="kamon" level="ERROR" />
     <logger name="akka.event" level="WARN" />
     <logger name="akka.remote" level="WARN" />
     <logger name="akka.cluster" level="WARN" />
