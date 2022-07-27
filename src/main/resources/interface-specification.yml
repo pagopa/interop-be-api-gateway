@@ -501,8 +501,59 @@ paths:
                 $ref: '#/components/schemas/Problem'
   '/organizations/origin/{origin}/externalId/{externalId}/eservices':
     get:
+      tags:
+        - gateway
+      summary: Get the eservices for a given organization
+      description: Get the eservices for a given organization
+      operationId: getOrganizationEservices
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: origin
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: externalId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Eservices'
 
   '/eservices/{eserviceId}':
+    get:
+      tags:
+        - gateway
+      summary: Get the eservices for a given organization
+      description: Get the eservices for a given organization
+      operationId: getOrganizationEservices
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: origin
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: externalId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Eservice'
   '/eservices/{eserviceId}/descriptors':
     get:
       tags:
@@ -526,7 +577,10 @@ paths:
       responses:
         '200':
           description: successfully associated
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Descriptors'
         '400':
           description: Bad request
           content:
@@ -681,7 +735,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Attributes'
+                $ref: '#/components/schemas/AgreementAttributes'
         '400':
           description: Bad request
           content:
@@ -1023,7 +1077,7 @@ components:
         - id
         - name
         - kind
-    Attributes:
+    AgreementAttributes:
       type: object
       properties:
         attributes:
