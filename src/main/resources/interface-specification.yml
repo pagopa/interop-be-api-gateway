@@ -27,6 +27,60 @@ tags:
 security:
   - bearerAuth: []
 paths:
+  /agreements:
+    get:
+      tags:
+        - gateway
+      summary: Retrieve a list of agreement
+      description: |
+        It is mandatory to insert either the producerId field or the consumerId field.
+      operationId: getAgreements
+      parameters:
+        - in: query
+          name: producerId
+          schema:
+            type: string
+        - in: query
+          name: consumerId
+          schema:
+            type: string
+        - in: query
+          name: eserviceId
+          schema:
+            type: string
+        - in: query
+          name: descriptorId
+          schema:
+            type: string
+        - in: query
+          name: state
+          schema:
+            $ref: '#/components/schemas/AgreementState'
+      responses:
+        '200':
+          description: A list of Agreement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreements'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/agreements/{agreementId}':
     get:
       tags:
@@ -75,27 +129,74 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/purposes/{purposeId}':
+  '/agreements/{agreementId}/attributes':
+    get:
+      tags:
+        - gateway
+      summary: Get agreement attributes
+      description: Retrieve attributes of the agreement
+      operationId: getAgreementAttributes
+      parameters:
+        - name: agreementId
+          in: path
+          description: the agreement identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attributes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementAttributes'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Purposes not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/agreements/{agreementId}/purposes':
     get:
       tags:
         - gateway
       summary: Get an purpose
-      description: Retrieve a purpose using a purpose identifier
-      operationId: getPurpose
+      description: Retrieve purposes of the agreement
+      operationId: getAgreementPurposes
       parameters:
-        - name: purposeId
+        - name: agreementId
           in: path
-          description: the purpose Id
+          description: the agreement identifier
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
-          description: Purpose retrieved
+          description: Purposes retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purpose'
+                $ref: '#/components/schemas/Purposes'
         '400':
           description: Bad request
           content:
@@ -115,34 +216,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Purpose not found
+          description: Purposes not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/purposes/{purposeId}/agreement':
-    get:
+  '/attributes':
+    post:
       tags:
         - gateway
-      summary: Get an agreement by purposeId
-      description: Retrieve the agreement associated to a purpose
-      operationId: getAgreementByPurpose
+      summary: Create a new certificated attribute
+      description: Create a new certificated attribute
+      operationId: createCertificatedAttribute
       security:
-        - bearerAuth: []
-      parameters:
-        - name: purposeId
-          in: path
-          description: the purpose Id
-          required: true
-          schema:
-            type: string
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeSeed'
       responses:
         '200':
-          description: Agreement retrieved
+          description: the new certificated attribute
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Agreement'
+                $ref: '#/components/schemas/Attribute'
         '400':
           description: Bad request
           content:
@@ -151,18 +251,6 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '401':
           description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Agreement not found
           content:
             application/problem+json:
               schema:
@@ -262,13 +350,75 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/eservices/{eserviceId}':
+    get:
+      tags:
+        - gateway
+      summary: Get the eservices for a given organization
+      description: Get the eservices for a given organization
+      operationId: getEservice
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: eserviceId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Eservice'
+  '/eservices/{eserviceId}/descriptors':
+    get:
+      tags:
+        - gateway
+      summary: Get the eservice descriptors for a given organization
+      description: Get the eservice descriptors for a given organization
+      operationId: getEserviceDescriptors
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: eserviceId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EserviceDescriptors'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}/descriptors/{descriptorId}':
     get:
       tags:
         - gateway
-      summary: Get an eService
-      description: Retrieve an eService by identifier
-      operationId: getEService
+      summary: Get an eservice descriptor
+      description: Retrieve an eservice descriptor by identifiers
+      operationId: getEserviceDescriptor
       security:
         - bearerAuth: []
       parameters:
@@ -288,11 +438,11 @@ paths:
             format: uuid
       responses:
         '200':
-          description: EService retrieved
+          description: Eservice retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EService'
+                $ref: '#/components/schemas/EserviceDescriptor'
         '400':
           description: Bad request
           content:
@@ -312,135 +462,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: EService not found
+          description: Eservice not found
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/organizations/{organizationId}':
+  '/events':
     get:
       tags:
         - gateway
-      summary: Get an organization
-      description: Retrieve an organization by identifier
-      operationId: getOrganization
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: organizationId
-          in: path
-          description: the organization Id
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Organization retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Organization'
-        '400':
-          description: Bad request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Organization not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  /agreements:
-    get:
-      tags:
-        - gateway
-      summary: Retrieve a list of agreement
-      description: |
-        It is mandatory to insert either the producerId field or the consumerId field.
-      operationId: getAgreements
-      parameters:
-        - in: query
-          name: producerId
-          schema:
-            type: string
-        - in: query
-          name: consumerId
-          schema:
-            type: string
-        - in: query
-          name: eserviceId
-          schema:
-            type: string
-        - in: query
-          name: descriptorId
-          schema:
-            type: string
-        - in: query
-          name: state
-          schema:
-            $ref: '#/components/schemas/AgreementState'
-      responses:
-        '200':
-          description: A list of Agreement
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Agreements'
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  '/attributes':
-    post:
-      tags:
-        - gateway
-      summary: Create a new certificated attribute
-      description: Create a new certificated attribute
-      operationId: createCertificatedAttribute
+      summary: Get list of events
+      description: Retrieves the list of events for the caller's institution
+      operationId: getEventsFromId
       security:
         - bearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AttributeSeed'
+      parameters:
+        - name: lastEventId
+          in: query
+          description: last event identifier already processed by the caller
+          required: true
+          schema:
+            type: integer
+            format: int64
+            default: 0
+        - name: limit
+          in: query
+          description: the maximum number of events returned by this response
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+            default: 100
       responses:
         '200':
-          description: the new certificated attribute
+          description: Messages
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Attribute'
+                $ref: '#/components/schemas/Events'
         '400':
           description: Bad request
           content:
@@ -449,6 +509,64 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '401':
           description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Institution not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/events/eservices':
+    get:
+      tags:
+        - gateway
+      summary: Get list of eservices events
+      description: Retrieves the list of eservices events
+      operationId: getEservicesEventsFromId
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: lastEventId
+          in: query
+          description: last event identifier already processed by the caller
+          required: true
+          schema:
+            type: integer
+            format: int64
+            default: 0
+        - name: limit
+          in: query
+          description: the maximum number of events returned by this response
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Events'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Institution not found
           content:
             application/problem+json:
               schema:
@@ -519,6 +637,15 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: attributes
+          schema:
+            type: array
+            items:
+              description: |
+              a list of attributes used to filter the eservices. Only those that match the filter will be returned..
+              type: string
+          required: true
       responses:
         '200':
           description: successfully associated
@@ -526,61 +653,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Eservices'
-
-  '/eservices/{eserviceId}':
+  '/organizations/{organizationId}':
     get:
       tags:
         - gateway
-      summary: Get the eservices for a given organization
-      description: Get the eservices for a given organization
-      operationId: getOrganizationEservices
+      summary: Get an organization
+      description: Retrieve an organization by identifier
+      operationId: getOrganization
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
-        - in: path
-          name: origin
+        - name: organizationId
+          in: path
+          description: the organization Id
+          required: true
           schema:
             type: string
-          required: true
-        - in: path
-          name: externalId
-          schema:
-            type: string
-          required: true
+            format: uuid
       responses:
         '200':
-          description: successfully associated
+          description: Organization retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Eservice'
-  '/eservices/{eserviceId}/descriptors':
-    get:
-      tags:
-        - gateway
-      summary: Get the eservices for a given organization
-      description: Get the eservices for a given organization
-      operationId: getOrganizationEservices
-      security:
-        - bearerAuth: [ ]
-      parameters:
-        - in: path
-          name: origin
-          schema:
-            type: string
-          required: true
-        - in: path
-          name: externalId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: successfully associated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Descriptors'
+                $ref: '#/components/schemas/Organization'
         '400':
           description: Bad request
           content:
@@ -593,46 +689,39 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '404':
-          description: Not Found
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/events':
+        '404':
+          description: Organization not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/purposes/{purposeId}':
     get:
       tags:
         - gateway
-      summary: Get list of events
-      description: Retrieves the list of events for the caller's institution
-      operationId: getEventsFromId
-      security:
-        - bearerAuth: [ ]
+      summary: Get an purpose
+      description: Retrieve a purpose using a purpose identifier
+      operationId: getPurpose
       parameters:
-        - name: lastEventId
-          in: query
-          description: last event identifier already processed by the caller
+        - name: purposeId
+          in: path
+          description: the purpose Id
           required: true
           schema:
-            type: integer
-            format: int64
-            default: 0
-        - name: limit
-          in: query
-          description: the maximum number of events returned by this response
-          schema:
-            type: integer
-            format: int32
-            minimum: 1
-            maximum: 500
-            default: 100
+            type: string
       responses:
         '200':
-          description: Messages
+          description: Purpose retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Events'
+                $ref: '#/components/schemas/Purpose'
         '400':
           description: Bad request
           content:
@@ -645,8 +734,61 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
-          description: Institution not found
+          description: Purpose not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/purposes/{purposeId}/agreement':
+    get:
+      tags:
+        - gateway
+      summary: Get an agreement by purposeId
+      description: Retrieve the agreement associated to a purpose
+      operationId: getAgreementByPurpose
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: purposeId
+          in: path
+          description: the purpose Id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agreement retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Agreement not found
           content:
             application/problem+json:
               schema:
@@ -657,7 +799,7 @@ paths:
       summary: Returns the application status
       description: |
         Returns the application status. For testing purposes, it might randomly reply with an error.
-      operationId: get_status
+      operationId: getStatus
       tags:
         - health
       responses:
@@ -668,447 +810,10 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  '/agreements/{agreementId}/purposes':
-    get:
-      tags:
-        - gateway
-      summary: Get an purpose
-      description: Retrieve purposes of the agreement
-      operationId: getAgreementPurposes
-      parameters:
-        - name: agreementId
-          in: path
-          description: the agreement identifier
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Purposes retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Purposes'
-        '400':
-          description: Bad request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Purposes not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  '/agreements/{agreementId}/attributes':
-    get:
-      tags:
-        - gateway
-      summary: Get agreement attributes
-      description: Retrieve attributes of the agreement
-      operationId: getAgreementAttributes
-      parameters:
-        - name: agreementId
-          in: path
-          description: the agreement identifier
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Attributes retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementAttributes'
-        '400':
-          description: Bad request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '401':
-          description: Unauthorized
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Purposes not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+
+
 components:
   schemas:
-    Client:
-      type: object
-      additionalProperties: false
-      properties:
-        id:
-          type: string
-          format: uuid
-        consumerId:
-          type: string
-          format: uuid
-      required:
-        - id
-        - consumerId
-    Organization:
-      type: object
-      additionalProperties: false
-      properties:
-        id:
-          type: string
-          format: uuid
-        externalId:
-          description: l'identificativo dell'Erogatore dell'Eservice
-          $ref: '#/components/schemas/ExternalId'
-        name:
-          type: string
-        category:
-          type: string
-      required:
-        - id
-        - externalId
-        - name
-        - category
-    EService:
-      description: il modello dell'Eservice
-      type: object
-      required:
-        - id
-        - producerId
-        - name
-        - version
-        - description
-        - technology
-        - attributes
-        - state
-      properties:
-        id:
-          description: l'identificativo dell'Eservice
-          type: string
-          format: uuid
-        producer:
-          description: l'identificativo dell'Erogatore dell'Eservice
-          $ref: '#/components/schemas/Organization'
-        name:
-          description: il nome dell'Eservice
-          type: string
-        version:
-          type: string
-          pattern: ^[0-9]{1,4}$
-        description:
-          description: la descrizione dell'Eservice
-          type: string
-        technology:
-          description: la tecnologia con cui le API dell'Eservice sono scritte
-          $ref: '#/components/schemas/EServiceTechnology'
-        attributes:
-          description: il set di attributi che definiscono l'accesso all'Eservice
-          $ref: '#/components/schemas/Attributes'
-        state:
-          $ref: '#/components/schemas/EServiceDescriptorState'
-    ExternalId:
-      description: il modello dell'identificativo esterno dell'ente
-      type: object
-      required:
-        - origin
-        - id
-      properties:
-        origin:
-          description: l'origine del codice esterno (es IPA)
-          type: string
-        id:
-          description: l'identificativo esterno dell'ente (es codice ipa)
-          type: string
-    EServiceTechnology:
-      description: le technologie API ammesse
-      type: string
-      enum:
-        - REST
-        - SOAP
-#    Attributes:
-#      description: il set degli attributi associati all'Eservice
-#      properties:
-#        certified:
-#          description: la lista degli attributi certficati
-#          type: array
-#          items:
-#            $ref: '#/components/schemas/Attribute'
-#        declared:
-#          description: la lista degli attributi dichiarati
-#          type: array
-#          items:
-#            $ref: '#/components/schemas/Attribute'
-#        verified:
-#          description: la lista degli attributi verificati
-#          type: array
-#          items:
-#            $ref: '#/components/schemas/Attribute'
-#      required:
-#        - certified
-#        - declared
-#        - verified
-#    Attribute:
-#      description: il modello di un attributo
-#      type: object
-#      properties:
-#        single:
-#          description: |
-#            un attributo singolo;
-#            nella risoluzione degli attributi va in AND con gli altri attributi definiti
-#          $ref: '#/components/schemas/AttributeValue'
-#        group:
-#          description: |
-#            un gruppo di attributi i cui elementi vanno in OR tra loro;
-#            nella risoluzione degli attributi va in AND con gli altri attributi definiti
-#          type: array
-#          items:
-#            $ref: '#/components/schemas/AttributeValue'
-#    AttributeValue:
-#      description: il valore di un attributo
-#      type: object
-#      properties:
-#        id:
-#          description: l'identificativo dell'attributo
-#          type: string
-#        explicitAttributeVerification:
-#          description: |
-#            questo campo viene utilizzato solo nel flusso di attributi verificati:
-#            se true l'erogatore deve verificare l'attributo,
-#            in caso contrario, se è già verificato da un altro erogatore, può essere verificato implicitamente
-#          type: boolean
-#      required:
-#        - id
-#        - explicitAttributeVerification
-    EServiceDescriptor:
-      description: il modello di un descrittore di un EService
-      type: object
-      required:
-        - id
-        - version
-        - docs
-        - state
-        - creationDate
-        - audience
-        - voucherLifespan
-        - dailyCallsPerConsumer
-        - dailyCallsTotal
-      properties:
-        id:
-          description: l'identificativo del descrittore dell'EService
-          type: string
-          format: uuid
-        version:
-          description: la versione del descrittore dell'EService
-          type: string
-        description:
-          description: la descrizione del descrittore dell'EService
-          type: string
-        audience:
-          description: la lista delle audience accettate dell'EService
-          type: array
-          items:
-            type: string
-        voucherLifespan:
-          description: la durata del voucher generato per questo EService da Interoperabilità
-          type: integer
-          format: int32
-        dailyCallsPerConsumer:
-          description: numero massimo di chiamate giornaliere che questo descrittore può consumatore.
-          type: integer
-          format: int32
-          minimum: 0
-        dailyCallsTotal:
-          description: totale delle chiamate giornaliere disponibili per questo EService
-          type: integer
-          format: int32
-          minimum: 0
-        interface:
-          description: il documento di interfaccia dell'EService
-          $ref: '#/components/schemas/EServiceDoc'
-        docs:
-          description: la lista dei documenti a corredo dell'EService
-          type: array
-          items:
-            $ref: '#/components/schemas/EServiceDoc'
-        state:
-          description: lo stato del descrittore
-          $ref: '#/components/schemas/EServiceDescriptorState'
-    EServiceDoc:
-      description: il modello di un documento del descrittore di un EService
-      type: object
-      required:
-        - id
-        - name
-        - contentType
-      properties:
-        id:
-          description: identificativo del documento
-          type: string
-          format: uuid
-        name:
-          description: il nome del documento
-          type: string
-        contentType:
-          description: il content type del documento
-          type: string
-    EServiceDescriptorState:
-      type: string
-      description: gli stati del descrittore di un EService
-      enum:
-        - PUBLISHED
-        - DEPRECATED
-        - SUSPENDED
-        - ARCHIVED
-    PurposeState:
-      type: string
-      description: Purpose State
-      enum:
-        - ACTIVE
-        - DRAFT
-        - SUSPENDED
-        - WAITING_FOR_APPROVAL
-        - ARCHIVED
-    Purpose:
-      type: object
-      additionalProperties: false
-      properties:
-        id:
-          type: string
-          format: uuid
-        throughput:
-          type: integer
-          format: int32
-        state:
-          $ref: '#/components/schemas/PurposeState'
-      required:
-        - id
-        - throughput
-        - state
-    Purposes:
-      type: object
-      properties:
-        purposes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Purpose'
-      required:
-        - purposes
-    AttributeKind:
-      type: string
-      enum:
-        - CERTIFIED
-        - DECLARED
-        - VERIFIED
-    AttributeValidity:
-      type: string
-      enum:
-        - VALID
-        - INVALID
-    AttributeSeed:
-      type: object
-      additionalProperties: false
-      title: Attribute
-      description: represents the details of a verified attribute bound to the agreement.
-      properties:
-        code:
-          type: string
-          description: source identifier
-          pattern: '[a-z0-9 \-]{,48}'
-          maxLength: 48
-        name:
-          type: string
-          description: human readable description
-          pattern: '[a-z0-9 \-]{,48}'
-          maxLength: 48
-      required:
-        - code
-        - name
-    Attribute:
-      type: object
-      additionalProperties: false
-      title: Attribute
-      description: represents the details of a verified attribute bound to the agreement.
-      properties:
-        id:
-          type: string
-          format: uuid
-        code:
-          type: string
-          description: source identifier
-          pattern: '[a-z0-9 \-]{,48}'
-          maxLength: 48
-        origin:
-          type: string
-          description: 'represents the origin of this attribute (e.g.: IPA, Normattiva, etc)'
-          pattern: '[a-z0-9 \-]{,48}'
-          maxLength: 48
-        name:
-          type: string
-          pattern: '[a-z0-9 \-]{,48}'
-          maxLength: 48
-        kind:
-          $ref: '#/components/schemas/AttributeKind'
-      required:
-        - id
-        - name
-        - kind
-    AgreementAttributes:
-      type: object
-      properties:
-        attributes:
-          type: array
-          uniqueItems: true
-          items:
-            $ref: '#/components/schemas/AttributeValidityState'
-      required:
-        - attributes
-    AttributeValidityState:
-      type: object
-      additionalProperties: false
-      title: AttributeValidityState
-      description: represents the validity of a specified attribute
-      properties:
-        id:
-          type: string
-          format: uuid
-        validity:
-          $ref: '#/components/schemas/AttributeValidity'
-      required:
-        - id
-        - validity
-    AgreementState:
-      type: string
-      description: Agreement State
-      enum:
-        - ACTIVE
-        - PENDING
-        - SUSPENDED
-        - INACTIVE
     Agreement:
       type: object
       additionalProperties: false
@@ -1138,6 +843,24 @@ components:
         - consumerId
         - state
       description: business representation of an agreement
+    AgreementAttributes:
+      type: object
+      properties:
+        attributes:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AttributeValidityState'
+      required:
+        - attributes
+    AgreementState:
+      type: string
+      description: Agreement State
+      enum:
+        - ACTIVE
+        - PENDING
+        - SUSPENDED
+        - INACTIVE
     Agreements:
       type: object
       properties:
@@ -1147,28 +870,305 @@ components:
             $ref: '#/components/schemas/Agreement'
       required:
         - agreements
-    Events:
+    Attribute:
       type: object
+      additionalProperties: false
+      title: Attribute
+      description: represents the details of a verified attribute bound to the agreement.
       properties:
-        lastEventId:
-          type: integer
-          format: int64
-        events:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: source identifier
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        origin:
+          type: string
+          description: 'represents the origin of this attribute (e.g.: IPA, Normattiva, etc)'
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        name:
+          type: string
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        kind:
+          $ref: '#/components/schemas/AttributeKind'
+      required:
+        - id
+        - name
+        - kind
+    AttributeKind:
+      type: string
+      enum:
+        - CERTIFIED
+        - DECLARED
+        - VERIFIED
+    AttributeSeed:
+      type: object
+      additionalProperties: false
+      title: Attribute
+      description: represents the details of a verified attribute bound to the agreement.
+      properties:
+        code:
+          type: string
+          description: source identifier
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        name:
+          type: string
+          description: human readable description
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+      required:
+        - code
+        - name
+    AttributeValidity:
+      type: string
+      enum:
+        - VALID
+        - INVALID
+    AttributeValidityState:
+      type: object
+      additionalProperties: false
+      title: AttributeValidityState
+      description: represents the validity of a specified attribute
+      properties:
+        id:
+          type: string
+          format: uuid
+        validity:
+          $ref: '#/components/schemas/AttributeValidity'
+      required:
+        - id
+        - validity
+    Client:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        consumerId:
+          type: string
+          format: uuid
+      required:
+        - id
+        - consumerId
+    Eservice:
+      description: The eservice model
+      type: object
+      required:
+        - id
+        - producerId
+        - name
+        - version
+        - description
+        - technology
+        - attributes
+        - state
+      properties:
+        id:
+          description: eservice identifier
+          type: string
+          format: uuid
+        producer:
+          description: eservice producer identifier
+          $ref: '#/components/schemas/Organization'
+        name:
+          description: eservice name
+          type: string
+        version:
+          type: string
+          pattern: ^[0-9]{1,4}$
+        description:
+          description: eservice description
+          type: string
+        technology:
+          description: eservice technology
+          $ref: '#/components/schemas/EserviceTechnology'
+        attributes:
+          description: eservice attributes set
+          $ref: '#/components/schemas/EserviceAttributes'
+        state:
+          description: eservice state
+          $ref: '#/components/schemas/EserviceDescriptorState'
+    EserviceAttributes:
+      description: il set degli attributi associati all'Eservice
+      properties:
+        certified:
+          description: la lista degli attributi certficati
           type: array
           items:
-            $ref: '#/components/schemas/Event'
+            $ref: '#/components/schemas/EserviceAttribute'
+        declared:
+          description: la lista degli attributi dichiarati
+          type: array
+          items:
+            $ref: '#/components/schemas/EserviceAttribute'
+        verified:
+          description: la lista degli attributi verificati
+          type: array
+          items:
+            $ref: '#/components/schemas/EserviceAttribute'
       required:
-        - events
+        - certified
+        - declared
+        - verified
+    EserviceAttribute:
+      description: eservice attribute model
+      type: object
+      properties:
+        single:
+          description: |
+            a single attribute;
+            in the resolution of the expression of the attribute, it is combined with other attributes with AND operator
+          $ref: '#/components/schemas/EserviceAttributeValue'
+        group:
+          description: |
+            a group of attributes combined together with OR oparator
+            in the resolution of the expression of the attribute, it is combined with other attributes with AND operator
+          type: array
+          items:
+            $ref: '#/components/schemas/EserviceAttributeValue'
+    EserviceAttributeValue:
+      description: attribute value
+      type: object
+      properties:
+        id:
+          description: attribute identifier
+          type: string
+        explicitAttributeVerification:
+          description: |
+            this field is used only in the flow of verified attributes:
+            if true the producer must check the attribute,
+            otherwise, if it is already verified by another producer, it can be implicitly verified
+          type: boolean
+      required:
+        - id
+        - explicitAttributeVerification
+    EserviceDescriptor:
+      description: eservice descriptor model
+      type: object
+      required:
+        - id
+        - version
+        - docs
+        - state
+        - creationDate
+        - audience
+        - voucherLifespan
+        - dailyCallsPerConsumer
+        - dailyCallsTotal
+      properties:
+        id:
+          description: eservice descriptor identifier
+          type: string
+          format: uuid
+        version:
+          description: eservice descriptor version
+          type: string
+        description:
+          description: eservice descriptor description
+          type: string
+        audience:
+          description: eservice descriptor audience
+          type: array
+          items:
+            type: string
+        voucherLifespan:
+          description: voucher duration
+          type: integer
+          format: int32
+        dailyCallsPerConsumer:
+          description: max number of daily requests per consumer
+          type: integer
+          format: int32
+          minimum: 0
+        dailyCallsTotal:
+          description: total number of daily requests delivered by the eservice
+          type: integer
+          format: int32
+          minimum: 0
+        interface:
+          description: eservice interface document
+          $ref: '#/components/schemas/EserviceDoc'
+        docs:
+          description: eservice supplementary documents
+          type: array
+          items:
+            $ref: '#/components/schemas/EserviceDoc'
+        state:
+          description: eservice descriptor state
+          $ref: '#/components/schemas/EserviceDescriptorState'
+    EserviceDescriptorState:
+      type: string
+      description: list of eservice descriptor states
+      enum:
+        - PUBLISHED
+        - DEPRECATED
+        - SUSPENDED
+        - ARCHIVED
+    EserviceDescriptors:
+      description: eservice descriptors list model
+      type: object
+      required:
+        - descriptors
+      properties:
+        descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/EserviceDescriptor'
+    EserviceDoc:
+      description: eservice descriptor document model
+      type: object
+      required:
+        - id
+        - name
+        - contentType
+      properties:
+        id:
+          description: document identifier
+          type: string
+          format: uuid
+        name:
+          description: document name
+          type: string
+        contentType:
+          description: document content type
+          type: string
+    EserviceTechnology:
+      description: API technlogy admitted
+      type: string
+      enum:
+        - REST
+        - SOAP
+    Eservices:
+      description: eservices list model
+      type: object
+      required:
+        - eservices
+      properties:
+        eservices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Eservice'
     Event:
+      description: Notification event model
       properties:
         eventId:
+          description: event identifier
           type: integer
           format: int64
         eventType:
+          description: event type
           type: string
         objectType:
+          description: reference to which object is been involved with notification
           type: string
         objectId:
+          description: object identifier
           additionalProperties:
             type: string
       required:
@@ -1176,6 +1176,56 @@ components:
         - eventType
         - objectType
         - objectId
+    Events:
+      description: list of event model
+      type: object
+      properties:
+        lastEventId:
+          description: reference to the last eventId
+          type: integer
+          format: int64
+        events:
+          description: the list of event model
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+      required:
+        - events
+    ExternalId:
+      description: organization identifier model
+      type: object
+      required:
+        - origin
+        - id
+      properties:
+        origin:
+          description: external organizatio identifier origin (es IPA)
+          type: string
+        id:
+          description: external organizatio identifier (es codice ipa)
+          type: string
+    Organization:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: internal organization identifier
+          type: string
+          format: uuid
+        externalId:
+          description: external organization identifier
+          $ref: '#/components/schemas/ExternalId'
+        name:
+          description: organization name
+          type: string
+        category:
+          description: organization category (IPA category)
+          type: string
+      required:
+        - id
+        - externalId
+        - name
+        - category
     Problem:
       properties:
         type:
@@ -1230,6 +1280,40 @@ components:
       required:
         - code
         - detail
+    Purpose:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        throughput:
+          type: integer
+          format: int32
+        state:
+          $ref: '#/components/schemas/PurposeState'
+      required:
+        - id
+        - throughput
+        - state
+    PurposeState:
+      type: string
+      description: Purpose State
+      enum:
+        - ACTIVE
+        - DRAFT
+        - SUSPENDED
+        - WAITING_FOR_APPROVAL
+        - ARCHIVED
+    Purposes:
+      type: object
+      properties:
+        purposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purpose'
+      required:
+        - purposes
   securitySchemes:
     bearerAuth:
       type: http
