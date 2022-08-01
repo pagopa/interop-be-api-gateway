@@ -376,8 +376,8 @@ paths:
     get:
       tags:
         - gateway
-      summary: Get the eservice descriptors for a given organization
-      description: Get the eservice descriptors for a given organization
+      summary: Get the eservice descriptors by eservice ID
+      description: Get the eservice descriptors by eservice ID
       operationId: getEserviceDescriptors
       security:
         - bearerAuth: [ ]
