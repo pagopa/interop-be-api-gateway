@@ -583,11 +583,13 @@ paths:
       parameters:
         - in: path
           name: origin
+          description: the origin of the external id (e.g. IPA)
           schema:
             type: string
           required: true
         - in: path
           name: externalId
+          description: organization external id (e.g. codice ipa)
           schema:
             type: string
           required: true
@@ -629,11 +631,13 @@ paths:
       parameters:
         - in: path
           name: origin
+          description: the origin of the external id (e.g. IPA)
           schema:
             type: string
           required: true
         - in: path
           name: externalId
+          description: organization external id (e.g. codice ipa)
           schema:
             type: string
           required: true
@@ -643,7 +647,8 @@ paths:
             type: array
             items:
               description: |
-              a list of attributes used to filter the eservices. Only those that match the filter will be returned..
+                A list of attributes used to filter the eservices. Only those that match the filter will be returned.
+                The values must be the external ones (e.g. iPA categories, SDG attributes).
               type: string
           required: true
       responses:
@@ -974,7 +979,6 @@ components:
           type: string
           format: uuid
         producer:
-          description: eservice producer identifier
           $ref: '#/components/schemas/Organization'
         name:
           description: eservice name
@@ -986,29 +990,26 @@ components:
           description: eservice description
           type: string
         technology:
-          description: eservice technology
           $ref: '#/components/schemas/EserviceTechnology'
         attributes:
-          description: eservice attributes set
           $ref: '#/components/schemas/EserviceAttributes'
         state:
-          description: eservice state
           $ref: '#/components/schemas/EserviceDescriptorState'
     EserviceAttributes:
-      description: il set degli attributi associati all'Eservice
+      description: the attributes set associated to the Eservice
       properties:
         certified:
-          description: la lista degli attributi certficati
+          description: certified attributes list
           type: array
           items:
             $ref: '#/components/schemas/EserviceAttribute'
         declared:
-          description: la lista degli attributi dichiarati
+          description: declared attributes list
           type: array
           items:
             $ref: '#/components/schemas/EserviceAttribute'
         verified:
-          description: la lista degli attributi verificati
+          description: verified attributes list
           type: array
           items:
             $ref: '#/components/schemas/EserviceAttribute'
@@ -1017,18 +1018,17 @@ components:
         - declared
         - verified
     EserviceAttribute:
-      description: eservice attribute model
+      description: | 
+        Eservice attribute model.
+        In the resolution of the expression of the attribute, a single attribute is combined with other attributes 
+        with AND operator.
+        A group of attributes combined together with OR oparator; in the resolution of the expression of the attribute, 
+        it is combined with other attributes with AND operator.
       type: object
       properties:
         single:
-          description: |
-            a single attribute;
-            in the resolution of the expression of the attribute, it is combined with other attributes with AND operator
           $ref: '#/components/schemas/EserviceAttributeValue'
         group:
-          description: |
-            a group of attributes combined together with OR oparator
-            in the resolution of the expression of the attribute, it is combined with other attributes with AND operator
           type: array
           items:
             $ref: '#/components/schemas/EserviceAttributeValue'
@@ -1092,7 +1092,6 @@ components:
           format: int32
           minimum: 0
         interface:
-          description: eservice interface document
           $ref: '#/components/schemas/EserviceDoc'
         docs:
           description: eservice supplementary documents
@@ -1100,7 +1099,6 @@ components:
           items:
             $ref: '#/components/schemas/EserviceDoc'
         state:
-          description: eservice descriptor state
           $ref: '#/components/schemas/EserviceDescriptorState'
     EserviceDescriptorState:
       type: string
@@ -1206,6 +1204,7 @@ components:
           type: string
     Organization:
       type: object
+      description: organization model
       additionalProperties: false
       properties:
         id:
@@ -1213,7 +1212,6 @@ components:
           type: string
           format: uuid
         externalId:
-          description: external organization identifier
           $ref: '#/components/schemas/ExternalId'
         name:
           description: organization name
