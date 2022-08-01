@@ -585,7 +585,7 @@ paths:
           name: origin
           description: the origin of the external id (e.g. IPA)
           schema:
-            type: string
+            $ref: '#/components/schemas/Origin'
           required: true
         - in: path
           name: externalId
@@ -633,7 +633,7 @@ paths:
           name: origin
           description: the origin of the external id (e.g. IPA)
           schema:
-            type: string
+            $ref: '#/components/schemas/Origin'
           required: true
         - in: path
           name: externalId
@@ -642,15 +642,27 @@ paths:
             type: string
           required: true
         - in: query
-          name: attributes
+          name: externalAttributes
           schema:
             type: array
             items:
               description: |
-                A list of attributes used to filter the eservices. Only those that match the filter will be returned.
-                The values must be the external ones (e.g. iPA categories, SDG attributes).
+                A list of external attribute identifiers used to filter the eservices. 
+                Only those that match the filter will be returned.
+                It must be pass as a comma separated list.
+                Each value must be the concatenation of attribute origin and code using / char (e.g. IPA/L37, SDG/SDG).
+              example: IPA/L37,SDG/SDG_1,SDG/SDG_2
               type: string
-          required: true
+        - in: query
+          name: internalAttributes
+          schema:
+            type: array
+            items:
+              description: |
+                A list of internal attribute identifiers used to filter the eservices. Only those that match the filter will be returned.
+                It must be pass as a comma separated list.
+              example: cf371097-aa2c-4b55-96bf-6dbfbbb02bfc,68a19171-0422-4a80-b26f-d47e2524e694
+              type: string
       responses:
         '200':
           description: successfully associated
@@ -890,10 +902,7 @@ components:
           pattern: '[a-z0-9 \-]{,48}'
           maxLength: 48
         origin:
-          type: string
-          description: 'represents the origin of this attribute (e.g.: IPA, Normattiva, etc)'
-          pattern: '[a-z0-9 \-]{,48}'
-          maxLength: 48
+          $ref: '#/components/schemas/Origin'
         name:
           type: string
           pattern: '[a-z0-9 \-]{,48}'
@@ -1039,6 +1048,13 @@ components:
         id:
           description: attribute identifier
           type: string
+        code:
+          type: string
+          description: source identifier
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        origin:
+          $ref: '#/components/schemas/Origin'
         explicitAttributeVerification:
           description: |
             this field is used only in the flow of verified attributes:
@@ -1047,6 +1063,8 @@ components:
           type: boolean
       required:
         - id
+        - code
+        - origin
         - explicitAttributeVerification
     EserviceDescriptor:
       description: eservice descriptor model
@@ -1197,8 +1215,7 @@ components:
         - id
       properties:
         origin:
-          description: external organizatio identifier origin (es IPA)
-          type: string
+          $ref: '#/components/schemas/Origin'
         id:
           description: external organizatio identifier (es codice ipa)
           type: string
@@ -1224,6 +1241,12 @@ components:
         - externalId
         - name
         - category
+    Origin:
+      description: Attribute origin admitted
+      type: string
+      enum:
+        - IPA
+        - SDG
     Problem:
       properties:
         type:
