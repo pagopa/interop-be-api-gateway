@@ -354,8 +354,8 @@ paths:
     get:
       tags:
         - gateway
-      summary: Get the eservices for a given organization
-      description: Get the eservices for a given organization
+      summary: Get the eservice by ID
+      description: Get the eservice by ID
       operationId: getEservice
       security:
         - bearerAuth: [ ]
