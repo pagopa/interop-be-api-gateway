@@ -7,7 +7,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
-import it.pagopa.interop.notifier.client.invoker.ApiError
+import it.pagopa.interop.purposemanagement.client.invoker.ApiError
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.purposemanagement.client.invoker.BearerToken
 import it.pagopa.interop.purposemanagement.client.model.{Purpose, Purposes}
