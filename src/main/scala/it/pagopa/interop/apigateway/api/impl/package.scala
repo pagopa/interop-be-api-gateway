@@ -1,6 +1,7 @@
 package it.pagopa.interop.apigateway.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.StatusCode
 import cats.data.Validated
 import cats.implicits._
@@ -17,6 +18,7 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.{
 }
 import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.catalogmanagement.client.model.{
+  AttributeValue,
   Attribute => CatalogManagementApiAttribute,
   EService => CatalogManagementApiEService,
   EServiceDescriptor => CatalogManagementApiDescriptor,
@@ -65,10 +67,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val attributesFormat: RootJsonFormat[Attributes] = jsonFormat1(Attributes)
 
+  final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
+
   final val serviceErrorCodePrefix: String = "013"
   final val defaultProblemType: String     = "about:blank"
+  final val defaultErrorMessage: String    = "Unknown error"
 
-  def problemOf(httpError: StatusCode, error: ComponentError, defaultEvent: String = "Unknown error"): Problem =
+  def problemOf(httpError: StatusCode, error: ComponentError): Problem =
     Problem(
       `type` = defaultProblemType,
       status = httpError.intValue,
@@ -76,7 +81,20 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       errors = Seq(
         ProblemError(
           code = s"$serviceErrorCodePrefix-${error.code}",
-          detail = Option(error.getMessage).getOrElse(defaultEvent)
+          detail = Option(error.getMessage).getOrElse(defaultErrorMessage)
+        )
+      )
+    )
+
+  def problemOf(httpError: StatusCode, errors: List[ComponentError]): Problem =
+    Problem(
+      `type` = defaultProblemType,
+      status = httpError.intValue,
+      title = httpError.defaultMessage,
+      errors = errors.map(error =>
+        ProblemError(
+          code = s"$serviceErrorCodePrefix-${error.code}",
+          detail = Option(error.getMessage).getOrElse(defaultErrorMessage)
         )
       )
     )
@@ -145,8 +163,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     def toModel(descriptor: CatalogManagementApiDescriptor): EService =
       EService(eservice.id, eservice.name, version = descriptor.version, state = descriptor.state.toModel)
 
-    private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] =
-      (attribute.group.sequence :+ attribute.single).flatten.traverse(_.id.toUUID).getOrElse(List.empty).toSet
+    private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
+      val allAttributes: Seq[Option[AttributeValue]] = attribute.group.sequence :+ attribute.single
+      allAttributes.flatMap(attribute => attribute.map(_.id)).toSet
+    }
 
     def isVerified(attribute: AgreementManagementApiVerifiedAttribute): Boolean = attribute.verified.contains(true)
 
@@ -188,9 +208,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
-    def toModel: Try[Attribute] = for {
-      attributeId <- attribute.id.toUUID
-    } yield Attribute(id = attributeId, name = attribute.name, kind = attribute.kind.toModel)
+    def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = attribute.kind.toModel)
   }
 
   implicit class EnrichedAttributeKind(private val kind: AttributeRegistryManagementApiAttributeKind) extends AnyVal {
