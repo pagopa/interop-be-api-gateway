@@ -127,9 +127,8 @@ final case class GatewayApiServiceImpl(
   ): Route = authorize {
     val result: Future[Attribute] = for {
       attributeUUID <- attributeId.toFutureUUID
-      rawAttribute  <- attributeRegistryManagementService.getAttributeById(attributeUUID)(contexts)
-      attribute     <- rawAttribute.toModel.toFuture
-    } yield attribute
+      attribute     <- attributeRegistryManagementService.getAttributeById(attributeUUID)(contexts)
+    } yield attribute.toModel
 
     onComplete(result) {
       case Success(attribute)                                        =>

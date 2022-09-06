@@ -75,14 +75,14 @@ class AttributeFlatteningSpec extends AnyWordSpec with Matchers {
       )
 
       val verified = Seq(
-        Attribute(single = Some(AttributeValue(attributeId1.toString, false)), group = None),
+        Attribute(single = Some(AttributeValue(attributeId1, false)), group = None),
         Attribute(
           single = None,
           group = Some(
             Seq(
-              AttributeValue(attributeId2.toString, true),
-              AttributeValue(attributeId3.toString, true),
-              AttributeValue(attributeId4.toString, true)
+              AttributeValue(attributeId2, true),
+              AttributeValue(attributeId3, true),
+              AttributeValue(attributeId4, true)
             )
           )
         ),
@@ -90,9 +90,9 @@ class AttributeFlatteningSpec extends AnyWordSpec with Matchers {
           single = None,
           group = Some(
             Seq(
-              AttributeValue(attributeId5.toString, true),
-              AttributeValue(attributeId6.toString, true),
-              AttributeValue(attributeId7.toString, true)
+              AttributeValue(attributeId5, true),
+              AttributeValue(attributeId6, true),
+              AttributeValue(attributeId7, true)
             )
           )
         )
