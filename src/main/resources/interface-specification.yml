@@ -581,16 +581,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   /tenants:
-    # parameters:
-    #   - $ref: '#/components/parameters/CorrelationIdHeader'
-    #   - $ref: '#/components/parameters/IpAddress'
     post:
       tags:
         - gateway
       operationId: upsertTenant
-      description: |
-        Creates the Tenant if it does not exist. Otherwise, add missing attributes.
-        Used when the attribute origin should be deducted from requester
+      description: Upserts the Tenant
       responses:
         '200':
           description: Tenant created or updated

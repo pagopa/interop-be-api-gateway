@@ -39,7 +39,7 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
         case ex @ ApiError(code, message, _, _, _) if code == 404 =>
           logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
           Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-        case ex @ ApiError(code, message, _, _, _) if code == 409 =>
+        case ex @ ApiError(code, message, _, _, _) if code == 403 =>
           logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
           Future.failed(GenericComponentErrors.OperationForbidden)
         case ex                                                   =>
