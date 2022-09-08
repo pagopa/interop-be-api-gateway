@@ -24,6 +24,7 @@ import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManag
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.apigateway.api.impl.Converter._
 
 final case class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
@@ -32,7 +33,8 @@ final case class GatewayApiServiceImpl(
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
   purposeManagementService: PurposeManagementService,
-  notifierService: NotifierService
+  notifierService: NotifierService,
+  tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
@@ -75,6 +77,27 @@ final case class GatewayApiServiceImpl(
         logger.error(s"Error while getting agreement $agreementId - ${ex.getMessage}")
         getAgreement404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) => internalServerError(s"Error while getting agreement - ${ex.getMessage}")
+    }
+  }
+
+  override def upsertTenant(tenantSeed: TenantSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerTenant: ToEntityMarshaller[Tenant]
+  ): Route = authorize {
+    logger.info(s"Upserting tenant with extenalId ${tenantSeed.externalId}")
+
+    val result: Future[Tenant] =
+      tenantProcessService.upsertTenant(m2mTenantSeedFromApi(tenantSeed)).map(m2mTenantToApi)
+
+    onComplete(result) {
+      case Success(tenant)             => upsertTenant200(tenant)
+      case Failure(OperationForbidden) =>
+        logger.error(
+          s"Error while upserting tenant with extenalId ${tenantSeed.externalId} - ${OperationForbidden.getMessage}"
+        )
+        getAgreement404(problemOf(StatusCodes.Forbidden, OperationForbidden))
+      case Failure(ex)                 => internalServerError(s"Error while upserting tenant - ${ex.getMessage}")
     }
   }
 

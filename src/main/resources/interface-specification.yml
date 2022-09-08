@@ -222,7 +222,7 @@ paths:
       description: Retrieve a client using a client identifier
       operationId: getClient
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: clientId
           in: path
@@ -427,7 +427,7 @@ paths:
       description: Retrieves the list of events for the caller's institution
       operationId: getEventsFromId
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: lastEventId
           in: query
@@ -580,6 +580,36 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /tenants:
+    # parameters:
+    #   - $ref: '#/components/parameters/CorrelationIdHeader'
+    #   - $ref: '#/components/parameters/IpAddress'
+    post:
+      tags:
+        - gateway
+      operationId: upsertTenant
+      description: |
+        Creates the Tenant if it does not exist. Otherwise, add missing attributes.
+        Used when the attribute origin should be deducted from requester
+      responses:
+        '200':
+          description: Tenant created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSeed'
+        required: true
 components:
   schemas:
     Client:
@@ -802,6 +832,44 @@ components:
         - eventType
         - objectType
         - objectId
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+        - id
+      description: Representation of a Tenant
+    TenantSeed:
+      description: Tenant Seed model
+      type: object
+      properties:
+        externalId:
+          $ref: '#/components/schemas/ExternalId'
+        certifiedAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeSeed'
+      required:
+        - externalId
+        - certifiedAttributes
+    AttributeSeed:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+        - code
+    ExternalId:
+      properties:
+        origin:
+          type: string
+        value:
+          type: string
+      required:
+        - origin
+        - value
     Problem:
       properties:
         type:
