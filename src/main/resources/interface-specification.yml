@@ -619,6 +619,53 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+    delete:
+      tags:
+        - gateway
+      summary: Revoke an attribute from an organization
+      description: Revoke an attribute from an organization
+      operationId: unbindOrganizationAttribute
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: origin
+          description: the origin of the external id (e.g. IPA)
+          schema:
+            $ref: '#/components/schemas/Origin'
+          required: true
+        - in: path
+          name: externalId
+          description: organization external id (e.g. codice ipa)
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: code
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: successfully associated
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/organizations/origin/{origin}/externalId/{externalId}/eservices':
     get:
       tags:
