@@ -34,6 +34,7 @@ import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.selfcare.partymanagement.client.api.{PartyApi => PartyManagementApi}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import it.pagopa.interop.tenantprocess.client.api.TenantApi
 
 trait Dependencies {
 
@@ -93,6 +94,14 @@ trait Dependencies {
       PurposeApi(ApplicationConfiguration.purposeManagementURL)
     )
 
+  def tenantProcessService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+    new TenantProcessServiceImpl(
+      TenantProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      TenantApi(ApplicationConfiguration.tenantProcessURL)
+    )
+
   def getJwtValidator()(implicit ec: ExecutionContext): Future[JWTReader] = JWTConfiguration.jwtReader
     .loadKeyset()
     .toFuture
@@ -118,7 +127,8 @@ trait Dependencies {
         catalogManagementService(blockingEc),
         attributeRegistryManagementService(blockingEc),
         purposeManagementService(blockingEc),
-        notifierService(blockingEc)
+        notifierService(blockingEc),
+        tenantProcessService(blockingEc)
       ),
       GatewayApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts

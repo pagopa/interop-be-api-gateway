@@ -20,6 +20,7 @@ import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
+import it.pagopa.interop.tenantprocess.client.model.{M2MTenantSeed, M2MAttributeSeed, ExternalId}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +33,8 @@ final case class GatewayApiServiceImpl(
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
   purposeManagementService: PurposeManagementService,
-  notifierService: NotifierService
+  notifierService: NotifierService,
+  tenantProcessService: TenantProcessService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
@@ -75,6 +77,27 @@ final case class GatewayApiServiceImpl(
         logger.error(s"Error while getting agreement $agreementId - ${ex.getMessage}")
         getAgreement404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex) => internalServerError(s"Error while getting agreement - ${ex.getMessage}")
+    }
+  }
+
+  override def upsertTenant(origin: String, externalId: String, code: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize {
+    logger.info(s"Upserting tenant with extenalId (${origin},${externalId}) and attribute $code")
+
+    val result: Future[Unit] = tenantProcessService
+      .upsertTenant(m2mTenantSeedFromApi(origin, externalId)(code))
+      .void
+
+    onComplete(result) {
+      case Success(())                 => upsertTenant204
+      case Failure(OperationForbidden) =>
+        logger.error(
+          s"Error while upserting tenant with extenalId (${origin},${externalId}) and attribute $code - ${OperationForbidden.getMessage}"
+        )
+        getAgreement404(problemOf(StatusCodes.Forbidden, OperationForbidden))
+      case Failure(ex)                 => internalServerError(s"Error while upserting tenant - ${ex.getMessage}")
     }
   }
 
@@ -394,4 +417,8 @@ final case class GatewayApiServiceImpl(
         internalServerError(s"Error while getting the requested messages - ${ex.getMessage}")
     }
   }
+
+  def m2mTenantSeedFromApi(origin: String, externalId: String)(code: String): M2MTenantSeed =
+    M2MTenantSeed(ExternalId(origin, externalId), M2MAttributeSeed(code) :: Nil)
+
 }

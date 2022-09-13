@@ -15,6 +15,7 @@ package object service {
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
   type PurposeManagementInvoker           = purposemanagement.client.invoker.ApiInvoker
   type NotifierInvoker                    = notifier.client.invoker.ApiInvoker
+  type TenantProcessInvoker               = tenantprocess.client.invoker.ApiInvoker
 
   type PartyManagementApiKeyValue = selfcare.partymanagement.client.invoker.ApiKeyValue
 
@@ -60,6 +61,11 @@ package object service {
   object NotifierInvoker {
     def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): NotifierInvoker =
       notifier.client.invoker.ApiInvoker(partymanagement.client.api.EnumsSerializers.all, blockingEc)
+  }
+
+  object TenantProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): TenantProcessInvoker =
+      tenantprocess.client.invoker.ApiInvoker(tenantprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
 }
