@@ -10,6 +10,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.tenantprocess.client.model.{Tenant, M2MTenantSeed}
 import it.pagopa.interop.tenantprocess.client.invoker.{BearerToken, ApiError}
+import java.util.UUID
 
 class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(implicit ec: ExecutionContext)
     extends TenantProcessService {
@@ -17,7 +18,7 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def upsertTenant(m2MTenantSeed: M2MTenantSeed)(implicit contexts: Seq[(String, String)]): Future[Tenant] = {
+  override def upsertTenant(m2MTenantSeed: M2MTenantSeed)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.m2mUpsertTenant(xCorrelationId = correlationId, m2MTenantSeed = m2MTenantSeed, xForwardedFor = ip)(
@@ -29,7 +30,12 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
         handleCommonErrors(s"m2MTenantSeed ${m2MTenantSeed.externalId}")
       )
     } yield result
-  }
+
+  override def getTenant(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getTenant(xCorrelationId = correlationId, id = id, xForwardedFor = ip)(BearerToken(bearerToken))
+    result <- invoker.invoke(request, "Invoking getTenant", handleCommonErrors(s"getTenant ${id.toString}"))
+  } yield result
 
   private[service] def handleCommonErrors[T](
     resource: String

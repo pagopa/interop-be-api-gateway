@@ -580,12 +580,31 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-  /tenants:
+  /organizations/origin/{origin}/externalId/{externalId}/attributes/{code}:
     post:
       tags:
         - gateway
       operationId: upsertTenant
       description: Upserts the Tenant
+      parameters:
+        - name: origin
+          in: path
+          description: the origin identifier
+          required: true
+          schema:
+            type: string
+        - name: externalId
+          in: path
+          description: the externalId identifier
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: path
+          description: the attribute code identifier
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: Tenant created or updated
@@ -599,12 +618,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TenantSeed'
-        required: true
+      # requestBody:
+      #   content:
+      #     application/json:
+      #       schema:
+      #         $ref: '#/components/schemas/TenantSeed'
+      #   required: true
 components:
   schemas:
     Client:

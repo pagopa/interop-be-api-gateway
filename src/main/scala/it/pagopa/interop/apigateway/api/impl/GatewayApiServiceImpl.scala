@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementmanagement.client.model.{AgreementState => AgreementManagementApiAgreementState}
 import it.pagopa.interop.apigateway.api.GatewayApiService
 import it.pagopa.interop.apigateway.error.GatewayErrors._
-import it.pagopa.interop.apigateway.model._
+import it.pagopa.interop.apigateway.model.{ExternalId => _, _}
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.commons.jwt.{M2M_ROLE, authorizeInterop, hasPermissions}
@@ -80,21 +80,22 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  override def upsertTenant(tenantSeed: TenantSeed)(implicit
+  override def upsertTenant(origin: String, externalId: String, code: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerTenant: ToEntityMarshaller[Tenant]
   ): Route = authorize {
-    logger.info(s"Upserting tenant with extenalId ${tenantSeed.externalId}")
+    logger.info(s"Upserting tenant with extenalId (${origin},${externalId}) and attribute $code")
 
-    val result: Future[Tenant] =
-      tenantProcessService.upsertTenant(m2mTenantSeedFromApi(tenantSeed)).map(m2mTenantToApi)
+    val result: Future[Tenant] = tenantProcessService
+      .upsertTenant(m2mTenantSeedFromApi(origin, externalId)(code))
+      .map(m2mTenantToApi)
 
     onComplete(result) {
       case Success(tenant)             => upsertTenant200(tenant)
       case Failure(OperationForbidden) =>
         logger.error(
-          s"Error while upserting tenant with extenalId ${tenantSeed.externalId} - ${OperationForbidden.getMessage}"
+          s"Error while upserting tenant with extenalId (${origin},${externalId}) and attribute $code - ${OperationForbidden.getMessage}"
         )
         getAgreement404(problemOf(StatusCodes.Forbidden, OperationForbidden))
       case Failure(ex)                 => internalServerError(s"Error while upserting tenant - ${ex.getMessage}")
