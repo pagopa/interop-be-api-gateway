@@ -262,6 +262,46 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/eservices/{eserviceId}/descriptors':
+    get:
+      tags:
+        - gateway
+      summary: Get the eservice descriptors by eservice ID
+      description: Get the eservice descriptors by eservice ID
+      operationId: getEServiceDescriptors
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: eserviceId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EServiceDescriptors'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}/descriptors/{descriptorId}':
     get:
       tags:
