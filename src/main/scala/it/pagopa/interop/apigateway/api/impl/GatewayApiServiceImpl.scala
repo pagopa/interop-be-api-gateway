@@ -163,6 +163,9 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: EServiceDescriptorNotFound)                   =>
         logger.error(s"Error while getting EService $eServiceId and Descriptor $descriptorId", ex)
         getEServiceDescriptor404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex: UnexpectedDescriptorState)                   =>
+        logger.error(s"Error while getting EService $eServiceId and Descriptor $descriptorId", ex)
+        getEServiceDescriptor400(problemOf(StatusCodes.BadRequest, ex))
       case Failure(ex)                                               =>
         internalServerError(s"Error while getting EService $eServiceId and Descriptor $descriptorId - ${ex.getMessage}")
     }
