@@ -21,4 +21,7 @@ object GatewayErrors {
   final case class MissingActivePurposesVersions(purposesIds: Seq[UUID])
       extends ComponentError("0006", s"There is no active version for purposes ${purposesIds.mkString(", ")}")
 
+  final case class OrganizationIsNotACertifier(organizationId: UUID)
+      extends ComponentError("0007", s"Organization ${organizationId} is not a certifier")
+
 }

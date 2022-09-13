@@ -167,6 +167,42 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /attributes:
+    post:
+      tags:
+        - gateway
+      summary: Creates an attribute
+      description: Creates an attribute if the caller is a certifier
+      operationId: createCertifiedAttribute
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeSeed'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/attributes/{attributeId}':
     get:
       tags:
@@ -713,6 +749,31 @@ components:
         - CERTIFIED
         - DECLARED
         - VERIFIED
+    AttributeSeed:
+      type: object
+      additionalProperties: false
+      title: Attribute
+      description: represents the details of a verified attribute bound to the agreement.
+      properties:
+        code:
+          type: string
+          description: source identifier
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        name:
+          type: string
+          description: human readable name
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        description:
+          type: string
+          description: human readable description
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+      required:
+        - code
+        - name
+        - description
     AttributeValidity:
       type: string
       enum:
