@@ -266,9 +266,9 @@ paths:
     get:
       tags:
         - gateway
-      summary: Get an eService
-      description: Retrieve an eService by identifier
-      operationId: getEService
+      summary: Get an eservice descriptor
+      description: Retrieve an eservice descriptor by identifiers
+      operationId: getEServiceDescriptor
       security:
         - bearerAuth: []
       parameters:
@@ -292,7 +292,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EService'
+                $ref: '#/components/schemas/EServiceDescriptor'
         '400':
           description: Bad request
           content:
@@ -595,6 +595,94 @@ components:
       required:
         - id
         - consumerId
+    EServiceDescriptor:
+      description: eservice descriptor model
+      type: object
+      required:
+        - id
+        - version
+        - docs
+        - state
+        - creationDate
+        - audience
+        - voucherLifespan
+        - dailyCallsPerConsumer
+        - dailyCallsTotal
+      properties:
+        id:
+          description: eservice descriptor identifier
+          type: string
+          format: uuid
+        version:
+          description: eservice descriptor version
+          type: string
+        description:
+          description: eservice descriptor description
+          type: string
+        audience:
+          description: eservice descriptor audience
+          type: array
+          items:
+            type: string
+        voucherLifespan:
+          description: voucher duration
+          type: integer
+          format: int32
+        dailyCallsPerConsumer:
+          description: max number of daily requests per consumer
+          type: integer
+          format: int32
+          minimum: 0
+        dailyCallsTotal:
+          description: total number of daily requests delivered by the eservice
+          type: integer
+          format: int32
+          minimum: 0
+        interface:
+          $ref: '#/components/schemas/EServiceDoc'
+        docs:
+          description: eservice supplementary documents
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceDoc'
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
+    EServiceDescriptorState:
+      type: string
+      description: EService State
+      enum:
+        - PUBLISHED
+        - DEPRECATED
+        - SUSPENDED
+        - ARCHIVED
+    EServiceDescriptors:
+      description: eservice descriptors list model
+      type: object
+      required:
+        - descriptors
+      properties:
+        descriptors:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceDescriptor'
+    EServiceDoc:
+      description: eservice descriptor document model
+      type: object
+      required:
+        - id
+        - name
+        - contentType
+      properties:
+        id:
+          description: document identifier
+          type: string
+          format: uuid
+        name:
+          description: document name
+          type: string
+        contentType:
+          description: document content type
+          type: string
     Organization:
       type: object
       additionalProperties: false
@@ -610,35 +698,12 @@ components:
         - id
         - name
         - category
-    EServiceDescriptorState:
+    Origin:
+      description: Attribute origin admitted
       type: string
-      description: EService State
       enum:
-        - DRAFT
-        - PUBLISHED
-        - DEPRECATED
-        - SUSPENDED
-        - ARCHIVED
-    EService:
-      type: object
-      additionalProperties: false
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          pattern: /^[a-zA-Z]/s+$/
-        version:
-          type: string
-          pattern: ^[0-9]{1,4}$
-        state:
-          $ref: '#/components/schemas/EServiceDescriptorState'
-      required:
-        - id
-        - name
-        - version
-        - state
+        - IPA
+        - SDG
     PurposeState:
       type: string
       description: Purpose State

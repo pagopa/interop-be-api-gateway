@@ -21,4 +21,7 @@ object GatewayErrors {
   final case class MissingActivePurposesVersions(purposesIds: Seq[UUID])
       extends ComponentError("0006", s"There is no active version for purposes ${purposesIds.mkString(", ")}")
 
+  final case class UnexpectedDescriptorState(state: String)
+      extends ComponentError("0007", s"Unexpected Descriptor state: $state")
+
 }

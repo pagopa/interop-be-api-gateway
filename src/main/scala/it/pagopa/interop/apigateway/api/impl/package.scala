@@ -10,7 +10,11 @@ import it.pagopa.interop.agreementmanagement.client.model.{
   AgreementState => AgreementManagementApiAgreementState,
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
-import it.pagopa.interop.apigateway.error.GatewayErrors.{MissingActivePurposeVersion, MissingActivePurposesVersions}
+import it.pagopa.interop.apigateway.error.GatewayErrors.{
+  MissingActivePurposeVersion,
+  MissingActivePurposesVersions,
+  UnexpectedDescriptorState
+}
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
@@ -21,6 +25,7 @@ import it.pagopa.interop.catalogmanagement.client.model.{
   AttributeValue,
   Attribute => CatalogManagementApiAttribute,
   EService => CatalogManagementApiEService,
+  EServiceDoc => CatalogManagementApiEServiceDoc,
   EServiceDescriptor => CatalogManagementApiDescriptor,
   EServiceDescriptorState => CatalogManagementApiDescriptorState
 }
@@ -48,8 +53,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val purposeFormat: RootJsonFormat[Purpose]   = jsonFormat3(Purpose)
   implicit val purposesFormat: RootJsonFormat[Purposes] = jsonFormat1(Purposes)
 
-  implicit val subscriberFormat: RootJsonFormat[Organization] = jsonFormat3(Organization)
-  implicit val eServiceFormat: RootJsonFormat[EService]       = jsonFormat4(EService)
+  implicit val subscriberFormat: RootJsonFormat[Organization]               = jsonFormat3(Organization)
+  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]               = jsonFormat3(EServiceDoc)
+  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor] = jsonFormat10(EServiceDescriptor)
 
   implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat6(Agreement)
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
@@ -150,19 +156,17 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedEServiceDescriptorState(private val state: CatalogManagementApiDescriptorState)
       extends AnyVal {
-    def toModel: EServiceDescriptorState = state match {
-      case CatalogManagementApiDescriptorState.DRAFT      => EServiceDescriptorState.DRAFT
-      case CatalogManagementApiDescriptorState.PUBLISHED  => EServiceDescriptorState.PUBLISHED
-      case CatalogManagementApiDescriptorState.DEPRECATED => EServiceDescriptorState.DEPRECATED
-      case CatalogManagementApiDescriptorState.SUSPENDED  => EServiceDescriptorState.SUSPENDED
-      case CatalogManagementApiDescriptorState.ARCHIVED   => EServiceDescriptorState.ARCHIVED
+    def toModel: Try[EServiceDescriptorState] = state match {
+      case CatalogManagementApiDescriptorState.PUBLISHED  => Success(EServiceDescriptorState.PUBLISHED)
+      case CatalogManagementApiDescriptorState.DEPRECATED => Success(EServiceDescriptorState.DEPRECATED)
+      case CatalogManagementApiDescriptorState.SUSPENDED  => Success(EServiceDescriptorState.SUSPENDED)
+      case CatalogManagementApiDescriptorState.ARCHIVED   => Success(EServiceDescriptorState.ARCHIVED)
+      case CatalogManagementApiDescriptorState.DRAFT      =>
+        Failure(UnexpectedDescriptorState(CatalogManagementApiDescriptorState.DRAFT.toString))
     }
   }
 
   implicit class EnrichedEService(private val eservice: CatalogManagementApiEService) extends AnyVal {
-    def toModel(descriptor: CatalogManagementApiDescriptor): EService =
-      EService(eservice.id, eservice.name, version = descriptor.version, state = descriptor.state.toModel)
-
     private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
       val allAttributes: Seq[Option[AttributeValue]] = attribute.group.sequence :+ attribute.single
       allAttributes.flatMap(attribute => attribute.map(_.id)).toSet
@@ -196,6 +200,28 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         .flatMap(flatAttributes)
   }
 
+  implicit class EnrichedEServiceDescriptor(private val descriptor: CatalogManagementApiDescriptor) extends AnyVal {
+    def toModel: Try[EServiceDescriptor] =
+      descriptor.state.toModel.map(state =>
+        EServiceDescriptor(
+          id = descriptor.id,
+          version = descriptor.version,
+          description = descriptor.description,
+          audience = descriptor.audience,
+          voucherLifespan = descriptor.voucherLifespan,
+          dailyCallsPerConsumer = descriptor.dailyCallsPerConsumer,
+          dailyCallsTotal = descriptor.dailyCallsTotal,
+          interface = descriptor.interface.map(_.toModel),
+          docs = descriptor.docs.map(_.toModel),
+          state = state
+        )
+      )
+  }
+
+  implicit class EnrichedEServiceDoc(private val doc: CatalogManagementApiEServiceDoc) extends AnyVal {
+    def toModel: EServiceDoc = EServiceDoc(id = doc.id, name = doc.name, contentType = doc.contentType)
+  }
+
   implicit class EnrichedInstitution(private val institution: PartyManagementApiInstitution) extends AnyVal {
     def toModel: Organization =
       Organization(
@@ -203,7 +229,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         name = institution.description,
         category = institution.attributes.headOption
           .map(_.description)
-          .getOrElse("UNKOWN") // TODO, hey Jude consider to make this retrieval better
+          .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
       )
   }
 

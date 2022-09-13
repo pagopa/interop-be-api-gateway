@@ -69,7 +69,7 @@ final case class GatewayApiServiceImpl(
       case Success(agr)                                              =>
         getAgreement200(agr)
       case Failure(Forbidden)                                        =>
-        logger.error(s"The user has no access to the requested agreement ${agreementId}")
+        logger.error(s"The user has no access to the requested agreement $agreementId")
         getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting agreement $agreementId - ${ex.getMessage}")
@@ -140,31 +140,59 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  override def getEService(eserviceId: String, descriptorId: String)(implicit
+  override def getEServiceDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-    toEntityMarshallerEService: ToEntityMarshaller[EService]
+    toEntityMarshallerEServiceDescriptor: ToEntityMarshaller[EServiceDescriptor],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
-    val result: Future[EService] = for {
-      eserviceUUID <- eserviceId.toFutureUUID
-      eservice     <- catalogManagementService.getEService(eserviceUUID)(contexts)
-      descriptor   <- eservice.descriptors
+    val result: Future[EServiceDescriptor] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogManagementService.getEService(eServiceUUID)(contexts)
+      descriptor   <- eService.descriptors
         .find(_.id.toString == descriptorId)
-        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
-    } yield eservice.toModel(descriptor)
+        .toFuture(EServiceDescriptorNotFound(eServiceId, descriptorId))
+      result       <- descriptor.toModel.toFuture
+    } yield result
 
     onComplete(result) {
-      case Success(eservice)                                         =>
-        getEService200(eservice)
+      case Success(descriptor)                                       =>
+        getEServiceDescriptor200(descriptor)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error(s"Error while getting eservice $eserviceId - ${ex.getMessage}")
-        getEService404(problemOf(StatusCodes.NotFound, ex))
+        logger.error(s"Error while getting EService $eServiceId and Descriptor $descriptorId", ex)
+        getEServiceDescriptor404(problemOf(StatusCodes.NotFound, ex))
       case Failure(ex: EServiceDescriptorNotFound)                   =>
-        logger.error(ex.getMessage)
-        getEService404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex) => internalServerError(s"Error while getting eservice - ${ex.getMessage}")
+        logger.error(s"Error while getting EService $eServiceId and Descriptor $descriptorId", ex)
+        getEServiceDescriptor404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex)                                               =>
+        internalServerError(s"Error while getting EService $eServiceId and Descriptor $descriptorId - ${ex.getMessage}")
     }
   }
+
+  //  override def getEService(eserviceId: String, descriptorId: String)(implicit
+//    contexts: Seq[(String, String)],
+//    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+//    toEntityMarshallerEService: ToEntityMarshaller[EService]
+//  ): Route = authorize {
+//    val result: Future[EService] = for {
+//      eserviceUUID <- eserviceId.toFutureUUID
+//      eservice     <- catalogManagementService.getEService(eserviceUUID)(contexts)
+//      descriptor   <- eservice.descriptors
+//        .find(_.id.toString == descriptorId)
+//        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
+//    } yield eservice.toModel(descriptor)
+//
+//    onComplete(result) {
+//      case Success(eservice)                                         =>
+//        getEService200(eservice)
+//      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+//        logger.error(s"Error while getting eservice $eserviceId - ${ex.getMessage}")
+//        getEService404(problemOf(StatusCodes.NotFound, ex))
+//      case Failure(ex: EServiceDescriptorNotFound)                   =>
+//        logger.error(ex.getMessage)
+//        getEService404(problemOf(StatusCodes.NotFound, ex))
+//      case Failure(ex) => internalServerError(s"Error while getting eservice - ${ex.getMessage}")
+//    }
+//  }
 
   override def getOrganization(organizationId: String)(implicit
     contexts: Seq[(String, String)],
