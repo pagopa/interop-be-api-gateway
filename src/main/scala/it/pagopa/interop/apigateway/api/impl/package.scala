@@ -156,13 +156,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedEServiceDescriptorState(private val state: CatalogManagementApiDescriptorState)
       extends AnyVal {
-    def toModel: Try[EServiceDescriptorState] = state match {
-      case CatalogManagementApiDescriptorState.PUBLISHED  => Success(EServiceDescriptorState.PUBLISHED)
-      case CatalogManagementApiDescriptorState.DEPRECATED => Success(EServiceDescriptorState.DEPRECATED)
-      case CatalogManagementApiDescriptorState.SUSPENDED  => Success(EServiceDescriptorState.SUSPENDED)
-      case CatalogManagementApiDescriptorState.ARCHIVED   => Success(EServiceDescriptorState.ARCHIVED)
+    def toModel: Either[ComponentError, EServiceDescriptorState] = state match {
+      case CatalogManagementApiDescriptorState.PUBLISHED  => Right(EServiceDescriptorState.PUBLISHED)
+      case CatalogManagementApiDescriptorState.DEPRECATED => Right(EServiceDescriptorState.DEPRECATED)
+      case CatalogManagementApiDescriptorState.SUSPENDED  => Right(EServiceDescriptorState.SUSPENDED)
+      case CatalogManagementApiDescriptorState.ARCHIVED   => Right(EServiceDescriptorState.ARCHIVED)
       case CatalogManagementApiDescriptorState.DRAFT      =>
-        Failure(UnexpectedDescriptorState(CatalogManagementApiDescriptorState.DRAFT.toString))
+        Left(UnexpectedDescriptorState(CatalogManagementApiDescriptorState.DRAFT.toString))
     }
   }
 
@@ -201,7 +201,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedEServiceDescriptor(private val descriptor: CatalogManagementApiDescriptor) extends AnyVal {
-    def toModel: Try[EServiceDescriptor] =
+    def toModel: Either[ComponentError, EServiceDescriptor] =
       descriptor.state.toModel.map(state =>
         EServiceDescriptor(
           id = descriptor.id,
