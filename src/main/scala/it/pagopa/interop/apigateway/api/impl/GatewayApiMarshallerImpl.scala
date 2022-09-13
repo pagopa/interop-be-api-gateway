@@ -6,8 +6,6 @@ import it.pagopa.interop.apigateway.model._
 
 object GatewayApiMarshallerImpl extends GatewayApiMarshaller {
 
-  override implicit def toEntityMarshallerTenant: ToEntityMarshaller[Tenant] = sprayJsonMarshaller[Tenant]
-
   override implicit def toEntityMarshallerPurpose: ToEntityMarshaller[Purpose] = sprayJsonMarshaller[Purpose]
 
   override implicit def toEntityMarshallerAgreements: ToEntityMarshaller[Agreements] = sprayJsonMarshaller[Agreements]

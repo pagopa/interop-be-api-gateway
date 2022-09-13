@@ -42,10 +42,6 @@ import scala.annotation.nowarn
 import scala.util.{Failure, Success, Try}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val tenantFormat: RootJsonFormat[Tenant]               = jsonFormat1(Tenant)
-  implicit val externalIdFormat: RootJsonFormat[ExternalId]       = jsonFormat2(ExternalId)
-  implicit val attributeSeedFormat: RootJsonFormat[AttributeSeed] = jsonFormat1(AttributeSeed)
-  implicit val tenantSeedFormat: RootJsonFormat[TenantSeed]       = jsonFormat2(TenantSeed)
 
   implicit val problemErrorFormat: RootJsonFormat[ProblemError] = jsonFormat2(ProblemError)
   implicit val problemFormat: RootJsonFormat[Problem]           = jsonFormat5(Problem)

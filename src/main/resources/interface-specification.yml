@@ -606,24 +606,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Tenant created or updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tenant'
+        '204':
+          description: No Content
         '403':
           description: Forbidden
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-      # requestBody:
-      #   content:
-      #     application/json:
-      #       schema:
-      #         $ref: '#/components/schemas/TenantSeed'
-      #   required: true
 components:
   schemas:
     Client:
@@ -846,44 +836,6 @@ components:
         - eventType
         - objectType
         - objectId
-    Tenant:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-      required:
-        - id
-      description: Representation of a Tenant
-    TenantSeed:
-      description: Tenant Seed model
-      type: object
-      properties:
-        externalId:
-          $ref: '#/components/schemas/ExternalId'
-        certifiedAttributes:
-          type: array
-          items:
-            $ref: '#/components/schemas/AttributeSeed'
-      required:
-        - externalId
-        - certifiedAttributes
-    AttributeSeed:
-      type: object
-      properties:
-        code:
-          type: string
-      required:
-        - code
-    ExternalId:
-      properties:
-        origin:
-          type: string
-        value:
-          type: string
-      required:
-        - origin
-        - value
     Problem:
       properties:
         type:
