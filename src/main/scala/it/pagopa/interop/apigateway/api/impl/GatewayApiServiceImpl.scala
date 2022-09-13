@@ -168,32 +168,6 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  //  override def getEService(eserviceId: String, descriptorId: String)(implicit
-//    contexts: Seq[(String, String)],
-//    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
-//    toEntityMarshallerEService: ToEntityMarshaller[EService]
-//  ): Route = authorize {
-//    val result: Future[EService] = for {
-//      eserviceUUID <- eserviceId.toFutureUUID
-//      eservice     <- catalogManagementService.getEService(eserviceUUID)(contexts)
-//      descriptor   <- eservice.descriptors
-//        .find(_.id.toString == descriptorId)
-//        .toFuture(EServiceDescriptorNotFound(eserviceId, descriptorId))
-//    } yield eservice.toModel(descriptor)
-//
-//    onComplete(result) {
-//      case Success(eservice)                                         =>
-//        getEService200(eservice)
-//      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-//        logger.error(s"Error while getting eservice $eserviceId - ${ex.getMessage}")
-//        getEService404(problemOf(StatusCodes.NotFound, ex))
-//      case Failure(ex: EServiceDescriptorNotFound)                   =>
-//        logger.error(ex.getMessage)
-//        getEService404(problemOf(StatusCodes.NotFound, ex))
-//      case Failure(ex) => internalServerError(s"Error while getting eservice - ${ex.getMessage}")
-//    }
-//  }
-
   override def getOrganization(organizationId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerOrganization: ToEntityMarshaller[Organization],
