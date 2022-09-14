@@ -276,6 +276,7 @@ paths:
           name: eserviceId
           schema:
             type: string
+            format: uuid
           required: true
       responses:
         '200':
