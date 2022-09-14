@@ -8,4 +8,5 @@ import scala.concurrent.Future
 trait CatalogManagementService {
 
   def getEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
+  def getEServices(producerId: UUID, attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Seq[EService]]
 }

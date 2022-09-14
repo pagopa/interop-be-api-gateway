@@ -23,6 +23,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     mock[AttributeRegistryManagementService]
   val mockNotifierService: NotifierService                                       = mock[NotifierService]
   val mockTenantProcessService: TenantProcessService                             = mock[TenantProcessService]
+  val mockTenantManagementService: TenantManagementService                       = mock[TenantManagementService]
 
   val service: GatewayApiServiceImpl =
     GatewayApiServiceImpl(
@@ -33,7 +34,8 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
       mockAttributeRegistryManagementService,
       mockPurposeManagementService,
       mockNotifierService,
-      mockTenantProcessService
+      mockTenantProcessService,
+      mockTenantManagementService
     )(ExecutionContext.global)
 
   def mockClientRetrieve(clientId: UUID, result: AuthorizationManagement.Client)(implicit

@@ -12,6 +12,7 @@ import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
+import it.pagopa.interop.catalogmanagement.client.model.{EService => CatalogManagementEService}
 import it.pagopa.interop.commons.jwt.{M2M_ROLE, authorizeInterop, hasPermissions}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils._
@@ -35,7 +36,8 @@ final case class GatewayApiServiceImpl(
   attributeRegistryManagementService: AttributeRegistryManagementService,
   purposeManagementService: PurposeManagementService,
   notifierService: NotifierService,
-  tenantProcessService: TenantProcessService
+  tenantProcessService: TenantProcessService,
+  tenantManagementService: TenantManagementService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
@@ -85,7 +87,7 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
-    logger.info(s"Upserting tenant with extenalId (${origin},${externalId}) and attribute $code")
+    logger.info(s"Upserting tenant with extenalId ($origin,$externalId) and attribute $code")
 
     val result: Future[Unit] = tenantProcessService
       .upsertTenant(m2mTenantSeedFromApi(origin, externalId)(code))
@@ -95,7 +97,7 @@ final case class GatewayApiServiceImpl(
       case Success(())                 => upsertTenant204
       case Failure(OperationForbidden) =>
         logger.error(
-          s"Error while upserting tenant with extenalId (${origin},${externalId}) and attribute $code - ${OperationForbidden.getMessage}"
+          s"Error while upserting tenant with extenalId ($origin,$externalId) and attribute $code - ${OperationForbidden.getMessage}"
         )
         getAgreement404(problemOf(StatusCodes.Forbidden, OperationForbidden))
       case Failure(ex)                 => internalServerError(s"Error while upserting tenant - ${ex.getMessage}")
@@ -170,25 +172,10 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerEService: ToEntityMarshaller[EService]
   ): Route = authorize {
     val result: Future[EService] = for {
-      eServiceUUID     <- eServiceId.toFutureUUID
-      eService         <- catalogManagementService.getEService(eServiceUUID)(contexts)
-      producer         <- partyManagementService.getInstitution(eService.producerId)
-      latestDescriptor <- eService.latestAvailableDescriptor
-      state            <- latestDescriptor.state.toModel.toFuture
-      allAttributesIds = eService.attributes.allIds
-      attributes  <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
-      apiProducer <- producer.toModel.toFuture
-      attributes  <- eService.attributes.toModel(attributes.attributes).toFuture
-    } yield EService(
-      id = eService.id,
-      producer = apiProducer,
-      name = eService.name,
-      version = latestDescriptor.version,
-      description = eService.description,
-      technology = eService.technology.toModel,
-      attributes = attributes,
-      state = state
-    )
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogManagementService.getEService(eServiceUUID)(contexts)
+      apiEService  <- enhanceEService(eService)
+    } yield apiEService
 
     onComplete(result) {
       case Success(eService)                                         =>
@@ -201,6 +188,36 @@ final case class GatewayApiServiceImpl(
         getEService400(problemOf(StatusCodes.BadRequest, ex))
       case Failure(ex)                                               =>
         internalServerError(s"Error while getting EService $eServiceId - ${ex.getMessage}")
+    }
+  }
+
+  override def getOrganizationEServices(
+    attributeOrigin: String,
+    attributeCode: String,
+    origin: String,
+    externalId: String
+  )(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServices: ToEntityMarshaller[EServices],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val result: Future[EServices] = for {
+      tenant       <- tenantManagementService.getTenantByExternalId(origin, externalId)
+      attribute    <- attributeRegistryManagementService.getAttributeByOriginAndCode(attributeOrigin, attributeCode)
+      eServices    <- catalogManagementService.getEServices(tenant.id, attribute.id)
+      apiEServices <- Future.traverse(eServices)(enhanceEService)
+    } yield EServices(apiEServices)
+
+    onComplete(result) {
+      case Success(eServices)                                        =>
+        getOrganizationEServices200(eServices)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while getting Organization EServices for Origin $origin and Code $externalId", ex)
+        getOrganizationEServices404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex)                                               =>
+        internalServerError(
+          s"Error while getting Organization EServices for Origin $origin and Code $externalId - ${ex.getMessage}"
+        )
     }
   }
 
@@ -453,7 +470,7 @@ final case class GatewayApiServiceImpl(
         case Success(attribute)                             =>
           createCertifiedAttribute200(attribute)
         case Failure(ex @ OrganizationIsNotACertifier(org)) =>
-          logger.error(s"The tenant ${org} is not a certifier and cannot create attributes")
+          logger.error(s"The tenant $org is not a certifier and cannot create attributes")
           createCertifiedAttribute403(problemOf(StatusCodes.Forbidden, ex))
         case Failure(ex) => internalServerError(s"Error while creating attribute - ${ex.getMessage}")
       }
@@ -519,5 +536,25 @@ final case class GatewayApiServiceImpl(
 
   def m2mTenantSeedFromApi(origin: String, externalId: String)(code: String): M2MTenantSeed =
     M2MTenantSeed(ExternalId(origin, externalId), M2MAttributeSeed(code) :: Nil)
+
+  def enhanceEService(eService: CatalogManagementEService)(implicit contexts: Seq[(String, String)]): Future[EService] =
+    for {
+      producer         <- partyManagementService.getInstitution(eService.producerId)
+      latestDescriptor <- eService.latestAvailableDescriptor
+      state            <- latestDescriptor.state.toModel.toFuture
+      allAttributesIds = eService.attributes.allIds
+      attributes  <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
+      apiProducer <- producer.toModel.toFuture
+      attributes  <- eService.attributes.toModel(attributes.attributes).toFuture
+    } yield EService(
+      id = eService.id,
+      producer = apiProducer,
+      name = eService.name,
+      version = latestDescriptor.version,
+      description = eService.description,
+      technology = eService.technology.toModel,
+      attributes = attributes,
+      state = state
+    )
 
 }

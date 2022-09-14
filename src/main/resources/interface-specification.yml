@@ -735,6 +735,56 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /organizations/origin/{origin}/externalId/{externalId}/eservices:
+    post:
+      tags:
+        - gateway
+      operationId: getOrganizationEServices
+      description: Retrieve EServices for a given Organization
+      parameters:
+        - name: origin
+          in: path
+          description: the origin identifier
+          required: true
+          schema:
+            type: string
+        - name: externalId
+          in: path
+          description: the externalId identifier
+          required: true
+          schema:
+            type: string
+        - name: attributeOrigin
+          in: query
+          description: attribute origin that the EService must contain
+          required: true
+          schema:
+            type: string
+        - name: attributeCode
+          in: query
+          description: attribute code that the EService must contain
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: EServices retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EServices'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   schemas:
     Client:
@@ -917,6 +967,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EServiceDescriptor'
+    EServices:
+      description: EServices list model
+      type: object
+      required:
+        - eservices
+      properties:
+        eservices:
+          type: array
+          items:
+            $ref: '#/components/schemas/EService'
     EServiceDoc:
       description: eservice descriptor document model
       type: object
