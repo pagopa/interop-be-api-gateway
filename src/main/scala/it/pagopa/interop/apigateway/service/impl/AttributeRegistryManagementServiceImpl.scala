@@ -1,9 +1,10 @@
 package it.pagopa.interop.apigateway.service.impl
 
+import cats.implicits.catsSyntaxOptionId
 import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute, AttributeSeed}
+import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute, AttributeSeed, AttributesResponse}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -62,6 +63,25 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
       handleCommonErrors(s"attribute ${attributeSeed.name}")
     )
   } yield result
+
+  override def getBulkAttributes(
+    attributeIds: Set[UUID]
+  )(implicit contexts: Seq[(String, String)]): Future[AttributesResponse] = {
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request          = api.getBulkedAttributes(
+        xCorrelationId = correlationId,
+        ids = attributeIds.mkString(",").some,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      attributesString = attributeIds.mkString("[", ",", "]")
+      result <- invoker.invoke(
+        request,
+        s"Retrieving bulk attributes $attributesString",
+        handleCommonErrors(s"attributes $attributesString")
+      )
+    } yield result
+  }
 
   private[service] def handleCommonErrors[T](
     resource: String
