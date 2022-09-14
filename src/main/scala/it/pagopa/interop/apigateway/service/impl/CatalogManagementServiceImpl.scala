@@ -43,8 +43,8 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
       )(BearerToken(bearerToken))
       result <- invoker.invoke(
         request,
-        "Retrieving E-Services by Producer",
-        handleCommonErrors(s"producerId $producerId")
+        "Retrieving E-Services",
+        handleCommonErrors(s"producerId $producerId attributeId $attributeId")
       )
     } yield result
   }
