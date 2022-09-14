@@ -222,7 +222,7 @@ paths:
       description: Retrieve a client using a client identifier
       operationId: getClient
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: clientId
           in: path
@@ -508,7 +508,7 @@ paths:
       description: Retrieves the list of events for the caller's institution
       operationId: getEventsFromId
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - name: lastEventId
           in: query
@@ -657,6 +657,40 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Purposes not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /organizations/origin/{origin}/externalId/{externalId}/attributes/{code}:
+    post:
+      tags:
+        - gateway
+      operationId: upsertTenant
+      description: Upserts the Tenant
+      parameters:
+        - name: origin
+          in: path
+          description: the origin identifier
+          required: true
+          schema:
+            type: string
+        - name: externalId
+          in: path
+          description: the externalId identifier
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: path
+          description: the attribute code identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '403':
+          description: Forbidden
           content:
             application/problem+json:
               schema:
