@@ -353,18 +353,20 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  override def createCertifiedAttribute(
-    attributeSeed: AttributeSeed
-  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route =
+  override def createCertifiedAttribute(attributeSeed: AttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route =
     authorize {
 
-      val result: Future[Unit] = for {
+      val result: Future[Attribute] = for {
         organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
         certifierId    <- tenantProcessService
           .getTenant(organizationId)
-          .map(_.features.headOption.flatMap(_.certifier).map(_.certifierId))
+          .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
           .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
-        ()             <- attributeRegistryManagementService
+        attribute      <- attributeRegistryManagementService
           .createAttribute(
             model.AttributeSeed(
               name = attributeSeed.name,
@@ -374,11 +376,11 @@ final case class GatewayApiServiceImpl(
               description = attributeSeed.description
             )
           )
-          .void
-      } yield ()
+      } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
 
       onComplete(result) {
-        case Success(())                                    => createCertifiedAttribute204
+        case Success(attribute)                             =>
+          createCertifiedAttribute200(attribute)
         case Failure(ex @ OrganizationIsNotACertifier(org)) =>
           logger.error(s"The tenant ${org} is not a certifier and cannot create attributes")
           createCertifiedAttribute403(problemOf(StatusCodes.Forbidden, ex))

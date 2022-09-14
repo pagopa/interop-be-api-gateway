@@ -183,8 +183,12 @@ paths:
             schema:
               $ref: '#/components/schemas/AttributeSeed'
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: The newly created attribute
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Attribute'
         '400':
           description: Bad request
           content:
