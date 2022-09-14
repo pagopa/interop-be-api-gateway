@@ -24,4 +24,22 @@ object GatewayErrors {
   final case class UnexpectedDescriptorState(state: String)
       extends ComponentError("0007", s"Unexpected Descriptor state: $state")
 
+  final case class MissingAvailableDescriptor(eServiceId: String)
+      extends ComponentError("0008", s"No available descriptors for EService $eServiceId")
+
+  final case class AttributeNotFoundInRegistry(attributeId: UUID)
+      extends ComponentError("0009", s"Attribute $attributeId not found in Attribute Registry")
+
+  final case class MissingAttributeOrigin(attributeId: UUID)
+      extends ComponentError("0010", s"Attribute $attributeId Origin is empty")
+
+  final case class MissingAttributeCode(attributeId: UUID)
+      extends ComponentError("0011", s"Attribute $attributeId Code is empty")
+
+  final case class UnexpectedAttributeOrigin(attributeId: UUID, origin: String)
+      extends ComponentError("0012", s"Attribute $attributeId has unexpected Origin $origin")
+
+  final case class UnexpectedInstitutionOrigin(institutionId: UUID, origin: String)
+      extends ComponentError("0013", s"Institution $institutionId has unexpected Origin $origin")
+
 }
