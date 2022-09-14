@@ -25,6 +25,7 @@ import it.pagopa.interop.tenantprocess.client.model.{M2MTenantSeed, M2MAttribute
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import it.pagopa.interop.attributeregistrymanagement.client.model
 
 final case class GatewayApiServiceImpl(
   partyManagementService: PartyManagementService,
@@ -423,15 +424,49 @@ final case class GatewayApiServiceImpl(
     }
   }
 
+  override def createCertifiedAttribute(attributeSeed: AttributeSeed)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route =
+    authorize {
+
+      val result: Future[Attribute] = for {
+        organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
+        certifierId    <- tenantProcessService
+          .getTenant(organizationId)
+          .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
+          .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
+        attribute      <- attributeRegistryManagementService
+          .createAttribute(
+            model.AttributeSeed(
+              name = attributeSeed.name,
+              origin = certifierId.some,
+              code = attributeSeed.code.some,
+              kind = model.AttributeKind.CERTIFIED,
+              description = attributeSeed.description
+            )
+          )
+      } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
+
+      onComplete(result) {
+        case Success(attribute)                             =>
+          createCertifiedAttribute200(attribute)
+        case Failure(ex @ OrganizationIsNotACertifier(org)) =>
+          logger.error(s"The tenant ${org} is not a certifier and cannot create attributes")
+          createCertifiedAttribute403(problemOf(StatusCodes.Forbidden, ex))
+        case Failure(ex) => internalServerError(s"Error while creating attribute - ${ex.getMessage}")
+      }
+    }
+
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerClient: ToEntityMarshaller[Client]
   ): Route = authorize {
 
-    def isAllowed(client: AuthorizationManagementApiClient, organizationId: UUID): Future[Unit] = {
-      if (client.consumerId == organizationId)
-        Future.successful(())
+    def isAllowed(client: AuthorizationManagementApiClient, organizationId: UUID): Future[Unit] =
+      if (client.consumerId == organizationId) Future.unit
       else
         client.purposes
           .findM(purpose =>
@@ -440,8 +475,7 @@ final case class GatewayApiServiceImpl(
               .map(_.producerId == organizationId)
           )
           .ensure(Forbidden)(_.nonEmpty)
-          .as(())
-    }
+          .void
 
     val result: Future[Client] = for {
       organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM).flatMap(_.toFutureUUID)
@@ -463,12 +497,6 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  /**
-   * Code: 200, Message: Messages, DataType: Messages
-   * Code: 400, Message: Bad request, DataType: Problem
-   * Code: 401, Message: Unauthorized, DataType: Problem
-   * Code: 404, Message: Events not found, DataType: Problem
-   */
   override def getEventsFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEvents: ToEntityMarshaller[Events],

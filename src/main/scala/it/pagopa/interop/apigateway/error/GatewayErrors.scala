@@ -42,4 +42,7 @@ object GatewayErrors {
   final case class UnexpectedInstitutionOrigin(institutionId: UUID, origin: String)
       extends ComponentError("0013", s"Institution $institutionId has unexpected Origin $origin")
 
+  final case class OrganizationIsNotACertifier(organizationId: UUID)
+      extends ComponentError("0014", s"Organization ${organizationId} is not a certifier")
+
 }

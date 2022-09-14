@@ -3,8 +3,12 @@ package it.pagopa.interop.apigateway.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import it.pagopa.interop.apigateway.api.GatewayApiMarshaller
 import it.pagopa.interop.apigateway.model._
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 
 object GatewayApiMarshallerImpl extends GatewayApiMarshaller {
+
+  override implicit def fromEntityUnmarshallerAttributeSeed: FromEntityUnmarshaller[AttributeSeed] =
+    sprayJsonUnmarshaller[AttributeSeed]
 
   override implicit def toEntityMarshallerPurpose: ToEntityMarshaller[Purpose] = sprayJsonMarshaller[Purpose]
 
