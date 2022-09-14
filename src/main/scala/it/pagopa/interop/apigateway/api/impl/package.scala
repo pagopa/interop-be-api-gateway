@@ -11,9 +11,15 @@ import it.pagopa.interop.agreementmanagement.client.model.{
   VerifiedAttribute => AgreementManagementApiVerifiedAttribute
 }
 import it.pagopa.interop.apigateway.error.GatewayErrors.{
+  AttributeNotFoundInRegistry,
   MissingActivePurposeVersion,
   MissingActivePurposesVersions,
-  UnexpectedDescriptorState
+  MissingAttributeCode,
+  MissingAttributeOrigin,
+  MissingAvailableDescriptor,
+  UnexpectedAttributeOrigin,
+  UnexpectedDescriptorState,
+  UnexpectedInstitutionOrigin
 }
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.attributeregistrymanagement.client.model.{
@@ -22,12 +28,14 @@ import it.pagopa.interop.attributeregistrymanagement.client.model.{
 }
 import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.catalogmanagement.client.model.{
-  AttributeValue,
   Attribute => CatalogManagementApiAttribute,
+  AttributeValue => CatalogManagementApiAttributeValue,
+  Attributes => CatalogManagementApiAttributes,
   EService => CatalogManagementApiEService,
-  EServiceDoc => CatalogManagementApiEServiceDoc,
   EServiceDescriptor => CatalogManagementApiDescriptor,
-  EServiceDescriptorState => CatalogManagementApiDescriptorState
+  EServiceDescriptorState => CatalogManagementApiDescriptorState,
+  EServiceDoc => CatalogManagementApiEServiceDoc,
+  EServiceTechnology => CatalogManagementApiTechnology
 }
 import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -44,6 +52,7 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 import java.time.OffsetDateTime
 import java.util.UUID
 import scala.annotation.nowarn
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
@@ -54,9 +63,17 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val purposeFormat: RootJsonFormat[Purpose]   = jsonFormat3(Purpose)
   implicit val purposesFormat: RootJsonFormat[Purposes] = jsonFormat1(Purposes)
 
-  implicit val subscriberFormat: RootJsonFormat[Organization]               = jsonFormat3(Organization)
-  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]               = jsonFormat3(EServiceDoc)
-  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor] = jsonFormat10(EServiceDescriptor)
+  implicit val externalIdFormat: RootJsonFormat[ExternalId]                   = jsonFormat2(ExternalId)
+  implicit val organizationFormat: RootJsonFormat[Organization]               = jsonFormat4(Organization)
+  implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                 = jsonFormat3(EServiceDoc)
+  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor]   = jsonFormat10(EServiceDescriptor)
+  implicit val eServiceDescriptorsFormat: RootJsonFormat[EServiceDescriptors] = jsonFormat1(EServiceDescriptors)
+
+  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
+    jsonFormat4(EServiceAttributeValue)
+  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
+  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
+  implicit val eServiceFormat: RootJsonFormat[EService]                             = jsonFormat8(EService)
 
   implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat6(Agreement)
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
@@ -167,9 +184,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit class EnrichedEService(private val eservice: CatalogManagementApiEService) extends AnyVal {
+  implicit class EnrichedEServiceTechnology(private val tech: CatalogManagementApiTechnology) extends AnyVal {
+    def toModel: EServiceTechnology = tech match {
+      case CatalogManagementApiTechnology.REST => EServiceTechnology.REST
+      case CatalogManagementApiTechnology.SOAP => EServiceTechnology.SOAP
+    }
+  }
+
+  implicit class EnrichedEService(private val eService: CatalogManagementApiEService) extends AnyVal {
+    def latestAvailableDescriptor: Future[CatalogManagementApiDescriptor] =
+      eService.descriptors.sortBy(_.version.toInt).lastOption.toFuture(MissingAvailableDescriptor(eService.id.toString))
+
     private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
-      val allAttributes: Seq[Option[AttributeValue]] = attribute.group.sequence :+ attribute.single
+      val allAttributes: Seq[Option[CatalogManagementApiAttributeValue]] = attribute.group.sequence :+ attribute.single
       allAttributes.flatMap(attribute => attribute.map(_.id)).toSet
     }
 
@@ -184,7 +211,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       @nowarn certifiedFromParty: Set[UUID],   // TODO replace with the correct model once it's created
       verifiedFromAgreement: Set[AgreementManagementApiVerifiedAttribute],
       @nowarn declaredFromAgreement: Set[UUID] // TODO replace with the correct model once it's created
-    ): Set[AttributeValidityState] = eservice.attributes.verified.toSet
+    ): Set[AttributeValidityState] = eService.attributes.verified.toSet
       .flatMap(flatAttributes)
       .map(uuid =>
         verifiedFromAgreement
@@ -197,8 +224,61 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       )
 
     def attributesUUIDs: Set[UUID] =
-      (eservice.attributes.declared ++ eservice.attributes.certified ++ eservice.attributes.verified).toSet
+      (eService.attributes.declared ++ eService.attributes.certified ++ eService.attributes.verified).toSet
         .flatMap(flatAttributes)
+  }
+
+  implicit class EnrichedEServiceAttributeValue(private val attribute: CatalogManagementApiAttributeValue)
+      extends AnyVal {
+    def toModel(
+      registryAttributes: Seq[AttributeRegistryManagementApiAttribute]
+    ): Either[ComponentError, EServiceAttributeValue] = for {
+      regAttribute <- registryAttributes.find(_.id == attribute.id).toRight(AttributeNotFoundInRegistry(attribute.id))
+      origin       <- regAttribute.origin.toRight(MissingAttributeOrigin(attribute.id))
+      originEnum   <- Origin.fromValue(origin).leftMap(_ => UnexpectedAttributeOrigin(attribute.id, origin))
+      code         <- regAttribute.code.toRight(MissingAttributeCode(attribute.id))
+    } yield EServiceAttributeValue(
+      id = attribute.id,
+      code = code,
+      origin = originEnum,
+      explicitAttributeVerification = attribute.explicitAttributeVerification
+    )
+  }
+
+  implicit class EnrichedEServiceAttribute(private val attribute: CatalogManagementApiAttribute) extends AnyVal {
+    def toModel(
+      registryAttributes: Seq[AttributeRegistryManagementApiAttribute]
+    ): Either[ComponentError, EServiceAttribute] =
+      for {
+        single <- attribute.single.traverse(_.toModel(registryAttributes))
+        group  <- attribute.group.traverse(_.traverse(_.toModel(registryAttributes)))
+      } yield EServiceAttribute(single = single, group = group)
+  }
+
+  implicit class EnrichedEServiceAttributes(private val attributes: CatalogManagementApiAttributes) extends AnyVal {
+    def toModel(
+      registryAttributes: Seq[AttributeRegistryManagementApiAttribute]
+    ): Either[ComponentError, EServiceAttributes] = {
+      for {
+        certified <- attributes.certified.traverse(_.toModel(registryAttributes))
+        declared  <- attributes.declared.traverse(_.toModel(registryAttributes))
+        verified  <- attributes.verified.traverse(_.toModel(registryAttributes))
+      } yield EServiceAttributes(certified = certified, declared = declared, verified = verified)
+    }
+
+    def allIds: Set[UUID] = {
+      (attributes.verified ++ attributes.declared ++ attributes.certified)
+        .mapFilter(a =>
+          (a.single, a.group) match {
+            case (Some(s), Some(g)) => Some(s :: g.toList)
+            case (Some(s), None)    => Some(s :: Nil)
+            case (None, g)          => g
+          }
+        )
+        .flatten
+        .map(_.id)
+        .toSet
+    }
   }
 
   implicit class EnrichedEServiceDescriptor(private val descriptor: CatalogManagementApiDescriptor) extends AnyVal {
@@ -224,14 +304,20 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedInstitution(private val institution: PartyManagementApiInstitution) extends AnyVal {
-    def toModel: Organization =
-      Organization(
-        id = institution.id,
-        name = institution.description,
-        category = institution.attributes.headOption
-          .map(_.description)
-          .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
-      )
+    def toModel: Either[ComponentError, Organization] =
+      Origin
+        .fromValue(institution.origin)
+        .leftMap(_ => UnexpectedInstitutionOrigin(institution.id, institution.origin))
+        .map(origin =>
+          Organization(
+            id = institution.id,
+            name = institution.description,
+            externalId = ExternalId(origin, institution.externalId),
+            category = institution.attributes.headOption
+              .map(_.description)
+              .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
+          )
+        )
   }
 
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {

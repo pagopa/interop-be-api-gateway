@@ -163,6 +163,46 @@ final case class GatewayApiServiceImpl(
     }
   }
 
+  override def getEService(eServiceId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerEService: ToEntityMarshaller[EService]
+  ): Route = authorize {
+    val result: Future[EService] = for {
+      eServiceUUID     <- eServiceId.toFutureUUID
+      eService         <- catalogManagementService.getEService(eServiceUUID)(contexts)
+      producer         <- partyManagementService.getInstitution(eService.producerId)
+      latestDescriptor <- eService.latestAvailableDescriptor
+      state            <- latestDescriptor.state.toModel.toFuture
+      allAttributesIds = eService.attributes.allIds
+      attributes  <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
+      apiProducer <- producer.toModel.toFuture
+      attributes  <- eService.attributes.toModel(attributes.attributes).toFuture
+    } yield EService(
+      id = eService.id,
+      producer = apiProducer,
+      name = eService.name,
+      version = latestDescriptor.version,
+      description = eService.description,
+      technology = eService.technology.toModel,
+      attributes = attributes,
+      state = state
+    )
+
+    onComplete(result) {
+      case Success(eService)                                         =>
+        getEService200(eService)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while getting EService $eServiceId", ex)
+        getEService404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex: MissingAvailableDescriptor)                   =>
+        logger.error(s"Error while getting EService $eServiceId", ex)
+        getEService400(problemOf(StatusCodes.BadRequest, ex))
+      case Failure(ex)                                               =>
+        internalServerError(s"Error while getting EService $eServiceId - ${ex.getMessage}")
+    }
+  }
+
   override def getEServiceDescriptor(eServiceId: String, descriptorId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerEServiceDescriptor: ToEntityMarshaller[EServiceDescriptor],
@@ -186,11 +226,36 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: EServiceDescriptorNotFound)                   =>
         logger.error(s"Error while getting EService $eServiceId and Descriptor $descriptorId", ex)
         getEServiceDescriptor404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex: UnexpectedDescriptorState)                   =>
+      case Failure(ex: UnexpectedDescriptorState)                    =>
         logger.error(s"Error while getting EService $eServiceId and Descriptor $descriptorId", ex)
         getEServiceDescriptor400(problemOf(StatusCodes.BadRequest, ex))
       case Failure(ex)                                               =>
         internalServerError(s"Error while getting EService $eServiceId and Descriptor $descriptorId - ${ex.getMessage}")
+    }
+  }
+
+  override def getEServiceDescriptors(eServiceId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEServiceDescriptors: ToEntityMarshaller[EServiceDescriptors],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize {
+    val result: Future[EServiceDescriptors] = for {
+      eServiceUUID <- eServiceId.toFutureUUID
+      eService     <- catalogManagementService.getEService(eServiceUUID)(contexts)
+      descriptors  <- eService.descriptors.traverse(_.toModel).toFuture
+    } yield EServiceDescriptors(descriptors = descriptors)
+
+    onComplete(result) {
+      case Success(descriptor)                                       =>
+        getEServiceDescriptors200(descriptor)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while getting descriptors for EService $eServiceId", ex)
+        getEServiceDescriptors404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex: UnexpectedDescriptorState)                    =>
+        logger.error(s"Error while getting descriptors for EService $eServiceId", ex)
+        getEServiceDescriptors400(problemOf(StatusCodes.BadRequest, ex))
+      case Failure(ex)                                               =>
+        internalServerError(s"Error while getting descriptors for EService $eServiceId - ${ex.getMessage}")
     }
   }
 
@@ -202,7 +267,8 @@ final case class GatewayApiServiceImpl(
     val result: Future[Organization] = for {
       organizationUUID <- organizationId.toFutureUUID
       organization     <- partyManagementService.getInstitution(organizationUUID)
-    } yield organization.toModel
+      apiOrganization  <- organization.toModel.toFuture
+    } yield apiOrganization
 
     onComplete(result) {
       case Success(organization)                                     => getOrganization200(organization)

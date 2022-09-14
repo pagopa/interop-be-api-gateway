@@ -262,6 +262,87 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  '/eservices/{eserviceId}':
+    get:
+      tags:
+        - gateway
+      summary: Get the eservice by ID
+      description: Get the eservice by ID
+      operationId: getEService
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: eserviceId
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EService'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  '/eservices/{eserviceId}/descriptors':
+    get:
+      tags:
+        - gateway
+      summary: Get the eservice descriptors by eservice ID
+      description: Get the eservice descriptors by eservice ID
+      operationId: getEServiceDescriptors
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: eserviceId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: successfully associated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EServiceDescriptors'
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}/descriptors/{descriptorId}':
     get:
       tags:
@@ -681,6 +762,103 @@ components:
             $ref: '#/components/schemas/EServiceDoc'
         state:
           $ref: '#/components/schemas/EServiceDescriptorState'
+    EService:
+      description: The eservice model
+      type: object
+      required:
+        - id
+        - producer
+        - name
+        - version
+        - description
+        - technology
+        - attributes
+        - state
+      properties:
+        id:
+          description: eservice identifier
+          type: string
+          format: uuid
+        producer:
+          $ref: '#/components/schemas/Organization'
+        name:
+          description: eservice name
+          type: string
+        version:
+          type: string
+          pattern: ^[0-9]{1,4}$
+        description:
+          description: eservice description
+          type: string
+        technology:
+          $ref: '#/components/schemas/EServiceTechnology'
+        attributes:
+          $ref: '#/components/schemas/EServiceAttributes'
+        state:
+          $ref: '#/components/schemas/EServiceDescriptorState'
+    EServiceAttributes:
+      description: the attributes set associated to the EService
+      properties:
+        certified:
+          description: certified attributes list
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttribute'
+        declared:
+          description: declared attributes list
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttribute'
+        verified:
+          description: verified attributes list
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttribute'
+      required:
+        - certified
+        - declared
+        - verified
+    EServiceAttribute:
+      description: |
+        EService attribute model.
+        In the resolution of the expression of the attribute, a single attribute is combined with other attributes 
+        with AND operator.
+        A group of attributes combined together with OR oparator; in the resolution of the expression of the attribute, 
+        it is combined with other attributes with AND operator.
+      type: object
+      properties:
+        single:
+          $ref: '#/components/schemas/EServiceAttributeValue'
+        group:
+          type: array
+          items:
+            $ref: '#/components/schemas/EServiceAttributeValue'
+    EServiceAttributeValue:
+      description: attribute value
+      type: object
+      properties:
+        id:
+          description: attribute identifier
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: source identifier
+          pattern: '[a-z0-9 \-]{,48}'
+          maxLength: 48
+        origin:
+          $ref: '#/components/schemas/Origin'
+        explicitAttributeVerification:
+          description: |
+            this field is used only in the flow of verified attributes:
+            if true the producer must check the attribute,
+            otherwise, if it is already verified by another producer, it can be implicitly verified
+          type: boolean
+      required:
+        - id
+        - code
+        - origin
+        - explicitAttributeVerification
     EServiceDescriptorState:
       type: string
       description: EService State
@@ -717,19 +895,44 @@ components:
         contentType:
           description: document content type
           type: string
+    EServiceTechnology:
+      description: API technlogy admitted
+      type: string
+      enum:
+        - REST
+        - SOAP
+    ExternalId:
+      description: organization identifier model
+      type: object
+      required:
+        - origin
+        - id
+      properties:
+        origin:
+          $ref: '#/components/schemas/Origin'
+        id:
+          description: external organizatio identifier (es codice ipa)
+          type: string
     Organization:
       type: object
+      description: organization model
       additionalProperties: false
       properties:
         id:
+          description: internal organization identifier
           type: string
           format: uuid
+        externalId:
+          $ref: '#/components/schemas/ExternalId'
         name:
+          description: organization name
           type: string
         category:
+          description: organization category (IPA category)
           type: string
       required:
         - id
+        - externalId
         - name
         - category
     Origin:
