@@ -334,15 +334,23 @@ final case class GatewayApiServiceImpl(
           .getAgreementById(agreementUUID)(contexts)
           .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
 
-      eservice <- catalogManagementService.getEService(rawAgreement.eserviceId)(contexts)
+      tenant <- tenantManagementService.getTenantById(rawAgreement.consumerId)
 
-      attributeValidityStates = eservice.attributeUUIDSummary(
-        certifiedFromParty = Set.empty,
-        verifiedFromAgreement = rawAgreement.verifiedAttributes.toSet,
-        declaredFromAgreement = Set.empty
-      )
+      verifiedAttributes  = rawAgreement.verifiedAttributes
+        .flatMap(a => tenant.attributes.mapFilter(_.verified).filter(_.id == a.id))
+        .toSet
+      declaredAttributes  = rawAgreement.declaredAttributes
+        .flatMap(a => tenant.attributes.mapFilter(_.declared).filter(_.id == a.id))
+        .toSet
+      certifiedAttributes = rawAgreement.certifiedAttributes
+        .flatMap(a => tenant.attributes.mapFilter(_.certified).filter(_.id == a.id))
+        .toSet
 
-    } yield Attributes(attributeValidityStates)
+    } yield Attributes(
+      verified = verifiedAttributes.map(_.toAgreementModel),
+      declared = declaredAttributes.map(_.toAgreementModel),
+      certified = certifiedAttributes.map(_.toAgreementModel)
+    )
 
     onComplete(result) {
       case Success(agr)                                              => getAgreementAttributes200(agr)

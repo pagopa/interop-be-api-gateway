@@ -7,20 +7,9 @@ import cats.data.Validated
 import cats.implicits._
 import it.pagopa.interop.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
-  AgreementState => AgreementManagementApiAgreementState,
-  VerifiedAttribute => AgreementManagementApiVerifiedAttribute
+  AgreementState => AgreementManagementApiAgreementState
 }
-import it.pagopa.interop.apigateway.error.GatewayErrors.{
-  AttributeNotFoundInRegistry,
-  MissingActivePurposeVersion,
-  MissingActivePurposesVersions,
-  MissingAttributeCode,
-  MissingAttributeOrigin,
-  MissingAvailableDescriptor,
-  UnexpectedAttributeOrigin,
-  UnexpectedDescriptorState,
-  UnexpectedInstitutionOrigin
-}
+import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.attributeregistrymanagement.client.model.{
   Attribute => AttributeRegistryManagementApiAttribute,
@@ -41,16 +30,20 @@ import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.client.model.{Event => NotifierApiEvent, Events => NotifierApiEvents}
-import it.pagopa.interop.selfcare.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
 import it.pagopa.interop.purposemanagement.client.model.{
   PurposeVersionState,
   Purpose => PurposeManagementApiPurpose,
   Purposes => PurposeManagementApiPurposes
 }
+import it.pagopa.interop.selfcare.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
+import it.pagopa.interop.tenantmanagement.client.model.{
+  CertifiedTenantAttribute,
+  DeclaredTenantAttribute,
+  VerifiedTenantAttribute
+}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import java.util.UUID
-import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
@@ -87,11 +80,9 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val messageFormat: RootJsonFormat[Event]   = jsonFormat4(Event)
   implicit val messagesFormat: RootJsonFormat[Events] = jsonFormat2(Events)
 
-  implicit val attributeValidityStateFormat: RootJsonFormat[AttributeValidityState] = jsonFormat2(
-    AttributeValidityState
-  )
-
-  implicit val attributesFormat: RootJsonFormat[Attributes] = jsonFormat1(Attributes)
+  implicit val attributeValidityStateFormat: RootJsonFormat[AttributeValidityState] =
+    jsonFormat2(AttributeValidityState)
+  implicit val attributesFormat: RootJsonFormat[Attributes]                         = jsonFormat3(Attributes)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
@@ -199,29 +190,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit class EnrichedEService(private val eService: CatalogManagementApiEService) extends AnyVal {
     def latestAvailableDescriptor: Future[CatalogManagementApiDescriptor] =
       eService.descriptors.sortBy(_.version.toInt).lastOption.toFuture(MissingAvailableDescriptor(eService.id.toString))
-
-    private def flatAttributes(attribute: CatalogManagementApiAttribute): Set[UUID] = {
-      val allAttributes: Seq[Option[CatalogManagementApiAttributeValue]] = attribute.group.sequence :+ attribute.single
-      allAttributes.flatMap(attribute => attribute.map(_.id)).toSet
-    }
-
-    def attributeUUIDSummary(
-      @nowarn certifiedFromParty: Set[UUID],   // TODO replace with the correct model once it's created
-      verifiedFromAgreement: Set[AgreementManagementApiVerifiedAttribute],
-      @nowarn declaredFromAgreement: Set[UUID] // TODO replace with the correct model once it's created
-    ): Set[AttributeValidityState] = eService.attributes.verified.toSet
-      .flatMap(flatAttributes)
-      .map(uuid =>
-        verifiedFromAgreement
-          .find(_.id == uuid)
-          .fold(AttributeValidityState(uuid, AttributeValidity.INVALID))(_ =>
-            AttributeValidityState(uuid, AttributeValidity.VALID)
-          )
-      )
-
-    def attributesUUIDs: Set[UUID] =
-      (eService.attributes.declared ++ eService.attributes.certified ++ eService.attributes.verified).toSet
-        .flatMap(flatAttributes)
   }
 
   implicit class EnrichedEServiceAttributeValue(private val attribute: CatalogManagementApiAttributeValue)
@@ -326,6 +294,29 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       case AttributeRegistryManagementApiAttributeKind.DECLARED  => AttributeKind.DECLARED
       case AttributeRegistryManagementApiAttributeKind.VERIFIED  => AttributeKind.VERIFIED
     }
+  }
+
+  implicit class EnrichedVerifiedTenantAttribute(private val attribute: VerifiedTenantAttribute) extends AnyVal {
+    def toAgreementModel: AttributeValidityState = AttributeValidityState(
+      id = attribute.id,
+      validity = if (attribute.verifiedBy.isEmpty) AttributeValidity.INVALID else AttributeValidity.VALID
+    )
+  }
+
+  implicit class EnrichedCertifiedTenantAttribute(private val attribute: CertifiedTenantAttribute) extends AnyVal {
+    def toAgreementModel: AttributeValidityState = AttributeValidityState(
+      id = attribute.id,
+      validity =
+        attribute.revocationTimestamp.fold[AttributeValidity](AttributeValidity.VALID)(_ => AttributeValidity.INVALID)
+    )
+  }
+
+  implicit class EnrichedDeclaredTenantAttribute(private val attribute: DeclaredTenantAttribute) extends AnyVal {
+    def toAgreementModel: AttributeValidityState = AttributeValidityState(
+      id = attribute.id,
+      validity =
+        attribute.revocationTimestamp.fold[AttributeValidity](AttributeValidity.VALID)(_ => AttributeValidity.INVALID)
+    )
   }
 
   implicit class EnrichedClient(private val client: AuthorizationManagementApiClient) extends AnyVal {
