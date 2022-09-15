@@ -142,6 +142,7 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerAgreements: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
+    import AgreementManagementApiAgreementState._
     val result: Future[Agreements] = for {
       organizationId  <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM)
       params          <- (producerId, consumerId) match {
@@ -155,10 +156,17 @@ final case class GatewayApiServiceImpl(
       }
       (prod, cons) = params
       agreementStates <- parseArrayParameters(states).traverse(AgreementManagementApiAgreementState.fromValue).toFuture
-      rawAgreements <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementStates)(
-        contexts
-      )
-      agreements    <- rawAgreements.traverse(_.toModel).toFuture // * DRAFT was removed from open-api so it can't fail
+      safeAgreementStates =
+        if (agreementStates.nonEmpty) agreementStates
+        else List(PENDING, ACTIVE, SUSPENDED, ARCHIVED, MISSING_CERTIFIED_ATTRIBUTES)
+      rawAgreements <- agreementManagementService.getAgreements(
+        prod,
+        cons,
+        eserviceId,
+        descriptorId,
+        safeAgreementStates
+      )(contexts)
+      agreements    <- rawAgreements.traverse(_.toModel).toFuture
     } yield Agreements(agreements)
 
     onComplete(result) {
