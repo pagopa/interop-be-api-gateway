@@ -1171,13 +1171,25 @@ components:
     Attributes:
       type: object
       properties:
-        attributes:
+        verified:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AttributeValidityState'
+        certified:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AttributeValidityState'
+        declared:
           type: array
           uniqueItems: true
           items:
             $ref: '#/components/schemas/AttributeValidityState'
       required:
-        - attributes
+        - verified
+        - certified
+        - declared
     AttributeValidityState:
       type: object
       additionalProperties: false

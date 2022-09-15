@@ -10,6 +10,7 @@ import it.pagopa.interop.tenantmanagement.client.api.TenantApi
 import it.pagopa.interop.tenantmanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.tenantmanagement.client.model._
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class TenantManagementServiceImpl(invoker: TenantManagementInvoker, api: TenantApi)(implicit ec: ExecutionContext)
@@ -33,6 +34,14 @@ class TenantManagementServiceImpl(invoker: TenantManagementInvoker, api: TenantA
       "Retrieve Tenant by external ID",
       handleCommonErrors(s"Origin $origin Code $code")
     )
+  } yield result
+
+  override def getTenantById(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getTenant(xCorrelationId = correlationId, tenantId = tenantId, xForwardedFor = ip)(
+      BearerToken(bearerToken)
+    )
+    result <- invoker.invoke(request, "Retrieve Tenant by ID", handleCommonErrors(s"tenantId $tenantId"))
   } yield result
 
   private[service] def handleCommonErrors[T](
