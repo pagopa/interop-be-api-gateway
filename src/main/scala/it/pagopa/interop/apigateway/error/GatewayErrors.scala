@@ -45,4 +45,8 @@ object GatewayErrors {
   final case class OrganizationIsNotACertifier(organizationId: UUID)
       extends ComponentError("0014", s"Organization ${organizationId} is not a certifier")
 
+  final case class TenantProcessBadRequest(resource: String) extends ComponentError("0015", s"Bad request - $resource")
+
+  case object InvalidAgreementState extends ComponentError("0016", s"Cannot retrieve agreement in DRAFT state")
+
 }

@@ -310,7 +310,7 @@ paths:
       description: Get the eservice by ID
       operationId: getEService
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: path
           name: eserviceId
@@ -351,7 +351,7 @@ paths:
       description: Get the eservice descriptors by eservice ID
       operationId: getEServiceDescriptors
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: path
           name: eserviceId
@@ -512,9 +512,14 @@ paths:
           schema:
             type: string
         - in: query
-          name: state
+          name: states
+          description: comma separated sequence of agreement states to filter the response with
           schema:
-            $ref: '#/components/schemas/AgreementState'
+            type: array
+            items:
+              $ref: '#/components/schemas/AgreementState'
+            default: []
+          explode: false
       responses:
         '200':
           description: A list of Agreement
@@ -707,6 +712,39 @@ paths:
         - gateway
       operationId: upsertTenant
       description: Upserts the Tenant
+      parameters:
+        - name: origin
+          in: path
+          description: the origin identifier
+          required: true
+          schema:
+            type: string
+        - name: externalId
+          in: path
+          description: the externalId identifier
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: path
+          description: the attribute code identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    delete:
+      tags:
+        - gateway
+      operationId: revokeTenantAttribute
+      description: Revokes a Tenant attribute
       parameters:
         - name: origin
           in: path
@@ -1158,10 +1196,11 @@ components:
       type: string
       description: Agreement State
       enum:
-        - ACTIVE
         - PENDING
+        - ACTIVE
         - SUSPENDED
-        - INACTIVE
+        - ARCHIVED
+        - MISSING_CERTIFIED_ATTRIBUTES
     Agreement:
       type: object
       additionalProperties: false

@@ -14,7 +14,7 @@ trait AgreementManagementService {
     consumerId: Option[String] = None,
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
-    state: Option[AgreementState] = None
+    states: List[AgreementState] = Nil
   )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]]
 
   def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement]
@@ -28,7 +28,7 @@ trait AgreementManagementService {
       consumerId = Some(consumerUUID.toString),
       eserviceId = Some(eserviceUUID.toString),
       descriptorId = None,
-      state = None
+      states = Nil
     )(contexts).flatMap(agreements =>
       agreements
         .filter(a => a.state == AgreementState.ACTIVE || a.state == AgreementState.SUSPENDED) match {
