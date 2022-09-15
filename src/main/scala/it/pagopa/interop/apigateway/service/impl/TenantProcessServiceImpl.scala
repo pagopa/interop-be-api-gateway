@@ -49,7 +49,7 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
       code = code,
       xForwardedFor = ip
     )(BearerToken(bearerToken))
-    () <- invoker.invoke(request, "Invoking revokeAttribute", handleCommonErrors(code))
+    () <- invoker.invoke(request, "Invoking revokeAttribute", handleCommonErrors(s"attribute $code"))
   } yield ()
 
   private[service] def handleCommonErrors[T](
@@ -59,7 +59,7 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
       {
         case ex @ ApiError(code, message, _, _, _) if code == 400 =>
           logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
-          Future.failed(GatewayErrors.UnexistingAttribute(resource))
+          Future.failed(GatewayErrors.TenantProcessBadRequest(resource))
         case ex @ ApiError(code, message, _, _, _) if code == 404 =>
           logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
           Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
