@@ -11,6 +11,7 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.tenantprocess.client.model.{Tenant, M2MTenantSeed}
 import it.pagopa.interop.tenantprocess.client.invoker.{BearerToken, ApiError}
 import java.util.UUID
+import it.pagopa.interop.apigateway.error.GatewayErrors
 
 class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(implicit ec: ExecutionContext)
     extends TenantProcessService {
@@ -37,11 +38,28 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
     result <- invoker.invoke(request, "Invoking getTenant", handleCommonErrors(s"getTenant ${id.toString}"))
   } yield result
 
+  override def revokeAttribute(origin: String, externalId: String, code: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Unit] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.m2mRevokeAttribute(
+      xCorrelationId = correlationId,
+      origin = origin,
+      externalId = externalId,
+      code = code,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    () <- invoker.invoke(request, "Invoking revokeAttribute", handleCommonErrors(code))
+  } yield ()
+
   private[service] def handleCommonErrors[T](
     resource: String
   ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] = {
     (contexts, logger, msg) =>
       {
+        case ex @ ApiError(code, message, _, _, _) if code == 400 =>
+          logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
+          Future.failed(GatewayErrors.UnexistingAttribute(resource))
         case ex @ ApiError(code, message, _, _, _) if code == 404 =>
           logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
           Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))

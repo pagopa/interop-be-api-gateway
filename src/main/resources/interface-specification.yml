@@ -740,6 +740,39 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+    delete:
+      tags:
+        - gateway
+      operationId: revokeTenantAttribute
+      description: Revokes a Tenant attribute
+      parameters:
+        - name: origin
+          in: path
+          description: the origin identifier
+          required: true
+          schema:
+            type: string
+        - name: externalId
+          in: path
+          description: the externalId identifier
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: path
+          description: the attribute code identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /organizations/origin/{origin}/externalId/{externalId}/eservices:
     post:
       tags:

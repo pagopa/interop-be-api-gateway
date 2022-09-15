@@ -45,4 +45,7 @@ object GatewayErrors {
   final case class OrganizationIsNotACertifier(organizationId: UUID)
       extends ComponentError("0014", s"Organization ${organizationId} is not a certifier")
 
+  final case class UnexistingAttribute(attributeIdentifier: String)
+      extends ComponentError("0015", s"Unexisting attribute $attributeIdentifier")
+
 }

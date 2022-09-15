@@ -105,6 +105,28 @@ final case class GatewayApiServiceImpl(
     }
   }
 
+  override def revokeTenantAttribute(origin: String, externalId: String, code: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize {
+    logger.info(s"Revoking attribute $code of tenant ($origin,$externalId)")
+
+    onComplete(tenantProcessService.revokeAttribute(origin, externalId, code)) {
+      case Success(())                     => revokeTenantAttribute204
+      case Failure(x: UnexistingAttribute) =>
+        logger.error(
+          s"Error while upserting tenant with externalId ($origin,$externalId) and attribute $code - ${x.getMessage()}"
+        )
+        getAgreement400(problemOf(StatusCodes.BadRequest, x))
+      case Failure(OperationForbidden)     =>
+        logger.error(
+          s"Error while upserting tenant with externalId ($origin,$externalId) and attribute $code - ${OperationForbidden.getMessage}"
+        )
+        getAgreement404(problemOf(StatusCodes.Forbidden, OperationForbidden))
+      case Failure(ex)                     => internalServerError(s"Error while upserting tenant - ${ex.getMessage}")
+    }
+  }
+
   override def getAgreements(
     producerId: Option[String],
     consumerId: Option[String],
