@@ -310,7 +310,7 @@ paths:
       description: Get the eservice by ID
       operationId: getEService
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: path
           name: eserviceId
@@ -351,7 +351,7 @@ paths:
       description: Get the eservice descriptors by eservice ID
       operationId: getEServiceDescriptors
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: path
           name: eserviceId
@@ -512,9 +512,14 @@ paths:
           schema:
             type: string
         - in: query
-          name: state
+          name: states
+          description: comma separated sequence of agreement states to filter the response with
           schema:
-            $ref: '#/components/schemas/AgreementState'
+            type: array
+            items:
+              $ref: '#/components/schemas/AgreementState'
+            default: []
+          explode: false
       responses:
         '200':
           description: A list of Agreement
@@ -1158,10 +1163,12 @@ components:
       type: string
       description: Agreement State
       enum:
-        - ACTIVE
+        - DRAFT
         - PENDING
+        - ACTIVE
         - SUSPENDED
-        - INACTIVE
+        - ARCHIVED
+        - MISSING_CERTIFIED_ATTRIBUTES
     Agreement:
       type: object
       additionalProperties: false

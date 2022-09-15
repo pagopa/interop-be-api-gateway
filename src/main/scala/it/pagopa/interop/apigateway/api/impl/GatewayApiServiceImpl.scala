@@ -18,6 +18,7 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.AkkaUtils._
 import it.pagopa.interop.commons.utils.ORGANIZATION_ID_CLAIM
 import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
@@ -109,7 +110,7 @@ final case class GatewayApiServiceImpl(
     consumerId: Option[String],
     eserviceId: Option[String],
     descriptorId: Option[String],
-    state: Option[String]
+    states: String
   )(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerAgreements: ToEntityMarshaller[Agreements],
@@ -127,7 +128,7 @@ final case class GatewayApiServiceImpl(
         case _                                            => Future.failed(Forbidden)
       }
       (prod, cons) = params
-      agreementState <- state.traverse(AgreementManagementApiAgreementState.fromValue(_).toFuture)
+      agreementState <- parseArrayParameters(states).traverse(AgreementManagementApiAgreementState.fromValue).toFuture
       rawAgreements  <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementState)(
         contexts
       )

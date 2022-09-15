@@ -24,4 +24,5 @@ object PagopaVersions {
   lazy val purposeManagementVersion           = "1.0.x-SNAPSHOT"
   lazy val notifierVersion                    = "1.0.x-SNAPSHOT"
   lazy val tenantProcessVersion               = "1.0.x-SNAPSHOT"
+  lazy val tenantManagementVersion            = "1.0.x-SNAPSHOT"
 }

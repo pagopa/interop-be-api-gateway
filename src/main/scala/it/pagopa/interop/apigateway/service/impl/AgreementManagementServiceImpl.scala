@@ -39,7 +39,7 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
     consumerId: Option[String] = None,
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
-    state: Option[AgreementState] = None
+    states: List[AgreementState] = Nil
   )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = {
 
     for {
@@ -51,7 +51,7 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
         consumerId = consumerId,
         eserviceId = eserviceId,
         descriptorId = descriptorId,
-        state = state
+        states = states
       )(BearerToken(bearerToken))
       result <- invoker.invoke(request, "Retrieving agreements")
     } yield result
