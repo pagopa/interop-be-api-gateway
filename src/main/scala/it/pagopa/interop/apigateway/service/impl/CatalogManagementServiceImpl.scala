@@ -1,5 +1,6 @@
 package it.pagopa.interop.apigateway.service.impl
 
+import cats.implicits._
 import it.pagopa.interop.apigateway.service.{CatalogManagementInvoker, CatalogManagementService}
 import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
 import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError, BearerToken}
@@ -19,12 +20,6 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  /** Returns the expected audience defined by the producer of the corresponding agreementId.
-    *
-    * @param contexts
-    * @param eServiceId
-    * @return
-    */
   override def getEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
@@ -32,6 +27,25 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
         BearerToken(bearerToken)
       )
       result <- invoker.invoke(request, "Retrieving E-Service", handleCommonErrors(s"eservice $eServiceId"))
+    } yield result
+  }
+
+  override def getEServices(producerId: UUID, attributeId: UUID)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Seq[EService]] = {
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.getEServices(
+        xCorrelationId = correlationId,
+        producerId = producerId.toString.some,
+        attributeId = attributeId.toString.some,
+        xForwardedFor = ip
+      )(BearerToken(bearerToken))
+      result <- invoker.invoke(
+        request,
+        "Retrieving E-Services",
+        handleCommonErrors(s"producerId $producerId attributeId $attributeId")
+      )
     } yield result
   }
 

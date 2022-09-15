@@ -41,6 +41,10 @@ object Dependencies {
       namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
     lazy val notifier =
       namespace %% "interop-be-notifier-client" % notifierVersion
+    lazy val tenantProcess =
+      namespace %% "interop-be-tenant-process-client" % tenantProcessVersion
+    lazy val tenantManagement =
+      namespace %% "interop-be-tenant-management-client" % tenantManagementVersion
 
     lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
     lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
@@ -118,6 +122,8 @@ object Dependencies {
       pagopa.notifier                    % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,
+      pagopa.tenantProcess               % Compile,
+      pagopa.tenantManagement            % Compile,
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
       akka.testkit                       % Test,

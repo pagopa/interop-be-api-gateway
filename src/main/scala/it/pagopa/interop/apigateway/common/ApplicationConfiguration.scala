@@ -15,7 +15,10 @@ object ApplicationConfiguration {
   val attributeRegistryManagementURL: String =
     config.getString("interop-api-gateway.services.attribute-registry-management")
   val purposeManagementURL: String           = config.getString("interop-api-gateway.services.purpose-management")
-  val notifierURL: String                    = config.getString("interop-api-gateway.services.notifier")
+  val tenantProcessURL: String               = config.getString("interop-api-gateway.services.tenant-process")
+  val tenantManagementURL: String            = config.getString("interop-api-gateway.services.tenant-management")
+
+  val notifierURL: String = config.getString("interop-api-gateway.services.notifier")
 
   val partyManagementApiKey: String = config.getString("interop-api-gateway.api-keys.party-management")
 
