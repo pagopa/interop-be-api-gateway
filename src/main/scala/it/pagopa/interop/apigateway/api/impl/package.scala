@@ -53,6 +53,7 @@ import java.util.UUID
 import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
+import it.pagopa.interop.apigateway.error.GatewayErrors
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -155,25 +156,28 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedAgreement(private val agreement: AgreementManagementApiAgreement) extends AnyVal {
-    def toModel: Agreement = Agreement(
-      id = agreement.id,
-      eserviceId = agreement.eserviceId,
-      descriptorId = agreement.descriptorId,
-      producerId = agreement.producerId,
-      consumerId = agreement.consumerId,
-      state = agreement.state.toModel
-    )
+    def toModel: Either[Throwable, Agreement] =
+      agreement.state.toModel.map(state =>
+        Agreement(
+          id = agreement.id,
+          eserviceId = agreement.eserviceId,
+          descriptorId = agreement.descriptorId,
+          producerId = agreement.producerId,
+          consumerId = agreement.consumerId,
+          state = state
+        )
+      )
   }
 
   implicit class EnrichedAgreementState(private val agreement: AgreementManagementApiAgreementState) extends AnyVal {
-    def toModel: AgreementState = agreement match {
-      case AgreementManagementApiAgreementState.DRAFT                        => AgreementState.DRAFT
-      case AgreementManagementApiAgreementState.PENDING                      => AgreementState.PENDING
-      case AgreementManagementApiAgreementState.ACTIVE                       => AgreementState.ACTIVE
-      case AgreementManagementApiAgreementState.SUSPENDED                    => AgreementState.SUSPENDED
-      case AgreementManagementApiAgreementState.ARCHIVED                     => AgreementState.ARCHIVED
+    def toModel: Either[Throwable, AgreementState] = agreement match {
+      case AgreementManagementApiAgreementState.DRAFT     => GatewayErrors.InvalidAgreementState.asLeft[AgreementState]
+      case AgreementManagementApiAgreementState.PENDING   => AgreementState.PENDING.asRight[Throwable]
+      case AgreementManagementApiAgreementState.ACTIVE    => AgreementState.ACTIVE.asRight[Throwable]
+      case AgreementManagementApiAgreementState.SUSPENDED => AgreementState.SUSPENDED.asRight[Throwable]
+      case AgreementManagementApiAgreementState.ARCHIVED  => AgreementState.ARCHIVED.asRight[Throwable]
       case AgreementManagementApiAgreementState.MISSING_CERTIFIED_ATTRIBUTES =>
-        AgreementState.MISSING_CERTIFIED_ATTRIBUTES
+        AgreementState.MISSING_CERTIFIED_ATTRIBUTES.asRight[Throwable]
     }
   }
 

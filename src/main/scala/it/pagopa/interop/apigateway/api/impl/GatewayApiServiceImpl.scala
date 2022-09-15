@@ -69,7 +69,8 @@ final case class GatewayApiServiceImpl(
         agreementManagementService
           .getAgreementById(agreementUUID)(contexts)
           .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
-    } yield agreement.toModel
+          .flatMap(_.toModel.toFuture)
+    } yield agreement
 
     onComplete(result) {
       case Success(agr)                                              =>
@@ -77,6 +78,9 @@ final case class GatewayApiServiceImpl(
       case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested agreement $agreementId")
         getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(InvalidAgreementState)                            =>
+        logger.error(s"Cannot retrieve agreement $agreementId since is in draft state")
+        getAgreement404(problemOf(StatusCodes.NotFound, InvalidAgreementState))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting agreement $agreementId - ${ex.getMessage}")
         getAgreement404(problemOf(StatusCodes.NotFound, ex))
@@ -139,8 +143,8 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
     val result: Future[Agreements] = for {
-      organizationId <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM)
-      params         <- (producerId, consumerId) match {
+      organizationId  <- getClaimFuture(contexts, ORGANIZATION_ID_CLAIM)
+      params          <- (producerId, consumerId) match {
         case (producer @ Some(_), None)                   => Future.successful((producer, Some(organizationId)))
         case (None, consumer @ Some(_))                   => Future.successful((Some(organizationId), consumer))
         case (Some(`organizationId`), consumer @ Some(_)) => Future.successful((Some(organizationId), consumer))
@@ -150,11 +154,11 @@ final case class GatewayApiServiceImpl(
         case _                                            => Future.failed(Forbidden)
       }
       (prod, cons) = params
-      agreementState <- parseArrayParameters(states).traverse(AgreementManagementApiAgreementState.fromValue).toFuture
-      rawAgreements  <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementState)(
+      agreementStates <- parseArrayParameters(states).traverse(AgreementManagementApiAgreementState.fromValue).toFuture
+      rawAgreements <- agreementManagementService.getAgreements(prod, cons, eserviceId, descriptorId, agreementStates)(
         contexts
       )
-      agreements = rawAgreements.map(_.toModel)
+      agreements    <- rawAgreements.traverse(_.toModel).toFuture // * DRAFT was removed from open-api so it can't fail
     } yield Agreements(agreements)
 
     onComplete(result) {
@@ -369,13 +373,17 @@ final case class GatewayApiServiceImpl(
       agreement      <- agreementManagementService
         .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)
         .ensure(Forbidden)(a => a.consumerId == organizationId || a.producerId == organizationId)
-    } yield agreement.toModel
+        .flatMap(_.toModel.toFuture)
+    } yield agreement
 
     onComplete(result) {
       case Success(agreement)                                        => getAgreementByPurpose200(agreement)
       case Failure(Forbidden)                                        =>
         logger.error(s"The user has no access to the requested agreement for purpose $purposeId")
         getAgreementByPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
+      case Failure(InvalidAgreementState)                            =>
+        logger.error(s"Cannot retrieve agreement since is in draft state")
+        getAgreementByPurpose404(problemOf(StatusCodes.NotFound, InvalidAgreementState))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting the requested agreement for purpose $purposeId - ${ex.getMessage}")
         getAgreementByPurpose404(problemOf(StatusCodes.NotFound, ex))

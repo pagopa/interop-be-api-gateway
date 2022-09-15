@@ -1196,7 +1196,6 @@ components:
       type: string
       description: Agreement State
       enum:
-        - DRAFT
         - PENDING
         - ACTIVE
         - SUSPENDED
