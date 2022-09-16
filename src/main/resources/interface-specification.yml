@@ -1130,13 +1130,13 @@ components:
           description: source identifier
           pattern: '^[a-zA-Z0-9\-_]+$'
           minLength: 2
-          maxLength: 24
+          maxLength: 16
         name:
           type: string
           description: human readable name
           pattern: '^[a-zA-Z0-9\s\-_]+$'
           minLength: 2
-          maxLength: 16
+          maxLength: 24
         description:
           type: string
           description: human readable description
