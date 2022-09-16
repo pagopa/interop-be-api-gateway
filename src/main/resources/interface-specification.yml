@@ -1128,15 +1128,19 @@ components:
         code:
           type: string
           description: source identifier
-          maxLength: 48
+          pattern: '[a-zA-Z0-9\-_]{2,24}'
+          minLength: 2
+          maxLength: 24
         name:
           type: string
           description: human readable name
+          pattern: '^.{0,48}$'
           maxLength: 48
         description:
           type: string
           description: human readable description
-          maxLength: 48
+          pattern: '^.{0,96}$'
+          maxLength: 96
       required:
         - code
         - name
@@ -1157,6 +1161,7 @@ components:
           format: uuid
         name:
           type: string
+          pattern: '^.{0,48}$'
           maxLength: 48
         kind:
           $ref: '#/components/schemas/AttributeKind'
