@@ -1134,13 +1134,13 @@ components:
         name:
           type: string
           description: human readable name
-          pattern: '^[a-zA-Z0-9\s\-\_]+$'
+          pattern: '^[a-zA-Z0-9\s\-_]+$'
           minLength: 2
           maxLength: 16
         description:
           type: string
           description: human readable description
-          pattern: '^[a-zA-Z0-9\s\-\_\.,;\:]+$'
+          pattern: '^[a-zA-Z0-9\s\-_\.,;\:]+$'
           minLength: 2
           maxLength: 64
       required:
@@ -1163,7 +1163,7 @@ components:
           format: uuid
         name:
           type: string
-          pattern: '^[a-zA-Z0-9\s\-\_]+$'
+          pattern: '^[a-zA-Z0-9\s\-_]+$'
           minLength: 2
           maxLength: 16
         kind:
