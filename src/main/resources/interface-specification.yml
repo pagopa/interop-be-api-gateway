@@ -1078,7 +1078,7 @@ components:
       type: string
       enum:
         - IPA
-        - SDG
+        - AGID
     PurposeState:
       type: string
       description: Purpose State
