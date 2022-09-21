@@ -75,6 +75,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/purposes/{purposeId}':
     get:
       tags:
@@ -116,6 +122,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Purpose not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -167,6 +179,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /attributes:
     post:
       tags:
@@ -203,6 +221,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -250,6 +274,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Attribute not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -302,6 +332,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}':
     get:
       tags:
@@ -343,6 +379,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/eservices/{eserviceId}/descriptors':
     get:
       tags:
@@ -379,6 +421,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -438,6 +486,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/organizations/{organizationId}':
     get:
       tags:
@@ -482,6 +536,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Organization not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:
@@ -545,6 +605,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   '/events':
     get:
       tags:
@@ -593,6 +659,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
         '404':
           description: Institution not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Too Many Requests
           content:
             application/problem+json:
               schema:

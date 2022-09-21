@@ -1,6 +1,10 @@
 package it.pagopa.interop.apigateway.common
 
 import com.typesafe.config.{Config, ConfigFactory}
+import it.pagopa.commons.ratelimiter.model.LimiterConfig
+
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 
 object ApplicationConfiguration {
 
@@ -24,6 +28,19 @@ object ApplicationConfiguration {
 
   val jwtAudience: Set[String] =
     config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)
+
+  val rateLimiterConfigs: LimiterConfig = {
+    val rateInterval = config.getDuration("interop-api-gateway.rate-limiter.rate-interval")
+
+    LimiterConfig(
+      limiterGroup = config.getString("interop-api-gateway.rate-limiter.limiter-group"),
+      maxRequests = config.getInt("interop-api-gateway.rate-limiter.max-requests"),
+      burstPercentage = config.getDouble("interop-api-gateway.rate-limiter.burst-percentage"),
+      rateInterval = FiniteDuration(rateInterval.toMillis, TimeUnit.MILLISECONDS),
+      redisHost = config.getString("interop-api-gateway.rate-limiter.redis-host"),
+      redisPort = config.getInt("interop-api-gateway.rate-limiter.redis-port")
+    )
+  }
 
   require(jwtAudience.nonEmpty, "Audience cannot be empty")
 }

@@ -46,8 +46,9 @@ object Dependencies {
     lazy val tenantManagement =
       namespace %% "interop-be-tenant-management-client" % tenantManagementVersion
 
-    lazy val commons = namespace %% "interop-commons-utils" % commonsVersion
-    lazy val jwt     = namespace %% "interop-commons-jwt"   % commonsVersion
+    lazy val commonsUtils = namespace %% "interop-commons-utils"        % commonsVersion
+    lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
+    lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
   }
 
   private[this] object cats {
@@ -116,9 +117,10 @@ object Dependencies {
       pagopa.agreementManagement         % Compile,
       pagopa.authorizationManagement     % Compile,
       pagopa.attributeRegistryManagement % Compile,
-      pagopa.commons                     % Compile,
+      pagopa.commonsUtils                % Compile,
       pagopa.catalogManagement           % Compile,
       pagopa.jwt                         % Compile,
+      pagopa.rateLimiter                 % Compile,
       pagopa.notifier                    % Compile,
       pagopa.partyManagement             % Compile,
       pagopa.purposeManagement           % Compile,

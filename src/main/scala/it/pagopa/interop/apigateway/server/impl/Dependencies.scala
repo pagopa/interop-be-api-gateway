@@ -3,11 +3,13 @@ package it.pagopa.interop.apigateway.server.impl
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.SecurityDirectives
+import akka.http.scaladsl.server.{Directive1, Route}
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import it.pagopa.commons.ratelimiter.RateLimiter
+import it.pagopa.commons.ratelimiter.akka.RateLimiterDirective
 import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
 import it.pagopa.interop.apigateway.api.impl.{
   GatewayApiMarshallerImpl,
@@ -28,16 +30,29 @@ import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, KID, PublicKeysHolder, SerializedKey}
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
+import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.service.impl.OffsetDateTimeSupplierImpl
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.selfcare.partymanagement.client.api.{PartyApi => PartyManagementApi}
+import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
+import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
-import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
 
 trait Dependencies {
+
+  val rateLimiter: RateLimiter = RateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplierImpl)
+
+  def rateLimiterDirective(
+    contexts: Seq[(String, String)]
+  )(implicit ec: ExecutionContext): Directive1[Seq[(String, String)]] = {
+    RateLimiterDirective.rateLimiterDirective(
+      rateLimiter,
+      problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
+    )(contexts)(ec, entityMarshallerProblem)
+  }
 
   def agreementManagementService(
     blockingEc: ExecutionContextExecutor
@@ -141,7 +156,7 @@ trait Dependencies {
         tenantManagementService(blockingEc)
       ),
       GatewayApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective)
     )
 
   val healthApi: HealthApi = new HealthApi(
