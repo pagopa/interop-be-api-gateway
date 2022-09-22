@@ -8,8 +8,8 @@ import akka.http.scaladsl.server.{Directive1, Route}
 import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
-import it.pagopa.commons.ratelimiter.RateLimiter
-import it.pagopa.commons.ratelimiter.akka.RateLimiterDirective
+import it.pagopa.interop.commons.ratelimiter.RateLimiter
+import it.pagopa.interop.commons.ratelimiter.akka.RateLimiterDirective
 import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
 import it.pagopa.interop.apigateway.api.impl.{
   GatewayApiMarshallerImpl,

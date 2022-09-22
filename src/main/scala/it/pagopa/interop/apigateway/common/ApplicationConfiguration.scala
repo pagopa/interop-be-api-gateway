@@ -1,7 +1,7 @@
 package it.pagopa.interop.apigateway.common
 
 import com.typesafe.config.{Config, ConfigFactory}
-import it.pagopa.commons.ratelimiter.model.LimiterConfig
+import it.pagopa.interop.commons.ratelimiter.model.LimiterConfig
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
