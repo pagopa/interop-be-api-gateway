@@ -31,6 +31,7 @@ object ApplicationConfiguration {
 
   val rateLimiterConfigs: LimiterConfig = {
     val rateInterval = config.getDuration("interop-api-gateway.rate-limiter.rate-interval")
+    val timeout      = config.getDuration("interop-api-gateway.rate-limiter.timeout")
 
     LimiterConfig(
       limiterGroup = config.getString("interop-api-gateway.rate-limiter.limiter-group"),
@@ -38,7 +39,8 @@ object ApplicationConfiguration {
       burstPercentage = config.getDouble("interop-api-gateway.rate-limiter.burst-percentage"),
       rateInterval = FiniteDuration(rateInterval.toMillis, TimeUnit.MILLISECONDS),
       redisHost = config.getString("interop-api-gateway.rate-limiter.redis-host"),
-      redisPort = config.getInt("interop-api-gateway.rate-limiter.redis-port")
+      redisPort = config.getInt("interop-api-gateway.rate-limiter.redis-port"),
+      timeout = FiniteDuration(timeout.toMillis, TimeUnit.MILLISECONDS)
     )
   }
 
