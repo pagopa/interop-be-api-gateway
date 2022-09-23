@@ -50,9 +50,9 @@ trait Dependencies {
     RedisRateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplierImpl)
 
   val rateLimiterDirective: ExecutionContext => Seq[(String, String)] => Directive1[Seq[(String, String)]] = {
-    ec => contexts =>
-      {
-        val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+    val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+    ec =>
+      contexts => {
         RateLimiterDirective.rateLimiterDirective(
           rateLimiter,
           problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
