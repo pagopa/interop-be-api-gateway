@@ -220,6 +220,9 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: MissingAvailableDescriptor)                   =>
         logger.error(s"Error while getting EService $eServiceId", ex)
         getEService400(problemOf(StatusCodes.BadRequest, ex))
+      case Failure(MissingSelfcareId)                                =>
+        logger.error(s"Tenant has no selfcareId")
+        internalServerError(MissingSelfcareId.getMessage())
       case Failure(ex)                                               =>
         internalServerError(s"Error while getting EService $eServiceId - ${ex.getMessage}")
     }
@@ -248,6 +251,9 @@ final case class GatewayApiServiceImpl(
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting Organization EServices for Origin $origin and Code $externalId", ex)
         getOrganizationEServices404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(MissingSelfcareId)                                =>
+        logger.error(s"Tenant has no selfcareId")
+        internalServerError(MissingSelfcareId.getMessage())
       case Failure(ex)                                               =>
         internalServerError(
           s"Error while getting Organization EServices for Origin $origin and Code $externalId - ${ex.getMessage}"
@@ -311,22 +317,27 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  override def getOrganization(organizationId: String)(implicit
+  override def getOrganization(tenantId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerOrganization: ToEntityMarshaller[Organization],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
     val result: Future[Organization] = for {
-      organizationUUID <- organizationId.toFutureUUID
-      organization     <- partyManagementService.getInstitution(organizationUUID)
-      apiOrganization  <- organization.toModel.toFuture
+      tenantUUID      <- tenantId.toFutureUUID
+      tenant          <- tenantManagementService.getTenantById(tenantUUID)
+      selfcareId      <- tenant.selfcareId.toFuture(MissingSelfcareId)
+      organization    <- partyManagementService.getInstitution(selfcareId)
+      apiOrganization <- organization.toModel(tenant.id).toFuture
     } yield apiOrganization
 
     onComplete(result) {
       case Success(organization)                                     => getOrganization200(organization)
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error(s"Error while getting organization $organizationId - ${ex.getMessage}")
+        logger.error(s"Error while getting organization $tenantId - ${ex.getMessage}")
         getOrganization404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(MissingSelfcareId)                                =>
+        logger.error(s"Tenant $tenantId has no selfcareId")
+        internalServerError(MissingSelfcareId.getMessage())
       case Failure(ex) => internalServerError(s"Error while getting organization - ${ex.getMessage}")
     }
   }
@@ -585,12 +596,14 @@ final case class GatewayApiServiceImpl(
 
   def enhanceEService(eService: CatalogManagementEService)(implicit contexts: Seq[(String, String)]): Future[EService] =
     for {
-      producer         <- partyManagementService.getInstitution(eService.producerId)
+      tenant           <- tenantManagementService.getTenantById(eService.producerId)
+      selfcareId       <- tenant.selfcareId.toFuture(MissingSelfcareId)
+      producer         <- partyManagementService.getInstitution(selfcareId)
       latestDescriptor <- eService.latestAvailableDescriptor
       state            <- latestDescriptor.state.toModel.toFuture
       allAttributesIds = eService.attributes.allIds
       attributes  <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
-      apiProducer <- producer.toModel.toFuture
+      apiProducer <- producer.toModel(tenant.id).toFuture
       attributes  <- eService.attributes.toModel(attributes.attributes).toFuture
     } yield EService(
       id = eService.id,

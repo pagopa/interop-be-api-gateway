@@ -272,13 +272,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedInstitution(private val institution: PartyManagementApiInstitution) extends AnyVal {
-    def toModel: Either[ComponentError, Organization] =
+    def toModel(tenantId: UUID): Either[ComponentError, Organization] =
       Origin
         .fromValue(institution.origin)
         .leftMap(_ => UnexpectedInstitutionOrigin(institution.id, institution.origin))
         .map(origin =>
           Organization(
-            id = institution.id,
+            id = tenantId,
             name = institution.description,
             externalId = ExternalId(origin, institution.externalId),
             category = institution.attributes.headOption

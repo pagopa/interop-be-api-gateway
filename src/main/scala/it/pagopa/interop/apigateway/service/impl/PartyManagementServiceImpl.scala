@@ -21,9 +21,9 @@ class PartyManagementServiceImpl(invoker: PartyManagementInvoker, api: PartyApi)
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getInstitution(
-    institutionId: UUID
+    institutionId: String
   )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = {
-    val request: ApiRequest[Institution] = api.getInstitutionById(institutionId)(xSelfcareUid)
+    val request: ApiRequest[Institution] = api.getInstitutionById(UUID.fromString(institutionId))(xSelfcareUid)
     invoker.invoke(request, "Retrieve Institution", handleCommonErrors(s"institution $institutionId"))
   }
 
