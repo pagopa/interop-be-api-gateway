@@ -48,5 +48,6 @@ object GatewayErrors {
   final case class TenantProcessBadRequest(resource: String) extends ComponentError("0015", s"Bad request - $resource")
 
   case object InvalidAgreementState extends ComponentError("0016", s"Cannot retrieve agreement in DRAFT state")
+  case object MissingSelfcareId     extends ComponentError("0017", s"Tenant does not have a selfcareId")
 
 }

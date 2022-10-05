@@ -5,10 +5,10 @@ import it.pagopa.interop.apigateway.service.{PartyManagementApiKeyValue, PartyMa
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.selfcare.partymanagement.client.api.PartyApi
-import it.pagopa.interop.selfcare.partymanagement.client.invoker.{ApiError, ApiRequest}
+import it.pagopa.interop.selfcare.partymanagement.client.invoker.ApiError
 import it.pagopa.interop.selfcare.partymanagement.client.model._
+import it.pagopa.interop.commons.utils.TypeConversions.StringOps
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class PartyManagementServiceImpl(invoker: PartyManagementInvoker, api: PartyApi)(implicit
@@ -21,11 +21,12 @@ class PartyManagementServiceImpl(invoker: PartyManagementInvoker, api: PartyApi)
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getInstitution(
-    institutionId: UUID
-  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = {
-    val request: ApiRequest[Institution] = api.getInstitutionById(institutionId)(xSelfcareUid)
-    invoker.invoke(request, "Retrieve Institution", handleCommonErrors(s"institution $institutionId"))
-  }
+    institutionId: String
+  )(implicit contexts: Seq[(String, String)], ec: ExecutionContext): Future[Institution] = for {
+    institutionUUID <- institutionId.toFutureUUID
+    request = api.getInstitutionById(institutionUUID)(xSelfcareUid)
+    result <- invoker.invoke(request, "Retrieve Institution", handleCommonErrors(s"institution $institutionId"))
+  } yield result
 
   private[service] def handleCommonErrors[T](
     resource: String
