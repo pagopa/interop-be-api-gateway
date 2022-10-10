@@ -169,6 +169,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       case AgreementManagementApiAgreementState.ARCHIVED  => AgreementState.ARCHIVED.asRight[Throwable]
       case AgreementManagementApiAgreementState.MISSING_CERTIFIED_ATTRIBUTES =>
         AgreementState.MISSING_CERTIFIED_ATTRIBUTES.asRight[Throwable]
+      case AgreementManagementApiAgreementState.REJECTED => AgreementState.REJECTED.asRight[Throwable]
     }
   }
 

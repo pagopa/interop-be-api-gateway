@@ -2212,6 +2212,7 @@ components:
         - SUSPENDED
         - ARCHIVED
         - MISSING_CERTIFIED_ATTRIBUTES
+        - REJECTED
     Agreement:
       type: object
       additionalProperties: false
