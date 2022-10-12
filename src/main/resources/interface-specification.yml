@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Interoperability API Gateway Micro Service
   description: exposes the API for interacting with interoperability features
-  version: '0.1.0'
+  version: '1.0'
   contact:
     name: API Support
     url: 'http://www.example.com/support'
@@ -2212,6 +2212,7 @@ components:
         - SUSPENDED
         - ARCHIVED
         - MISSING_CERTIFIED_ATTRIBUTES
+        - REJECTED
     Agreement:
       type: object
       additionalProperties: false
