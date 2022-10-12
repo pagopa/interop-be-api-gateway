@@ -281,7 +281,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
           Organization(
             id = tenantId,
             name = institution.description,
-            externalId = ExternalId(origin, institution.externalId),
+            externalId = ExternalId(origin, institution.originId),
             category = institution.attributes.headOption
               .map(_.description)
               .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
