@@ -25,7 +25,7 @@ val interfaceVersion = buildinfo.BuildInfo.interfaceVersion
 
 private val mf = new DefaultMustacheFactory
 val writer =
-mf.compile("interface-specification.yml").execute(new StringWriter(), mutable.HashMap("version" -> interfaceVersion).asJava).asInstanceOf[StringWriter]
+mf.compile(openApiFileName).execute(new StringWriter(), mutable.HashMap("version" -> interfaceVersion).asJava).asInstanceOf[StringWriter]
 writer.flush()
 writer.close()
 private val tmpFile = File.createTempFile("tmp", openApiFileName)
@@ -41,7 +41,7 @@ private val validator: OpenApiInteractionValidator =
    .build
 
 private val strictnessTimeout = FiniteDuration({{entityStrictnessTimeout}}, SECONDS)
-private val validationsWhitelist: List[String] = List("swagger-ui", "build-info")
+private val validationsWhitelist: List[String] = List("build-info") ::: (if(swaggerEnabled) List("swagger-ui") else Nil)
 
  def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
     if (validationsWhitelist.exists(httpRequest.uri.toString.contains(_)))
