@@ -44,7 +44,7 @@ private val strictnessTimeout = FiniteDuration({{entityStrictnessTimeout}}, SECO
 private val validationsWhitelist: List[String] = List("swagger-ui", "build-info")
 
  def validationFunction(httpRequest: HttpRequest)(route: Route): Route = {
-    if (!(validationExceptionToRoute.isDefined && !validationsWhitelist.exists(httpRequest.uri.toString.contains(_))))
+    if (validationsWhitelist.exists(httpRequest.uri.toString.contains(_)))
       route
     else {
       val builder = new Builder(
