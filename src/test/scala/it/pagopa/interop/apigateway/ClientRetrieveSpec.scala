@@ -45,20 +45,11 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
     }
 
     "fail if the requester does not have M2M role" in {
-      val requesterOrganizationId                = UUID.randomUUID()
-      val clientId                               = UUID.randomUUID()
-      val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
-        id = clientId,
-        consumerId = requesterOrganizationId,
-        name = "A Client",
-        description = Some("A Client Description"),
-        purposes = Seq.empty,
-        relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER
-      )
+      val requesterOrganizationId = UUID.randomUUID()
+      val clientId                = UUID.randomUUID()
 
-      implicit val contexts: Seq[(String, String)] = Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
-      mockClientRetrieve(clientId, client)(contexts)
+      implicit val contexts: Seq[(String, String)] =
+        Seq(USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
 
       Get() ~> service.getClient(clientId.toString) ~> check {
         status shouldEqual StatusCodes.Forbidden
@@ -190,7 +181,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         descriptors = Seq.empty
       )
 
-      implicit val contexts: Seq[(String, String)] = Seq(ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
+      implicit val contexts: Seq[(String, String)] =
+        Seq(USER_ROLES -> "m2m", ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
 
       mockClientRetrieve(clientId, client)(contexts)
       mockEServiceRetrieve(eServiceId, eService)(contexts)
