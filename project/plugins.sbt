@@ -13,3 +13,5 @@ addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.6")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.11"
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
+ThisBuild / libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always)
