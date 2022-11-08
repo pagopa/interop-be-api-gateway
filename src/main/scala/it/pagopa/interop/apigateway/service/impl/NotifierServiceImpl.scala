@@ -39,12 +39,11 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
   ): Future[Events] = {
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getEventsFromId(
+      request = api.getAllEventsFromId(
         lastEventId,
         xCorrelationId = Some(correlationId),
         xForwardedFor = ip,
-        limit = Some(limit),
-        fromAllOrganizations = Some(true)
+        limit = Some(limit)
       )(BearerToken(bearerToken))
       result <- invoker.invoke(
         request,
