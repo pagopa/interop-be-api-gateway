@@ -591,6 +591,26 @@ final case class GatewayApiServiceImpl(
     }
   }
 
+  override def getEservicesEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize {
+    val result: Future[Events] = for {
+      events        <- notifierService.getAllOrganizationEvents(lastEventId, limit)(contexts)
+      gatewayEvents <- events.toModel.toFuture
+    } yield gatewayEvents
+
+    onComplete(result) {
+      case Success(messages)                                         => getEventsFromId200(messages)
+      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
+        logger.error(s"Error while getting the requested messages - ${ex.getMessage}")
+        getEventsFromId404(problemOf(StatusCodes.NotFound, ex))
+      case Failure(ex)                                               =>
+        internalServerError(s"Error while getting the requested messages - ${ex.getMessage}")
+    }
+  }
+
   def m2mTenantSeedFromApi(origin: String, externalId: String)(code: String): M2MTenantSeed =
     M2MTenantSeed(ExternalId(origin, externalId), M2MAttributeSeed(code) :: Nil)
 
