@@ -34,6 +34,25 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
     } yield result
   }
 
+  override def getAllOrganizationEvents(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Events] = {
+    for {
+      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+      request = api.getAllEventsFromId(
+        lastEventId,
+        xCorrelationId = Some(correlationId),
+        xForwardedFor = ip,
+        limit = Some(limit)
+      )(BearerToken(bearerToken))
+      result <- invoker.invoke(
+        request,
+        "Retrieving message events for all organizations",
+        handleCommonErrors(s"Error while retrieving events for all organizations from $lastEventId")
+      )
+    } yield result
+  }
+
   private[service] def handleCommonErrors[T](
     resource: String
   ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] =

@@ -6,4 +6,5 @@ import scala.concurrent.Future
 
 trait NotifierService {
   def getEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
+  def getAllOrganizationEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
 }
