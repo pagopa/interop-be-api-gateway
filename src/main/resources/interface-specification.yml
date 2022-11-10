@@ -2154,7 +2154,7 @@ components:
         origin:
           $ref: '#/components/schemas/Origin'
         id:
-          description: external organizatio identifier (es codice ipa)
+          description: external organization identifier (es codice ipa)
           type: string
     Organization:
       type: object
@@ -2179,11 +2179,8 @@ components:
         - name
         - category
     Origin:
-      description: Attribute origin admitted
+      description: external id origin
       type: string
-      enum:
-        - IPA
-        - AGID
     PurposeState:
       type: string
       description: Purpose State

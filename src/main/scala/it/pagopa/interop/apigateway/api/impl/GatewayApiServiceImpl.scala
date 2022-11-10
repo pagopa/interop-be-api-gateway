@@ -118,7 +118,7 @@ final case class GatewayApiServiceImpl(
       case Success(())                         => revokeTenantAttribute204
       case Failure(x: TenantProcessBadRequest) =>
         logger.error(
-          s"Error while upserting tenant with externalId ($origin,$externalId) and attribute $code - ${x.getMessage()}"
+          s"Error while upserting tenant with externalId ($origin,$externalId) and attribute $code - ${x.getMessage}"
         )
         getAgreement400(problemOf(StatusCodes.BadRequest, x))
       case Failure(OperationForbidden)         =>
@@ -222,7 +222,7 @@ final case class GatewayApiServiceImpl(
         getEService400(problemOf(StatusCodes.BadRequest, ex))
       case Failure(MissingSelfcareId)                                =>
         logger.error(s"Tenant has no selfcareId")
-        internalServerError(MissingSelfcareId.getMessage())
+        internalServerError(MissingSelfcareId.getMessage)
       case Failure(ex)                                               =>
         internalServerError(s"Error while getting EService $eServiceId - ${ex.getMessage}")
     }
@@ -253,7 +253,7 @@ final case class GatewayApiServiceImpl(
         getOrganizationEServices404(problemOf(StatusCodes.NotFound, ex))
       case Failure(MissingSelfcareId)                                =>
         logger.error(s"Tenant has no selfcareId")
-        internalServerError(MissingSelfcareId.getMessage())
+        internalServerError(MissingSelfcareId.getMessage)
       case Failure(ex)                                               =>
         internalServerError(
           s"Error while getting Organization EServices for Origin $origin and Code $externalId - ${ex.getMessage}"
@@ -323,12 +323,11 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
     val result: Future[Organization] = for {
-      tenantUUID      <- tenantId.toFutureUUID
-      tenant          <- tenantManagementService.getTenantById(tenantUUID)
-      selfcareId      <- tenant.selfcareId.toFuture(MissingSelfcareId)
-      organization    <- partyManagementService.getInstitution(selfcareId)
-      apiOrganization <- organization.toModel(tenant.id).toFuture
-    } yield apiOrganization
+      tenantUUID   <- tenantId.toFutureUUID
+      tenant       <- tenantManagementService.getTenantById(tenantUUID)
+      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId)
+      organization <- partyManagementService.getInstitution(selfcareId)
+    } yield organization.toModel(tenant.id)
 
     onComplete(result) {
       case Success(organization)                                     => getOrganization200(organization)
@@ -337,7 +336,7 @@ final case class GatewayApiServiceImpl(
         getOrganization404(problemOf(StatusCodes.NotFound, ex))
       case Failure(MissingSelfcareId)                                =>
         logger.error(s"Tenant $tenantId has no selfcareId")
-        internalServerError(MissingSelfcareId.getMessage())
+        internalServerError(MissingSelfcareId.getMessage)
       case Failure(ex) => internalServerError(s"Error while getting organization - ${ex.getMessage}")
     }
   }
@@ -622,12 +621,11 @@ final case class GatewayApiServiceImpl(
       latestDescriptor <- eService.latestAvailableDescriptor
       state            <- latestDescriptor.state.toModel.toFuture
       allAttributesIds = eService.attributes.allIds
-      attributes  <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
-      apiProducer <- producer.toModel(tenant.id).toFuture
-      attributes  <- eService.attributes.toModel(attributes.attributes).toFuture
+      attributes <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
+      attributes <- eService.attributes.toModel(attributes.attributes).toFuture
     } yield EService(
       id = eService.id,
-      producer = apiProducer,
+      producer = producer.toModel(tenant.id),
       name = eService.name,
       version = latestDescriptor.version,
       description = eService.description,

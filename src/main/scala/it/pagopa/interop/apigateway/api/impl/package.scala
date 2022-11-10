@@ -9,6 +9,7 @@ import it.pagopa.interop.agreementmanagement.client.model.{
   Agreement => AgreementManagementApiAgreement,
   AgreementState => AgreementManagementApiAgreementState
 }
+import it.pagopa.interop.apigateway.error.GatewayErrors
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.attributeregistrymanagement.client.model.{
@@ -46,7 +47,6 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 import java.util.UUID
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import it.pagopa.interop.apigateway.error.GatewayErrors
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -204,12 +204,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     ): Either[ComponentError, EServiceAttributeValue] = for {
       regAttribute <- registryAttributes.find(_.id == attribute.id).toRight(AttributeNotFoundInRegistry(attribute.id))
       origin       <- regAttribute.origin.toRight(MissingAttributeOrigin(attribute.id))
-      originEnum   <- Origin.fromValue(origin).leftMap(_ => UnexpectedAttributeOrigin(attribute.id, origin))
       code         <- regAttribute.code.toRight(MissingAttributeCode(attribute.id))
     } yield EServiceAttributeValue(
       id = attribute.id,
       code = code,
-      origin = originEnum,
+      origin = origin,
       explicitAttributeVerification = attribute.explicitAttributeVerification
     )
   }
@@ -273,20 +272,16 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedInstitution(private val institution: PartyManagementApiInstitution) extends AnyVal {
-    def toModel(tenantId: UUID): Either[ComponentError, Organization] =
-      Origin
-        .fromValue(institution.origin)
-        .leftMap(_ => UnexpectedInstitutionOrigin(institution.id, institution.origin))
-        .map(origin =>
-          Organization(
-            id = tenantId,
-            name = institution.description,
-            externalId = ExternalId(origin, institution.originId),
-            category = institution.attributes.headOption
-              .map(_.description)
-              .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
-          )
-        )
+    def toModel(tenantId: UUID): Organization =
+      Organization(
+        id = tenantId,
+        name = institution.description,
+        externalId = ExternalId(institution.origin, institution.originId),
+        category = institution.attributes.headOption
+          .map(_.description)
+          .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
+      )
+
   }
 
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
