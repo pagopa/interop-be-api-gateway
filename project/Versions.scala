@@ -4,7 +4,7 @@ object Versions {
   lazy val akkaManagementVersion    = "1.1.4"
   lazy val akkaPersistenceS3Version = "1.0.16"
   lazy val akkaVersion              = "2.6.20"
-  lazy val catsVersion              = "2.8.0"
+  lazy val catsVersion              = "2.9.0"
   lazy val jacksonVersion   = "2.11.4" // This cannot be updated yet because akka-serialization use 2.11.x version
   lazy val json4sVersion    = "4.0.6"
   lazy val logbackVersion   = "1.4.5"
