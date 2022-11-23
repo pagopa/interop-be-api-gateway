@@ -80,3 +80,4 @@ lazy val root = (project in file("."))
 
 Test / fork := true
 Test / javaOptions += "-Dconfig.file=src/test/resources/application-test.conf"
+
