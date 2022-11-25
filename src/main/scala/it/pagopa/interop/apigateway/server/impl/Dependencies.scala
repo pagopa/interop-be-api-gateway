@@ -38,7 +38,6 @@ import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
-import it.pagopa.interop.selfcare.partymanagement.client.api.{PartyApi => PartyManagementApi}
 import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
 import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
 
@@ -82,15 +81,6 @@ trait Dependencies {
     new CatalogManagementServiceImpl(
       CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
       CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
-    )
-
-  def partyManagementService()(implicit
-    actorSystem: ActorSystem[_],
-    partyManagementApiKeyValue: PartyManagementApiKeyValue
-  ) =
-    new PartyManagementServiceImpl(
-      PartyManagementInvoker()(actorSystem.classicSystem),
-      PartyManagementApi(ApplicationConfiguration.partyManagementURL)
     )
 
   def notifierService(
@@ -146,12 +136,11 @@ trait Dependencies {
 
   def gatewayApi(jwtReader: JWTReader, blockingEc: ExecutionContextExecutor)(implicit
     actorSystem: ActorSystem[_],
-    ec: ExecutionContext,
-    partyManagementApiKeyValue: PartyManagementApiKeyValue
+    ec: ExecutionContext
   ): GatewayApi =
     new GatewayApi(
       GatewayApiServiceImpl(
-        partyManagementService(),
+        // partyManagementService(),
         agreementManagementService(blockingEc),
         authorizationManagementService(blockingEc),
         catalogManagementService(blockingEc),
