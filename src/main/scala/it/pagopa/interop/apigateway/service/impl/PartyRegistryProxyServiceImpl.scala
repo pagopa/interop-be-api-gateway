@@ -22,10 +22,10 @@ class PartyRegistryProxyServiceImpl(invoker: PartyRegistryInvoker, api: Institut
   ): Future[Institution] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
     request = api.getInstitutionByExternalId(
-      // xCorrelationId = correlationId,
+      xCorrelationId = correlationId,
       origin = origin,
-      originId = originId
-      // xForwardedFor = ip
+      originId = originId,
+      xForwardedFor = ip
     )(BearerToken(bearerToken))
     result <- invoker.invoke(
       request,

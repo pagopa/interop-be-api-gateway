@@ -24,8 +24,6 @@ object ApplicationConfiguration {
 
   val notifierURL: String = config.getString("interop-api-gateway.services.notifier")
 
-  val partyManagementApiKey: String = config.getString("interop-api-gateway.api-keys.party-management")
-
   val jwtAudience: Set[String] =
     config.getString("interop-api-gateway.jwt.audience").split(",").toSet.filter(_.nonEmpty)
 
