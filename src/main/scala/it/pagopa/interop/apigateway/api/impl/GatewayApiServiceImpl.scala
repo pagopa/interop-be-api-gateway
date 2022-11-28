@@ -35,6 +35,7 @@ final case class GatewayApiServiceImpl(
   authorizationManagementService: AuthorizationManagementService,
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
+  partyRegistryProxyService: PartyRegistryProxyService,
   purposeManagementService: PurposeManagementService,
   notifierService: NotifierService,
   tenantProcessService: TenantProcessService,
@@ -94,11 +95,12 @@ final case class GatewayApiServiceImpl(
   ): Route = authorize {
     logger.info(s"Upserting tenant with extenalId ($origin,$externalId) and attribute $code")
 
-    // TODO Here we need a call to Party-Registry-Proxy to retrieve institution form IPA and get the name
-
-    val result: Future[Unit] = tenantProcessService
-      .upsertTenant(m2mTenantSeedFromApi(origin, externalId, "Waiting for IPA")(code))
-      .void
+    val result: Future[Unit] = for {
+      institution <- partyRegistryProxyService.getInstitutionByExternalId(origin, externalId)
+      updated     <- tenantProcessService
+        .upsertTenant(m2mTenantSeedFromApi(origin, externalId, institution.description)(code))
+        .void
+    } yield updated
 
     onComplete(result) {
       case Success(())                 => upsertTenant204

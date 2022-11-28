@@ -37,6 +37,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
+import it.pagopa.interop.partyregistryproxy.client.api.InstitutionApi
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
 import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
@@ -98,6 +99,13 @@ trait Dependencies {
       AttributeApi(ApplicationConfiguration.attributeRegistryManagementURL)
     )
 
+  def partyRegistryProxyService(
+    blockingEc: ExecutionContextExecutor
+  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
+    new PartyRegistryProxyServiceImpl(
+      PartyRegistryInvoker(blockingEc)(actorSystem.classicSystem),
+      InstitutionApi(ApplicationConfiguration.partyRegistryProxyURL)
+    )
   def purposeManagementService(
     blockingEc: ExecutionContextExecutor
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
@@ -144,6 +152,7 @@ trait Dependencies {
         authorizationManagementService(blockingEc),
         catalogManagementService(blockingEc),
         attributeRegistryManagementService(blockingEc),
+        partyRegistryProxyService(blockingEc),
         purposeManagementService(blockingEc),
         notifierService(blockingEc),
         tenantProcessService(blockingEc),
