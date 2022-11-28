@@ -140,7 +140,6 @@ trait Dependencies {
   ): GatewayApi =
     new GatewayApi(
       GatewayApiServiceImpl(
-        // partyManagementService(),
         agreementManagementService(blockingEc),
         authorizationManagementService(blockingEc),
         catalogManagementService(blockingEc),

@@ -272,14 +272,13 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedTenant(private val tenant: Tenant) extends AnyVal {
-    def toModel(category: String): Organization = {
+    def toModel(category: String): Organization =
       Organization(
         id = tenant.id,
         externalId = ExternalId(origin = tenant.externalId.origin, id = tenant.externalId.value),
         name = tenant.name,
         category = category
       )
-    }
   }
 
   implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute)    extends AnyVal {
