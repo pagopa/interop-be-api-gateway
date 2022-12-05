@@ -33,8 +33,8 @@ object Dependencies {
       namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
     lazy val catalogManagement =
       namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
-    lazy val partyManagement =
-      namespace %% "interop-selfcare-party-management-client" % partyManagementVersion
+    lazy val partyRegistryProxy =
+      namespace %% "interop-be-party-registry-proxy-client" % partyRegistryProxyVersion
     lazy val attributeRegistryManagement =
       namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryManagementVersion
     lazy val purposeManagement =
@@ -122,7 +122,7 @@ object Dependencies {
       pagopa.jwt                         % Compile,
       pagopa.rateLimiter                 % Compile,
       pagopa.notifier                    % Compile,
-      pagopa.partyManagement             % Compile,
+      pagopa.partyRegistryProxy          % Compile,
       pagopa.purposeManagement           % Compile,
       pagopa.tenantProcess               % Compile,
       pagopa.tenantManagement            % Compile,

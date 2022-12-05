@@ -2,14 +2,11 @@ package it.pagopa.interop.apigateway
 
 import akka.actor.ActorSystem
 import it.pagopa.interop._
-import it.pagopa.interop.apigateway.common.ApplicationConfiguration
-import it.pagopa.interop.selfcare._
 
 import scala.concurrent.ExecutionContextExecutor
 
 package object service {
   type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
-  type PartyManagementInvoker             = partymanagement.client.invoker.ApiInvoker
   type AgreementManagementInvoker         = agreementmanagement.client.invoker.ApiInvoker
   type AuthorizationManagementInvoker     = authorizationmanagement.client.invoker.ApiInvoker
   type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
@@ -17,13 +14,7 @@ package object service {
   type NotifierInvoker                    = notifier.client.invoker.ApiInvoker
   type TenantProcessInvoker               = tenantprocess.client.invoker.ApiInvoker
   type TenantManagementInvoker            = tenantmanagement.client.invoker.ApiInvoker
-
-  type PartyManagementApiKeyValue = selfcare.partymanagement.client.invoker.ApiKeyValue
-
-  object PartyManagementApiKeyValue {
-    def apply(): PartyManagementApiKeyValue =
-      partymanagement.client.invoker.ApiKeyValue(ApplicationConfiguration.partyManagementApiKey)
-  }
+  type PartyRegistryInvoker               = partyregistryproxy.client.invoker.ApiInvoker
 
   object AgreementManagementInvoker {
     def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): AgreementManagementInvoker =
@@ -41,11 +32,6 @@ package object service {
       catalogmanagement.client.invoker.ApiInvoker(catalogmanagement.client.api.EnumsSerializers.all, blockingEc)
   }
 
-  object PartyManagementInvoker {
-    def apply()(implicit actorSystem: ActorSystem): PartyManagementInvoker =
-      partymanagement.client.invoker.ApiInvoker(partymanagement.client.api.EnumsSerializers.all)
-  }
-
   object AttributeRegistryManagementInvoker {
     def apply(
       blockingEc: ExecutionContextExecutor
@@ -54,6 +40,10 @@ package object service {
         .ApiInvoker(attributeregistrymanagement.client.api.EnumsSerializers.all, blockingEc)
   }
 
+  object PartyRegistryInvoker     {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): PartyRegistryInvoker =
+      partyregistryproxy.client.invoker.ApiInvoker(partyregistryproxy.client.api.EnumsSerializers.all, blockingEc)
+  }
   object PurposeManagementInvoker {
     def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): PurposeManagementInvoker =
       purposemanagement.client.invoker.ApiInvoker(purposemanagement.client.api.EnumsSerializers.all, blockingEc)
@@ -61,7 +51,7 @@ package object service {
 
   object NotifierInvoker {
     def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): NotifierInvoker =
-      notifier.client.invoker.ApiInvoker(partymanagement.client.api.EnumsSerializers.all, blockingEc)
+      notifier.client.invoker.ApiInvoker(notifier.client.api.EnumsSerializers.all, blockingEc)
   }
 
   object TenantProcessInvoker {

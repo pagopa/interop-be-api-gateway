@@ -36,11 +36,11 @@ import it.pagopa.interop.purposemanagement.client.model.{
   Purpose => PurposeManagementApiPurpose,
   Purposes => PurposeManagementApiPurposes
 }
-import it.pagopa.interop.selfcare.partymanagement.client.model.{Institution => PartyManagementApiInstitution}
 import it.pagopa.interop.tenantmanagement.client.model.{
   CertifiedTenantAttribute,
   DeclaredTenantAttribute,
-  VerifiedTenantAttribute
+  VerifiedTenantAttribute,
+  Tenant
 }
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
@@ -271,23 +271,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     def toModel: EServiceDoc = EServiceDoc(id = doc.id, name = doc.name, contentType = doc.contentType)
   }
 
-  implicit class EnrichedInstitution(private val institution: PartyManagementApiInstitution) extends AnyVal {
-    def toModel(tenantId: UUID): Organization =
+  implicit class EnrichedTenant(private val tenant: Tenant) extends AnyVal {
+    def toModel(category: String): Organization =
       Organization(
-        id = tenantId,
-        name = institution.description,
-        externalId = ExternalId(institution.origin, institution.originId),
-        category = institution.attributes.headOption
-          .map(_.description)
-          .getOrElse("UNKNOWN") // TODO, hey Jude consider to make this retrieval better
+        id = tenant.id,
+        externalId = ExternalId(origin = tenant.externalId.origin, id = tenant.externalId.value),
+        name = tenant.name,
+        category = category
       )
-
   }
 
-  implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute) extends AnyVal {
+  implicit class EnrichedAttribute(private val attribute: AttributeRegistryManagementApiAttribute)    extends AnyVal {
     def toModel: Attribute = Attribute(id = attribute.id, name = attribute.name, kind = attribute.kind.toModel)
   }
-
   implicit class EnrichedAttributeKind(private val kind: AttributeRegistryManagementApiAttributeKind) extends AnyVal {
     def toModel: AttributeKind = kind match {
       case AttributeRegistryManagementApiAttributeKind.CERTIFIED => AttributeKind.CERTIFIED
