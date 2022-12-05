@@ -21,7 +21,9 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
+import it.pagopa.interop.tenantmanagement.client.model.{Tenant => TenantManagementApiTenant}
 import it.pagopa.interop.tenantprocess.client.model.{M2MTenantSeed, M2MAttributeSeed, ExternalId}
+import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute => AttributeManagementApiAttribute}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,11 +31,11 @@ import scala.util.{Failure, Success}
 import it.pagopa.interop.attributeregistrymanagement.client.model
 
 final case class GatewayApiServiceImpl(
-  partyManagementService: PartyManagementService,
   agreementManagementService: AgreementManagementService,
   authorizationManagementService: AuthorizationManagementService,
   catalogManagementService: CatalogManagementService,
   attributeRegistryManagementService: AttributeRegistryManagementService,
+  partyRegistryProxyService: PartyRegistryProxyService,
   purposeManagementService: PurposeManagementService,
   notifierService: NotifierService,
   tenantProcessService: TenantProcessService,
@@ -93,9 +95,12 @@ final case class GatewayApiServiceImpl(
   ): Route = authorize {
     logger.info(s"Upserting tenant with extenalId ($origin,$externalId) and attribute $code")
 
-    val result: Future[Unit] = tenantProcessService
-      .upsertTenant(m2mTenantSeedFromApi(origin, externalId)(code))
-      .void
+    val result: Future[Unit] = for {
+      institution <- partyRegistryProxyService.getInstitutionByExternalId(origin, externalId)
+      updated     <- tenantProcessService
+        .upsertTenant(m2mTenantSeedFromApi(origin, externalId, institution.description)(code))
+        .void
+    } yield updated
 
     onComplete(result) {
       case Success(())                 => upsertTenant204
@@ -323,11 +328,10 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
     val result: Future[Organization] = for {
-      tenantUUID   <- tenantId.toFutureUUID
-      tenant       <- tenantManagementService.getTenantById(tenantUUID)
-      selfcareId   <- tenant.selfcareId.toFuture(MissingSelfcareId)
-      organization <- partyManagementService.getInstitution(selfcareId)
-    } yield organization.toModel(tenant.id)
+      tenantUUID <- tenantId.toFutureUUID
+      tenant     <- tenantManagementService.getTenantById(tenantUUID)
+      category   <- extractCategoryIpa(tenant)
+    } yield tenant.toModel(category)
 
     onComplete(result) {
       case Success(organization)                                     => getOrganization200(organization)
@@ -610,22 +614,21 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  def m2mTenantSeedFromApi(origin: String, externalId: String)(code: String): M2MTenantSeed =
-    M2MTenantSeed(ExternalId(origin, externalId), M2MAttributeSeed(code) :: Nil)
+  def m2mTenantSeedFromApi(origin: String, externalId: String, name: String)(code: String): M2MTenantSeed =
+    M2MTenantSeed(ExternalId(origin, externalId), M2MAttributeSeed(code) :: Nil, name)
 
   def enhanceEService(eService: CatalogManagementEService)(implicit contexts: Seq[(String, String)]): Future[EService] =
     for {
       tenant           <- tenantManagementService.getTenantById(eService.producerId)
-      selfcareId       <- tenant.selfcareId.toFuture(MissingSelfcareId)
-      producer         <- partyManagementService.getInstitution(selfcareId)
       latestDescriptor <- eService.latestAvailableDescriptor
       state            <- latestDescriptor.state.toModel.toFuture
       allAttributesIds = eService.attributes.allIds
       attributes <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
       attributes <- eService.attributes.toModel(attributes.attributes).toFuture
+      category   <- extractCategoryIpa(tenant)
     } yield EService(
       id = eService.id,
-      producer = producer.toModel(tenant.id),
+      producer = tenant.toModel(category),
       name = eService.name,
       version = latestDescriptor.version,
       description = eService.description,
@@ -633,5 +636,17 @@ final case class GatewayApiServiceImpl(
       attributes = attributes,
       state = state
     )
+  private def extractCategoryIpa(
+    tenant: TenantManagementApiTenant
+  )(implicit contexts: Seq[(String, String)]): Future[String] = {
+    val certified: Seq[UUID] = tenant.attributes.flatMap(_.certified.map(_.id))
+    Future.traverse(certified)(attributeRegistryManagementService.getAttributeById).map(extractCategoryIpa)
+  }
 
+  /* it has been implemented in this way
+    in order to maintain backwards compatibility
+    with the current exposed model which requires the IPA category
+   */
+  private def extractCategoryIpa(attributes: Seq[AttributeManagementApiAttribute]): String =
+    attributes.find(_.origin == "IPA".some).map(_.name).getOrElse("Unknown")
 }
