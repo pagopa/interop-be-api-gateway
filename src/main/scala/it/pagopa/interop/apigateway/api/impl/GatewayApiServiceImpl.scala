@@ -6,29 +6,29 @@ import akka.http.scaladsl.server.Directives.{complete, onComplete}
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementmanagement.client.model.{AgreementState => AgreementManagementApiAgreementState}
+import it.pagopa.interop.agreementmanagement.client.{model => AgreementManagementDependency}
 import it.pagopa.interop.apigateway.api.GatewayApiService
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
+import it.pagopa.interop.attributeregistrymanagement.client.model
+import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute => AttributeManagementApiAttribute}
 import it.pagopa.interop.authorizationmanagement.client.model.{Client => AuthorizationManagementApiClient}
 import it.pagopa.interop.catalogmanagement.client.model.{EService => CatalogManagementEService}
 import it.pagopa.interop.commons.jwt.{M2M_ROLE, authorizeInterop, hasPermissions}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.AkkaUtils.{getOrganizationIdFutureUUID, getOrganizationIdFuture}
-import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.AkkaUtils.{getOrganizationIdFuture, getOrganizationIdFutureUUID}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
+import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import it.pagopa.interop.tenantmanagement.client.model.{Tenant => TenantManagementApiTenant}
-import it.pagopa.interop.tenantprocess.client.model.{M2MTenantSeed, M2MAttributeSeed, ExternalId}
-import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute => AttributeManagementApiAttribute}
+import it.pagopa.interop.tenantprocess.client.model.{ExternalId, M2MAttributeSeed, M2MTenantSeed}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-import it.pagopa.interop.attributeregistrymanagement.client.model
 
 final case class GatewayApiServiceImpl(
   agreementManagementService: AgreementManagementService,
@@ -64,14 +64,10 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
   ): Route = authorize {
     val result: Future[Agreement] = for {
-      organizationId <- getOrganizationIdFutureUUID(contexts)
-      agreementUUID  <- agreementId.toFutureUUID
-      agreement      <-
-        agreementManagementService
-          .getAgreementById(agreementUUID)(contexts)
-          .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
-          .flatMap(_.toModel.toFuture)
-    } yield agreement
+      agreementUUID <- agreementId.toFutureUUID
+      agreement     <- agreementManagementService.getAgreementById(agreementUUID)
+      apiModel      <- agreement.toModel.toFuture
+    } yield apiModel
 
     onComplete(result) {
       case Success(agr)                                              =>
@@ -146,7 +142,7 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerAgreements: ToEntityMarshaller[Agreements],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
-    import AgreementManagementApiAgreementState._
+    import AgreementManagementDependency.AgreementState._
     val result: Future[Agreements] = for {
       organizationId  <- getOrganizationIdFuture(contexts)
       params          <- (producerId, consumerId) match {
@@ -159,7 +155,9 @@ final case class GatewayApiServiceImpl(
         case _                                            => Future.failed(Forbidden)
       }
       (prod, cons) = params
-      agreementStates <- parseArrayParameters(states).traverse(AgreementManagementApiAgreementState.fromValue).toFuture
+      agreementStates <- parseArrayParameters(states)
+        .traverse(AgreementManagementDependency.AgreementState.fromValue)
+        .toFuture
       safeAgreementStates =
         if (agreementStates.nonEmpty) agreementStates
         else List(PENDING, ACTIVE, SUSPENDED, ARCHIVED, MISSING_CERTIFIED_ATTRIBUTES)
@@ -352,15 +350,9 @@ final case class GatewayApiServiceImpl(
   ): Route = authorize {
 
     val result: Future[Attributes] = for {
-      organizationId <- getOrganizationIdFutureUUID(contexts)
-      agreementUUID  <- agreementId.toFutureUUID
-      rawAgreement   <-
-        agreementManagementService
-          .getAgreementById(agreementUUID)(contexts)
-          .ensure(Forbidden)(agr => organizationId == agr.producerId || organizationId == agr.consumerId)
-
-      tenant <- tenantManagementService.getTenantById(rawAgreement.consumerId)
-
+      agreementUUID <- agreementId.toFutureUUID
+      rawAgreement  <- agreementManagementService.getAgreementById(agreementUUID)
+      tenant        <- tenantManagementService.getTenantById(rawAgreement.consumerId)
       verifiedAttributes  = rawAgreement.verifiedAttributes
         .flatMap(a => tenant.attributes.mapFilter(_.verified).filter(_.id == a.id))
         .toSet
@@ -370,7 +362,6 @@ final case class GatewayApiServiceImpl(
       certifiedAttributes = rawAgreement.certifiedAttributes
         .flatMap(a => tenant.attributes.mapFilter(_.certified).filter(_.id == a.id))
         .toSet
-
     } yield Attributes(
       verified = verifiedAttributes.map(_.toAgreementModel),
       declared = declaredAttributes.map(_.toAgreementModel),
@@ -396,14 +387,14 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerAgreement: ToEntityMarshaller[Agreement]
   ): Route = authorize {
     val result: Future[Agreement] = for {
-      organizationId <- getOrganizationIdFutureUUID(contexts)
-      purposeUUID    <- purposeId.toFutureUUID
-      purpose        <- purposeManagementService.getPurpose(purposeUUID)(contexts)
-      agreement      <- agreementManagementService
-        .getActiveOrSuspendedAgreementByConsumerAndEserviceId(purpose.consumerId, purpose.eserviceId)
-        .ensure(Forbidden)(a => a.consumerId == organizationId || a.producerId == organizationId)
-        .flatMap(_.toModel.toFuture)
-    } yield agreement
+      purposeUUID <- purposeId.toFutureUUID
+      purpose     <- purposeManagementService.getPurpose(purposeUUID)(contexts)
+      agreement   <- agreementManagementService.getActiveOrSuspendedAgreementByConsumerAndEserviceId(
+        purpose.consumerId,
+        purpose.eserviceId
+      )
+      apiModel    <- agreement.toModel.toFuture
+    } yield apiModel
 
     onComplete(result) {
       case Success(agreement)                                        => getAgreementByPurpose200(agreement)
@@ -474,13 +465,10 @@ final case class GatewayApiServiceImpl(
   ): Route = authorize {
 
     val result: Future[Purposes] = for {
-      organizationUUID <- getOrganizationIdFutureUUID(contexts)
-      agreementUUID    <- agreementId.toFutureUUID
-      agreement        <- agreementManagementService
-        .getAgreementById(agreementUUID)(contexts)
-        .ensure(Forbidden)(a => a.consumerId == organizationUUID || a.producerId == organizationUUID)
-      clientPurposes   <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(contexts)
-      purposes         <- clientPurposes.toModel.toFuture
+      agreementUUID  <- agreementId.toFutureUUID
+      agreement      <- agreementManagementService.getAgreementById(agreementUUID)
+      clientPurposes <- purposeManagementService.getPurposes(agreement.eserviceId, agreement.consumerId)(contexts)
+      purposes       <- clientPurposes.toModel.toFuture
     } yield purposes
 
     onComplete(result) {
