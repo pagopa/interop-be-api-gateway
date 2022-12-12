@@ -9,7 +9,10 @@ ThisBuild / version                          := ComputeVersion.version
 Global / onChangedBuildSource                := ReloadOnSourceChanges
 ThisBuild / githubSuppressPublicationWarning := true
 ThisBuild / resolvers += Resolver.githubPackages("pagopa")
+ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-snapshots/"
+ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-releases/"
 
+ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 lazy val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
 
 val packagePrefix = settingKey[String]("The package prefix derived from the uservice name")
