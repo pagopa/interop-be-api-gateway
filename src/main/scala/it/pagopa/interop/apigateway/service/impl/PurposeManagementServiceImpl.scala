@@ -2,6 +2,7 @@ package it.pagopa.interop.apigateway.service.impl
 
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.apigateway.error.GatewayErrors.PurposeNotFound
 import it.pagopa.interop.apigateway.service.{PurposeManagementInvoker, PurposeManagementService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -25,7 +26,9 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
     for {
       (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
       request = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(BearerToken(bearerToken))
-      result <- invoker.invoke(request, "Invoking getPurpose", handleCommonErrors(s"purpose $purposeId"))
+      result <- invoker
+        .invoke(request, "Invoking getPurpose")
+        .adaptError { case err: ApiError[_] if err.code == 404 => PurposeNotFound(purposeId) }
     } yield result
   }
 
@@ -41,26 +44,8 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
         consumerId.some,
         Nil
       )(BearerToken(bearerToken))
-      result <- invoker.invoke(
-        request,
-        "Invoking getPurposes",
-        handleCommonErrors(s"purposes for eservice $eserviceId and consumer $consumerId")
-      )
+      result <- invoker.invoke(request, "Invoking getPurposes")
     } yield result
-  }
-
-  private[service] def handleCommonErrors[T](
-    resource: String
-  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] = {
-    (contexts, logger, msg) =>
-      {
-        case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-          logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
-          Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-        case ex                                                   =>
-          logger.error(s"$msg. Error: ${ex.getMessage}")(contexts)
-          Future.failed(ex)
-      }
   }
 
 }

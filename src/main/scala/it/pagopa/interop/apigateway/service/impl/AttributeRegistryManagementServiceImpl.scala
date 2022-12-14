@@ -1,15 +1,16 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import cats.implicits.catsSyntaxOptionId
+import cats.syntax.all._
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.apigateway.error.GatewayErrors.{AttributeByOriginNotFound, AttributeNotFound}
 import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
 import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute, AttributeSeed, AttributesResponse}
-import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
-import it.pagopa.interop.commons.utils.extractHeaders
-import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.utils.TypeConversions._
+import it.pagopa.interop.commons.utils.extractHeaders
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,11 +27,9 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
     request = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId, xForwardedFor = ip)(
       BearerToken(bearerToken)
     )
-    result <- invoker.invoke(
-      request,
-      s"Retrieving attribute by id ${attributeId.toString}",
-      handleCommonErrors(s"attribute $attributeId")
-    )
+    result <- invoker
+      .invoke(request, s"Retrieving attribute by id ${attributeId.toString}")
+      .adaptError { case err: ApiError[_] if err.code == 404 => AttributeNotFound(attributeId) }
   } yield result
 
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit
@@ -43,11 +42,9 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
       code = code,
       xForwardedFor = ip
     )(BearerToken(bearerToken))
-    result <- invoker.invoke(
-      request,
-      s"Getting attribute ($origin,$code)",
-      handleCommonErrors(s"attribute ($origin,$code)")
-    )
+    result <- invoker
+      .invoke(request, s"Getting attribute ($origin,$code)")
+      .adaptError { case err: ApiError[_] if err.code == 404 => AttributeByOriginNotFound(origin, code) }
   } yield result
 
   override def createAttribute(
@@ -57,11 +54,7 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
     request = api.createAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
       BearerToken(bearerToken)
     )
-    result <- invoker.invoke(
-      request,
-      s"Creating ${attributeSeed.kind} attribute ${attributeSeed.name}",
-      handleCommonErrors(s"attribute ${attributeSeed.name}")
-    )
+    result <- invoker.invoke(request, s"Creating ${attributeSeed.kind} attribute ${attributeSeed.name}")
   } yield result
 
   override def getBulkAttributes(
@@ -75,24 +68,8 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
         xForwardedFor = ip
       )(BearerToken(bearerToken))
       attributesString = attributeIds.mkString("[", ",", "]")
-      result <- invoker.invoke(
-        request,
-        s"Retrieving bulk attributes $attributesString",
-        handleCommonErrors(s"attributes $attributesString")
-      )
+      result <- invoker.invoke(request, s"Retrieving bulk attributes $attributesString")
     } yield result
   }
-
-  private[service] def handleCommonErrors[T](
-    resource: String
-  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] =
-    (contexts, logger, msg) => {
-      case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-        logger.error(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
-        Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-      case ex                                                   =>
-        logger.error(s"$msg. Error: ${ex.getMessage}")(contexts)
-        Future.failed(ex)
-    }
 
 }
