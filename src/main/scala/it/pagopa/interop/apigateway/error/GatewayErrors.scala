@@ -6,9 +6,6 @@ import java.util.UUID
 
 object GatewayErrors {
 
-  final case object Forbidden extends ComponentError("0001", s"The user has no access to the requested resource")
-  final case object InternalServerError extends ComponentError("0002", "There was an internal server error")
-
   final case object ProducerAndConsumerParamMissing
       extends ComponentError("0003", "You should pass either producerId or consumerId")
 
@@ -36,19 +33,12 @@ object GatewayErrors {
   final case class MissingAttributeCode(attributeId: UUID)
       extends ComponentError("0011", s"Attribute $attributeId Code is empty")
 
-  final case class UnexpectedAttributeOrigin(attributeId: UUID, origin: String)
-      extends ComponentError("0012", s"Attribute $attributeId has unexpected Origin $origin")
-
-  final case class UnexpectedInstitutionOrigin(institutionId: UUID, origin: String)
-      extends ComponentError("0013", s"Institution $institutionId has unexpected Origin $origin")
-
   final case class OrganizationIsNotACertifier(organizationId: UUID)
-      extends ComponentError("0014", s"Organization ${organizationId} is not a certifier")
+      extends ComponentError("0014", s"Organization $organizationId is not a certifier")
 
   final case class TenantProcessBadRequest(resource: String) extends ComponentError("0015", s"Bad request - $resource")
 
   case object InvalidAgreementState extends ComponentError("0016", s"Cannot retrieve agreement in DRAFT state")
-  case object MissingSelfcareId     extends ComponentError("0017", s"Tenant does not have a selfcareId")
 
   final case class AgreementNotFound(agreementId: String)
       extends ComponentError("0018", s"Agreement $agreementId not found")
