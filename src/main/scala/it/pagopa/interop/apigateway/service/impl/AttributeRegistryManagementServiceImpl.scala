@@ -3,7 +3,11 @@ package it.pagopa.interop.apigateway.service.impl
 import cats.implicits.catsSyntaxOptionId
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.apigateway.error.GatewayErrors.{AttributeByOriginNotFound, AttributeNotFound}
+import it.pagopa.interop.apigateway.error.GatewayErrors.{
+  AttributeAlreadyExists,
+  AttributeByOriginNotFound,
+  AttributeNotFound
+}
 import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
 import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
@@ -54,7 +58,16 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
     request = api.createAttribute(xCorrelationId = correlationId, attributeSeed = attributeSeed, xForwardedFor = ip)(
       BearerToken(bearerToken)
     )
-    result <- invoker.invoke(request, s"Creating ${attributeSeed.kind} attribute ${attributeSeed.name}")
+    result <- invoker
+      .invoke(request, s"Creating ${attributeSeed.kind} attribute ${attributeSeed.name}")
+      .adaptError {
+        case err: ApiError[_] if err.code == 409 =>
+          (attributeSeed.origin, attributeSeed.code) match {
+            case (Some(origin), Some(code)) => AttributeAlreadyExists(origin, code)
+            case _                          => err
+          }
+
+      }
   } yield result
 
   override def getBulkAttributes(

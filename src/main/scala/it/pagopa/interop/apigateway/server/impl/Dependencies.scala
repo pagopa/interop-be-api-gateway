@@ -9,19 +9,16 @@ import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.commons.ratelimiter.RateLimiter
-import it.pagopa.interop.commons.ratelimiter.akkahttp.RateLimiterDirective
 import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
 import it.pagopa.interop.apigateway.api.impl.{
   GatewayApiMarshallerImpl,
   GatewayApiServiceImpl,
   HealthApiMarshallerImpl,
-  HealthServiceApiImpl,
-  entityMarshallerProblem,
-  problemOf
+  HealthServiceApiImpl
 }
 import it.pagopa.interop.apigateway.api.{GatewayApi, HealthApi}
 import it.pagopa.interop.apigateway.common.ApplicationConfiguration
+import it.pagopa.interop.apigateway.error.Handlers.serviceCode
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.apigateway.service.impl._
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
@@ -31,9 +28,11 @@ import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, KID, PublicKeysHolder, SerializedKey}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
+import it.pagopa.interop.commons.ratelimiter.RateLimiter
+import it.pagopa.interop.commons.ratelimiter.akkahttp.RateLimiterDirective
 import it.pagopa.interop.commons.ratelimiter.impl.RedisRateLimiter
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
@@ -51,13 +50,7 @@ trait Dependencies {
 
   val rateLimiterDirective: ExecutionContext => Seq[(String, String)] => Directive1[Seq[(String, String)]] = {
     val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
-    ec =>
-      contexts => {
-        RateLimiterDirective.rateLimiterDirective(
-          rateLimiter,
-          problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
-        )(contexts)(ec, entityMarshallerProblem, logger)
-      }
+    ec => contexts => RateLimiterDirective.rateLimiterDirective(rateLimiter)(contexts)(ec, serviceCode, logger)
   }
 
   def agreementManagementService(
@@ -171,8 +164,8 @@ trait Dependencies {
 
   val validationExceptionToRoute: ValidationReport => Route = report => {
     val error =
-      problemOf(StatusCodes.BadRequest, OpenapiUtils.errorFromRequestValidationReport(report))
-    complete(error.status, error)(entityMarshallerProblem)
+      CommonProblem(StatusCodes.BadRequest, OpenapiUtils.errorFromRequestValidationReport(report), serviceCode)
+    complete(error.status, error)
   }
 
 }

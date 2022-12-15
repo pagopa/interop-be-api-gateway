@@ -2,7 +2,6 @@ package it.pagopa.interop.apigateway.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCode
 import cats.data.Validated
 import cats.implicits._
 import it.pagopa.interop.agreementmanagement.client.model.{
@@ -294,8 +293,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedEvent(private val events: NotifierApiEvents) extends AnyVal {
-    def toModel: Try[Events] =
-      Success(Events(lastEventId = events.lastEventId, events = events.events.map(toEventModel)))
+    def toModel: Events = Events(lastEventId = events.lastEventId, events = events.events.map(toEventModel))
 
     private[this] def toEventModel(event: NotifierApiEvent): Event = Event(
       eventId = event.eventId,

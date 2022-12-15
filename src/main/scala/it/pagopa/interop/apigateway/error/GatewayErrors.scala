@@ -86,4 +86,9 @@ object GatewayErrors {
         s"Unexpected multiple Active Agreements for EService $eServiceId and Consumer $consumerId"
       )
 
+  final case class AttributeAlreadyExists(origin: String, externalId: String)
+      extends ComponentError("0029", s"Attribute ($origin, $externalId) already exists")
+
+  final case class ClientNotFound(clientId: UUID) extends ComponentError("0030", s"Client $clientId not found")
+
 }

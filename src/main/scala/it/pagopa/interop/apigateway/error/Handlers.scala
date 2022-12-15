@@ -118,14 +118,36 @@ object Handlers extends AkkaResponses {
     case Failure(ex)                              => internalServerError(ex, logMessage)
   }
 
-  def handleGetAgreementPurposesError[T](logMessage: String)(implicit
-                                                contexts: Seq[(String, String)],
-                                                logger: LoggerTakingImplicit[ContextFieldsToLog]
+  def handleGetAgreementPurposesError(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog]
   ): PartialFunction[Try[_], StandardRoute] = {
-    case Failure(ex: AgreementNotFound)             => notFound(ex, logMessage)
-    case Failure(ex)                              => internalServerError(ex, logMessage)
+    case Failure(ex: AgreementNotFound) => notFound(ex, logMessage)
+    case Failure(ex)                    => internalServerError(ex, logMessage)
   }
 
+  def handleGetClientError(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog]
+  ): PartialFunction[Try[_], StandardRoute] = {
+    case Failure(ex: OperationForbidden.type) => forbidden(ex, logMessage)
+    case Failure(ex: ClientNotFound)          => notFound(ex, logMessage)
+    case Failure(ex)                          => internalServerError(ex, logMessage)
+  }
+
+  def handleGetEventsFromIdError(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog]
+  ): PartialFunction[Try[_], StandardRoute] = { case Failure(ex) =>
+    internalServerError(ex, logMessage)
+  }
+
+  def handleGetEServicesEventsFromIdError(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog]
+  ): PartialFunction[Try[_], StandardRoute] = { case Failure(ex) =>
+    internalServerError(ex, logMessage)
+  }
   def handleUpsertTenantError(logMessage: String)(implicit
     contexts: Seq[(String, String)],
     logger: LoggerTakingImplicit[ContextFieldsToLog]
@@ -144,5 +166,14 @@ object Handlers extends AkkaResponses {
     case Failure(ex: OperationForbidden.type) => forbidden(ex, logMessage)
     case Failure(ex: TenantAttributeNotFound) => notFound(ex, logMessage)
     case Failure(ex)                          => internalServerError(ex, logMessage)
+  }
+
+  def handleCreateCertifiedAttributeError(logMessage: String)(implicit
+    contexts: Seq[(String, String)],
+    logger: LoggerTakingImplicit[ContextFieldsToLog]
+  ): PartialFunction[Try[_], StandardRoute] = {
+    case Failure(ex: OrganizationIsNotACertifier) => forbidden(ex, logMessage)
+    case Failure(ex: AttributeAlreadyExists)      => conflict(ex, logMessage)
+    case Failure(ex)                              => internalServerError(ex, logMessage)
   }
 }

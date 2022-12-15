@@ -1,9 +1,8 @@
 package it.pagopa.interop.apigateway.api.impl
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.onComplete
-import akka.http.scaladsl.server.{Route, StandardRoute}
+import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementmanagement.client.{model => AgreementManagementDependency}
@@ -19,12 +18,12 @@ import it.pagopa.interop.catalogmanagement.client.model.{
   EService => CatalogManagementEService,
   EServiceDescriptorState => CatalogManagementDescriptorState
 }
-import it.pagopa.interop.commons.jwt.{M2M_ROLE, authorizeInterop, hasPermissions}
+import it.pagopa.interop.commons
+import it.pagopa.interop.commons.jwt.M2M_ROLE
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils.{getOrganizationIdFuture, getOrganizationIdFutureUUID}
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import it.pagopa.interop.tenantmanagement.client.model.{Tenant => TenantManagementApiTenant}
@@ -50,12 +49,8 @@ final case class GatewayApiServiceImpl(
   private implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  private[this] def authorize(
-    route: => Route
-  )(implicit contexts: Seq[(String, String)], toEntityMarshallerProblem: ToEntityMarshaller[Problem]): Route =
-    authorizeInterop(hasPermissions(M2M_ROLE), problemOf(StatusCodes.Forbidden, OperationForbidden)) {
-      route
-    }
+  private[this] def authorize(route: => Route)(implicit contexts: Seq[(String, String)]): Route =
+    commons.jwt.authorize(M2M_ROLE)(route)
 
   override def getAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
@@ -403,7 +398,7 @@ final case class GatewayApiServiceImpl(
       purposes       <- clientPurposes.toModel.toFuture
     } yield purposes
 
-    val success: PartialFunction[Try[Purposes], StandardRoute] = {
+    val success: PartialFunction[Try[Purposes], Route] = {
       case Success(purposes)                         => getAgreementPurposes200(purposes)
       case Failure(_: MissingActivePurposesVersions) =>
         getAgreementPurposes200(Purposes(purposes = Seq.empty))
@@ -418,43 +413,44 @@ final case class GatewayApiServiceImpl(
     contexts: Seq[(String, String)],
     toEntityMarshallerAttribute: ToEntityMarshaller[Attribute],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
-  ): Route =
-    authorize {
+  ): Route = authorize {
+    val operationLabel = s"Creating certified attribute with code ${attributeSeed.code}"
+    logger.info(operationLabel)
 
-      val result: Future[Attribute] = for {
-        organizationId <- getOrganizationIdFutureUUID(contexts)
-        certifierId    <- tenantProcessService
-          .getTenant(organizationId)
-          .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
-          .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
-        attribute      <- attributeRegistryManagementService
-          .createAttribute(
-            model.AttributeSeed(
-              name = attributeSeed.name,
-              origin = certifierId.some,
-              code = attributeSeed.code.some,
-              kind = model.AttributeKind.CERTIFIED,
-              description = attributeSeed.description
-            )
+    val result: Future[Attribute] = for {
+      organizationId <- getOrganizationIdFutureUUID(contexts)
+      certifierId    <- tenantProcessService
+        .getTenant(organizationId)
+        .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
+        .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
+      attribute      <- attributeRegistryManagementService
+        .createAttribute(
+          model.AttributeSeed(
+            name = attributeSeed.name,
+            origin = certifierId.some,
+            code = attributeSeed.code.some,
+            kind = model.AttributeKind.CERTIFIED,
+            description = attributeSeed.description
           )
-      } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
+        )
+    } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
 
-      onComplete(result) {
-        case Success(attribute)                             =>
-          createCertifiedAttribute200(attribute)
-        case Failure(ex @ OrganizationIsNotACertifier(org)) =>
-          logger.error(s"The tenant $org is not a certifier and cannot create attributes")
-          createCertifiedAttribute403(problemOf(StatusCodes.Forbidden, ex))
-        case Failure(ex) => internalServerError(s"Error while creating attribute - ${ex.getMessage}")
+    onComplete(result) {
+      handleCreateCertifiedAttributeError(operationLabel) orElse { case Success(attribute) =>
+        createCertifiedAttribute200(attribute)
       }
     }
+  }
 
   override def getClient(clientId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerClient: ToEntityMarshaller[Client]
   ): Route = authorize {
+    val operationLabel = s"Retrieving Client $clientId"
+    logger.info(operationLabel)
 
+    // TODO Remove if unnecessary, otherwise move to Authorization Process
     def isAllowed(client: AuthorizationManagementApiClient, organizationId: UUID): Future[Unit] =
       if (client.consumerId == organizationId) Future.unit
       else
@@ -464,7 +460,7 @@ final case class GatewayApiServiceImpl(
               .getEService(purpose.states.eservice.eserviceId)(contexts)
               .map(_.producerId == organizationId)
           )
-          .ensure(Forbidden)(_.nonEmpty)
+          .ensure(OperationForbidden)(_.nonEmpty)
           .void
 
     val result: Future[Client] = for {
@@ -475,15 +471,7 @@ final case class GatewayApiServiceImpl(
     } yield client.toModel
 
     onComplete(result) {
-      case Success(client)                                           =>
-        getClient200(client)
-      case Failure(Forbidden)                                        =>
-        logger.error(s"The user has no access to the requested client $clientId")
-        getAgreement403(problemOf(StatusCodes.Forbidden, Forbidden))
-      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error(s"Error while getting client $clientId - ${ex.getMessage}")
-        getAgreement404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex) => internalServerError(s"Error while getting client - ${ex.getMessage}")
+      handleGetClientError(operationLabel) orElse { case Success(client) => getClient200(client) }
     }
   }
 
@@ -492,18 +480,13 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
-    val result: Future[Events] = for {
-      events        <- notifierService.getEvents(lastEventId, limit)(contexts)
-      gatewayEvents <- events.toModel.toFuture
-    } yield gatewayEvents
+    val operationLabel = s"Retrieving Events lastEventId $lastEventId limit $limit"
+    logger.info(operationLabel)
+
+    val result: Future[Events] = notifierService.getEvents(lastEventId, limit).map(_.toModel)
 
     onComplete(result) {
-      case Success(messages)                                         => getEventsFromId200(messages)
-      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error(s"Error while getting the requested messages - ${ex.getMessage}")
-        getEventsFromId404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex)                                               =>
-        internalServerError(s"Error while getting the requested messages - ${ex.getMessage}")
+      handleGetEventsFromIdError(operationLabel) orElse { case Success(messages) => getEventsFromId200(messages) }
     }
   }
 
@@ -512,18 +495,15 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerEvents: ToEntityMarshaller[Events],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
-    val result: Future[Events] = for {
-      events        <- notifierService.getAllOrganizationEvents(lastEventId, limit)(contexts)
-      gatewayEvents <- events.toModel.toFuture
-    } yield gatewayEvents
+    val operationLabel = s"Retrieving EServices Events lastEventId $lastEventId limit $limit"
+    logger.info(operationLabel)
+
+    val result: Future[Events] = notifierService.getAllOrganizationEvents(lastEventId, limit).map(_.toModel)
 
     onComplete(result) {
-      case Success(messages)                                         => getEventsFromId200(messages)
-      case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
-        logger.error(s"Error while getting the requested messages - ${ex.getMessage}")
-        getEventsFromId404(problemOf(StatusCodes.NotFound, ex))
-      case Failure(ex)                                               =>
-        internalServerError(s"Error while getting the requested messages - ${ex.getMessage}")
+      handleGetEServicesEventsFromIdError(operationLabel) orElse { case Success(messages) =>
+        getEventsFromId200(messages)
+      }
     }
   }
 

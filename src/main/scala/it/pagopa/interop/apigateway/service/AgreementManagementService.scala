@@ -1,12 +1,10 @@
 package it.pagopa.interop.apigateway.service
 
 import it.pagopa.interop.agreementmanagement.client.model.{Agreement, AgreementState}
-import it.pagopa.interop.apigateway.error.GatewayErrors
 import it.pagopa.interop.apigateway.error.GatewayErrors.{
   ActiveAgreementByEServiceAndConsumerNotFound,
   MultipleAgreementForEServiceAndConsumer
 }
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}

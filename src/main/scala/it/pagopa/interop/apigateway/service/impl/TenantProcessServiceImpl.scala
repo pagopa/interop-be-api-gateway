@@ -44,7 +44,7 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
   override def getTenant(id: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
     request = api.getTenant(xCorrelationId = correlationId, id = id, xForwardedFor = ip)(BearerToken(bearerToken))
-    result <- invoker.invoke(request, "Invoking getTenant", handleCommonErrors(s"getTenant ${id.toString}"))
+    result <- invoker.invoke(request, "Invoking getTenant")
   } yield result
 
   override def revokeAttribute(origin: String, externalId: String, code: String)(implicit
@@ -67,24 +67,4 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
         case err: ApiError[_] if err.code == 404 => TenantAttributeNotFound(origin, externalId, code)
       }
   } yield ()
-
-//  private[service] def handleCommonErrors[T](
-//    resource: String
-//  ): (ContextFieldsToLog, LoggerTakingImplicit[ContextFieldsToLog], String) => PartialFunction[Throwable, Future[T]] = {
-//    (contexts, logger, msg) =>
-//      {
-//        case ex @ ApiError(code, message, _, _, _) if code == 400 =>
-//          logger.warn(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
-//          Future.failed(GatewayErrors.TenantProcessBadRequest(resource))
-//        case ex @ ApiError(code, message, _, _, _) if code == 404 =>
-//          logger.warn(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
-//          Future.failed(GenericComponentErrors.ResourceNotFoundError(resource))
-//        case ex @ ApiError(code, message, _, _, _) if code == 403 =>
-//          logger.warn(s"$msg. code > $code - message > $message - ${ex.getMessage}")(contexts)
-//          Future.failed(GenericComponentErrors.OperationForbidden)
-//        case ex                                                   =>
-//          logger.error(s"$msg. Error: ${ex.getMessage}")(contexts)
-//          Future.failed(ex)
-//      }
-//  }
 }
