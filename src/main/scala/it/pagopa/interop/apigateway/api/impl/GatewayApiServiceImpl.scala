@@ -21,7 +21,6 @@ import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
-import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import it.pagopa.interop.tenantprocess.client.model.{ExternalId, M2MAttributeSeed, M2MTenantSeed}
 
 import java.util.UUID
@@ -410,35 +409,14 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
 
-    def validatePurposeIfSubjectIsProducer(
-      subject: UUID,
-      purpose: PurposeManagementApiPurpose
-    ): Future[PurposeManagementApiPurpose] =
-      catalogManagementService
-        .getEService(purpose.eserviceId)(contexts)
-        .map(_.producerId == subject)
-        .ifM(Future.successful(purpose), Future.failed(Forbidden))
-
-    def getPurposeIfAuthorized(organizationId: UUID, purposeId: UUID): Future[PurposeManagementApiPurpose] =
-      purposeManagementService
-        .getPurpose(purposeId)(contexts)
-        .flatMap(purpose =>
-          if (purpose.consumerId == organizationId) Future.successful(purpose)
-          else validatePurposeIfSubjectIsProducer(organizationId, purpose)
-        )
-
     val result: Future[Purpose] = for {
-      organizationUUID     <- getOrganizationIdFutureUUID(contexts)
       purposeUUID          <- purposeId.toFutureUUID
-      purpose              <- getPurposeIfAuthorized(organizationUUID, purposeUUID)
+      purpose              <- purposeManagementService.getPurpose(purposeUUID)
       actualPurposeVersion <- purpose.toModel.toFuture
     } yield actualPurposeVersion
 
     onComplete(result) {
       case Success(agr)                                              => getPurpose200(agr)
-      case Failure(Forbidden)                                        =>
-        logger.error(s"The user has no access to the requested purpose $purposeId")
-        getPurpose403(problemOf(StatusCodes.Forbidden, Forbidden))
       case Failure(ex: GenericComponentErrors.ResourceNotFoundError) =>
         logger.error(s"Error while getting the requested purpose $purposeId - ${ex.getMessage}")
         getPurpose404(problemOf(StatusCodes.NotFound, ex))
