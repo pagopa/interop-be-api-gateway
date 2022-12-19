@@ -18,7 +18,7 @@ import it.pagopa.interop.apigateway.api.impl.{
 }
 import it.pagopa.interop.apigateway.api.{GatewayApi, HealthApi}
 import it.pagopa.interop.apigateway.common.ApplicationConfiguration
-import it.pagopa.interop.apigateway.error.Handlers.serviceCode
+import it.pagopa.interop.apigateway.api.impl.ResponseHandlers.serviceCode
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.apigateway.service.impl._
 import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi

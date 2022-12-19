@@ -1,6 +1,5 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import cats.implicits.catsSyntaxOptionId
 import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.{
@@ -33,7 +32,7 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
     )
     result <- invoker
       .invoke(request, s"Retrieving attribute by id ${attributeId.toString}")
-      .adaptError { case err: ApiError[_] if err.code == 404 => AttributeNotFound(attributeId) }
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(AttributeNotFound(attributeId)) }
   } yield result
 
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit
@@ -48,7 +47,9 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, s"Getting attribute ($origin,$code)")
-      .adaptError { case err: ApiError[_] if err.code == 404 => AttributeByOriginNotFound(origin, code) }
+      .recoverWith {
+        case err: ApiError[_] if err.code == 404 => Future.failed(AttributeByOriginNotFound(origin, code))
+      }
   } yield result
 
   override def createAttribute(
@@ -60,11 +61,11 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
     )
     result <- invoker
       .invoke(request, s"Creating ${attributeSeed.kind} attribute ${attributeSeed.name}")
-      .adaptError {
+      .recoverWith {
         case err: ApiError[_] if err.code == 409 =>
           (attributeSeed.origin, attributeSeed.code) match {
-            case (Some(origin), Some(code)) => AttributeAlreadyExists(origin, code)
-            case _                          => err
+            case (Some(origin), Some(code)) => Future.failed(AttributeAlreadyExists(origin, code))
+            case _                          => Future.failed(err)
           }
 
       }

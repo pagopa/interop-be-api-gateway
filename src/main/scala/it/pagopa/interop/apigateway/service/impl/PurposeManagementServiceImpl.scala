@@ -26,7 +26,7 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
       request = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(BearerToken(bearerToken))
       result <- invoker
         .invoke(request, "Invoking getPurpose")
-        .adaptError { case err: ApiError[_] if err.code == 404 => PurposeNotFound(purposeId) }
+        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(PurposeNotFound(purposeId)) }
     } yield result
   }
 

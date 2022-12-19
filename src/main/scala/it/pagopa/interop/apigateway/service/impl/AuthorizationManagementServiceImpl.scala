@@ -1,6 +1,5 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.ClientNotFound
 import it.pagopa.interop.apigateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
@@ -29,7 +28,7 @@ class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker
       )
       result <- invoker
         .invoke(request, s"Retrieving client by id = $clientId")
-        .adaptError { case err: ApiError[_] if err.code == 404 => ClientNotFound(clientId) }
+        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(ClientNotFound(clientId)) }
     } yield result
   }
 

@@ -1,6 +1,5 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.InstitutionNotFound
 import it.pagopa.interop.apigateway.service.{PartyRegistryInvoker, PartyRegistryProxyService}
@@ -30,7 +29,7 @@ class PartyRegistryProxyServiceImpl(invoker: PartyRegistryInvoker, api: Institut
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, "Retrieve Institution by external ID")
-      .adaptError { case err: ApiError[_] if err.code == 404 => InstitutionNotFound(origin, originId) }
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(InstitutionNotFound(origin, originId)) }
   } yield result
 
 }

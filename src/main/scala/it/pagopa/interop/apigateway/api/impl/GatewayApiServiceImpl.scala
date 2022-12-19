@@ -7,8 +7,8 @@ import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementmanagement.client.{model => AgreementManagementDependency}
 import it.pagopa.interop.apigateway.api.GatewayApiService
+import it.pagopa.interop.apigateway.api.impl.ResponseHandlers._
 import it.pagopa.interop.apigateway.error.GatewayErrors._
-import it.pagopa.interop.apigateway.error.Handlers._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.attributeregistrymanagement.client.model
@@ -31,7 +31,6 @@ import it.pagopa.interop.tenantprocess.client.model.{ExternalId, M2MAttributeSee
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 
 final case class GatewayApiServiceImpl(
   agreementManagementService: AgreementManagementService,
@@ -67,7 +66,7 @@ final case class GatewayApiServiceImpl(
     } yield apiModel
 
     onComplete(result) {
-      handleGetAgreementError(operationLabel, agreementId) orElse { case Success(agr) => getAgreement200(agr) }
+      getAgreementResponse[Agreement](operationLabel, agreementId)(getAgreement200)
     }
   }
 
@@ -86,7 +85,7 @@ final case class GatewayApiServiceImpl(
     } yield updated
 
     onComplete(result) {
-      handleUpsertTenantError(operationLabel) orElse { case Success(()) => upsertTenant204 }
+      upsertTenantResponse[Unit](operationLabel)(_ => upsertTenant204)
     }
   }
 
@@ -98,7 +97,7 @@ final case class GatewayApiServiceImpl(
     logger.info(operationLabel)
 
     onComplete(tenantProcessService.revokeAttribute(origin, externalId, code)) {
-      handleRevokeTenantError(operationLabel) orElse { case Success(()) => revokeTenantAttribute204 }
+      revokeTenantAttributeResponse[Unit](operationLabel)(_ => revokeTenantAttribute204)
     }
   }
 
@@ -148,7 +147,7 @@ final case class GatewayApiServiceImpl(
     } yield Agreements(agreements)
 
     onComplete(result) {
-      handleGetAgreementsError(operationLabel) orElse { case Success(agreements) => getAgreements200(agreements) }
+      getAgreementsResponse[Agreements](operationLabel)(getAgreements200)
     }
   }
 
@@ -166,7 +165,7 @@ final case class GatewayApiServiceImpl(
     } yield attribute.toModel
 
     onComplete(result) {
-      handleGetAttributeError(operationLabel) orElse { case Success(attribute) => getAttribute200(attribute) }
+      getAttributeResponse[Attribute](operationLabel)(getAttribute200)
     }
   }
 
@@ -185,7 +184,7 @@ final case class GatewayApiServiceImpl(
     } yield apiEService
 
     onComplete(result) {
-      handleGetEServiceError(operationLabel) orElse { case Success(eService) => getEService200(eService) }
+      getEServiceResponse[EService](operationLabel)(getEService200)
     }
   }
 
@@ -212,9 +211,7 @@ final case class GatewayApiServiceImpl(
     } yield EServices(apiEServices)
 
     onComplete(result) {
-      handleGetOrganizationEServicesError(operationLabel) orElse { case Success(eServices) =>
-        getOrganizationEServices200(eServices)
-      }
+      getOrganizationEServicesResponse[EServices](operationLabel)(getOrganizationEServices200)
     }
   }
 
@@ -236,9 +233,9 @@ final case class GatewayApiServiceImpl(
     } yield result
 
     onComplete(result) {
-      handleGetEServiceDescriptorError(operationLabel, eServiceId, descriptorId) orElse { case Success(descriptor) =>
-        getEServiceDescriptor200(descriptor)
-      }
+      getEServiceDescriptorResponse[EServiceDescriptor](operationLabel, eServiceId, descriptorId)(
+        getEServiceDescriptor200
+      )
     }
   }
 
@@ -260,9 +257,7 @@ final case class GatewayApiServiceImpl(
     } yield EServiceDescriptors(descriptors = descriptors)
 
     onComplete(result) {
-      handleGetEServiceDescriptorsError(operationLabel) orElse { case Success(descriptor) =>
-        getEServiceDescriptors200(descriptor)
-      }
+      getEServiceDescriptorsResponse[EServiceDescriptors](operationLabel)(getEServiceDescriptors200)
     }
   }
 
@@ -281,9 +276,7 @@ final case class GatewayApiServiceImpl(
     } yield tenant.toModel(category)
 
     onComplete(result) {
-      handleGetOrganizationError(operationLabel) orElse { case Success(organization) =>
-        getOrganization200(organization)
-      }
+      getOrganizationResponse[Organization](operationLabel)(getOrganization200)
     }
   }
 
@@ -315,9 +308,7 @@ final case class GatewayApiServiceImpl(
     )
 
     onComplete(result) {
-      handleGetAgreementAttributesError(operationLabel) orElse { case Success(agr) =>
-        getAgreementAttributes200(agr)
-      }
+      getAgreementAttributesResponse[Attributes](operationLabel)(getAgreementAttributes200)
     }
   }
 
@@ -340,9 +331,7 @@ final case class GatewayApiServiceImpl(
     } yield apiModel
 
     onComplete(result) {
-      handleGetAgreementByPurposeError(operationLabel) orElse { case Success(agreement) =>
-        getAgreementByPurpose200(agreement)
-      }
+      getAgreementByPurposeResponse[Agreement](operationLabel)(getAgreementByPurpose200)
     }
   }
 
@@ -379,7 +368,7 @@ final case class GatewayApiServiceImpl(
     } yield actualPurposeVersion
 
     onComplete(result) {
-      handleGetPurposeError(operationLabel) orElse { case Success(agr) => getPurpose200(agr) }
+      getPurposeResponse[Purpose](operationLabel)(getPurpose200)
     }
   }
 
@@ -398,14 +387,8 @@ final case class GatewayApiServiceImpl(
       purposes       <- clientPurposes.toModel.toFuture
     } yield purposes
 
-    val success: PartialFunction[Try[Purposes], Route] = {
-      case Success(purposes)                         => getAgreementPurposes200(purposes)
-      case Failure(_: MissingActivePurposesVersions) =>
-        getAgreementPurposes200(Purposes(purposes = Seq.empty))
-    }
-
     onComplete(result) {
-      success orElse handleGetAgreementPurposesError(operationLabel)
+      getAgreementPurposesResponse(operationLabel)(getAgreementPurposes200, Purposes(purposes = Seq.empty))
     }
   }
 
@@ -436,9 +419,7 @@ final case class GatewayApiServiceImpl(
     } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
 
     onComplete(result) {
-      handleCreateCertifiedAttributeError(operationLabel) orElse { case Success(attribute) =>
-        createCertifiedAttribute200(attribute)
-      }
+      createCertifiedAttributeResponse[Attribute](operationLabel)(createCertifiedAttribute200)
     }
   }
 
@@ -471,7 +452,7 @@ final case class GatewayApiServiceImpl(
     } yield client.toModel
 
     onComplete(result) {
-      handleGetClientError(operationLabel) orElse { case Success(client) => getClient200(client) }
+      getClientResponse[Client](operationLabel)(getClient200)
     }
   }
 
@@ -486,7 +467,7 @@ final case class GatewayApiServiceImpl(
     val result: Future[Events] = notifierService.getEvents(lastEventId, limit).map(_.toModel)
 
     onComplete(result) {
-      handleGetEventsFromIdError(operationLabel) orElse { case Success(messages) => getEventsFromId200(messages) }
+      getEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
     }
   }
 
@@ -501,9 +482,7 @@ final case class GatewayApiServiceImpl(
     val result: Future[Events] = notifierService.getAllOrganizationEvents(lastEventId, limit).map(_.toModel)
 
     onComplete(result) {
-      handleGetEServicesEventsFromIdError(operationLabel) orElse { case Success(messages) =>
-        getEventsFromId200(messages)
-      }
+      getEservicesEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
     }
   }
 

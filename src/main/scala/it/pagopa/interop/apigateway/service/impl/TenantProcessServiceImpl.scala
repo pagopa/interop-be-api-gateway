@@ -1,21 +1,19 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import it.pagopa.interop.tenantprocess.client.api.TenantApi
-import it.pagopa.interop.apigateway.service.{TenantProcessInvoker, TenantProcessService}
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
+import it.pagopa.interop.apigateway.error.GatewayErrors
+import it.pagopa.interop.apigateway.error.GatewayErrors.TenantAttributeNotFound
+import it.pagopa.interop.apigateway.service.{TenantProcessInvoker, TenantProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-
-import scala.concurrent.{ExecutionContext, Future}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
 import it.pagopa.interop.commons.utils.extractHeaders
-import it.pagopa.interop.tenantprocess.client.model.{M2MTenantSeed, Tenant}
+import it.pagopa.interop.tenantprocess.client.api.TenantApi
 import it.pagopa.interop.tenantprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.tenantprocess.client.model.{M2MTenantSeed, Tenant}
 
 import java.util.UUID
-import it.pagopa.interop.apigateway.error.GatewayErrors
-import cats.syntax.all._
-import it.pagopa.interop.apigateway.error.GatewayErrors.TenantAttributeNotFound
+import scala.concurrent.{ExecutionContext, Future}
 
 class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(implicit ec: ExecutionContext)
     extends TenantProcessService {
@@ -31,12 +29,14 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
       )
       result <- invoker
         .invoke(request, "Invoking m2mUpsertTenant")
-        .adaptError {
+        .recoverWith {
           case err: ApiError[_] if err.code == 400 =>
-            GatewayErrors.TenantProcessBadRequest(
-              s"Tenant (${m2MTenantSeed.externalId.origin}, ${m2MTenantSeed.externalId.value})"
+            Future.failed(
+              GatewayErrors.TenantProcessBadRequest(
+                s"Tenant (${m2MTenantSeed.externalId.origin}, ${m2MTenantSeed.externalId.value})"
+              )
             )
-          case err: ApiError[_] if err.code == 403 => GenericComponentErrors.OperationForbidden
+          case err: ApiError[_] if err.code == 403 => Future.failed(GenericComponentErrors.OperationForbidden)
         }
 
     } yield result
@@ -60,11 +60,11 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
     )(BearerToken(bearerToken))
     () <- invoker
       .invoke(request, "Invoking revokeAttribute")
-      .adaptError {
+      .recoverWith {
         case err: ApiError[_] if err.code == 400 =>
-          GatewayErrors.TenantProcessBadRequest(s"Tenant ($origin, $externalId), Attribute $code")
-        case err: ApiError[_] if err.code == 403 => GenericComponentErrors.OperationForbidden
-        case err: ApiError[_] if err.code == 404 => TenantAttributeNotFound(origin, externalId, code)
+          Future.failed(GatewayErrors.TenantProcessBadRequest(s"Tenant ($origin, $externalId), Attribute $code"))
+        case err: ApiError[_] if err.code == 403 => Future.failed(GenericComponentErrors.OperationForbidden)
+        case err: ApiError[_] if err.code == 404 => Future.failed(TenantAttributeNotFound(origin, externalId, code))
       }
   } yield ()
 }

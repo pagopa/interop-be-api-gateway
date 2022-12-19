@@ -28,7 +28,7 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
       )
       result <- invoker
         .invoke(request, "Retrieving E-Service")
-        .adaptError { case err: ApiError[_] if err.code == 404 => EServiceNotFound(eServiceId) }
+        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(EServiceNotFound(eServiceId)) }
     } yield result
   }
 

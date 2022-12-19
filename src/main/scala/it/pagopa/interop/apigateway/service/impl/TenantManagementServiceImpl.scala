@@ -1,6 +1,5 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.{TenantByOriginNotFound, TenantNotFound}
 import it.pagopa.interop.apigateway.service.{TenantManagementInvoker, TenantManagementService}
@@ -32,7 +31,7 @@ class TenantManagementServiceImpl(invoker: TenantManagementInvoker, api: TenantA
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, "Retrieve Tenant by external ID")
-      .adaptError { case err: ApiError[_] if err.code == 404 => TenantByOriginNotFound(origin, code) }
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(TenantByOriginNotFound(origin, code)) }
   } yield result
 
   override def getTenantById(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] = for {
@@ -42,7 +41,7 @@ class TenantManagementServiceImpl(invoker: TenantManagementInvoker, api: TenantA
     )
     result <- invoker
       .invoke(request, "Retrieve Tenant by ID")
-      .adaptError { case err: ApiError[_] if err.code == 404 => TenantNotFound(tenantId) }
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(TenantNotFound(tenantId)) }
   } yield result
 
 }
