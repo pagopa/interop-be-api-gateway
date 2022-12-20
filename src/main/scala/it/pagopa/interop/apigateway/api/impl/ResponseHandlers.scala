@@ -163,9 +163,9 @@ object ResponseHandlers extends AkkaResponses {
   )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
     result match {
       case Success(s)  => success(s)
-      case Failure(ex) =>
-        internalServerError(ex, logMessage)
+      case Failure(ex) => internalServerError(ex, logMessage)
     }
+
   def upsertTenantResponse[T](logMessage: String)(
     success: T => Route
   )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
