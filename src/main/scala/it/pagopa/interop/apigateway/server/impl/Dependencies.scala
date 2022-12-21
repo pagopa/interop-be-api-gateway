@@ -42,6 +42,8 @@ import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagem
 import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import com.typesafe.scalalogging.Logger
+import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 
 trait Dependencies {
 
@@ -152,7 +154,9 @@ trait Dependencies {
         tenantManagementService(blockingEc)
       ),
       GatewayApiMarshallerImpl,
-      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
+      jwtReader
+        .OAuth2JWTValidatorAsContexts(Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts"))
+        .flatMap(rateLimiterDirective(ec))
     )
 
   val healthApi: HealthApi = new HealthApi(
