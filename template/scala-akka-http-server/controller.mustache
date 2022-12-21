@@ -108,6 +108,11 @@ pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
 getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
 }
 
+def openapiRoute: Route =
+pathPrefix("{{projectName}}" / interfaceVersion / openApiFileName) {
+getFromFile(tmpFile)
+}
+
 val devRoutes: Route = getBuildInfo ~ swaggerRoute
 
 lazy val appRoutes: Route = pathPrefix("{{projectName}}" / interfaceVersion) {
@@ -120,6 +125,8 @@ validationFunction(request) {
 }
 }
 
-lazy val routes: Route = if (devEndpointsEnabled)  devRoutes ~ appRoutes else appRoutes
+lazy val mainRoutes: Route = appRoutes ~ openapiRoute
+
+lazy val routes: Route = if (devEndpointsEnabled) devRoutes ~ mainRoutes else mainRoutes
 
 }

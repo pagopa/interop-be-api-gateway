@@ -5,14 +5,13 @@ ThisBuild / scalaVersion                     := "2.13.10"
 ThisBuild / organization                     := "it.pagopa"
 ThisBuild / organizationName                 := "Pagopa S.p.A."
 ThisBuild / dependencyOverrides ++= Dependencies.Jars.overrides
-ThisBuild / version                          := ComputeVersion.version
-Global / onChangedBuildSource                := ReloadOnSourceChanges
-ThisBuild / githubSuppressPublicationWarning := true
-ThisBuild / resolvers += Resolver.githubPackages("pagopa")
-ThisBuild / resolvers += "Pagopa Nexus Snapshots" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-snapshots/"
-ThisBuild / resolvers += "Pagopa Nexus Releases" at s"https://${System.getenv("MAVEN_REPO")}/nexus/repository/maven-releases/"
+ThisBuild / version           := ComputeVersion.version
+Global / onChangedBuildSource := ReloadOnSourceChanges
 
-ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+ThisBuild / githubOwner      := "pagopa"
+ThisBuild / githubRepository := "interop-be-api-gateway"
+ThisBuild / resolvers += Resolver.githubPackages("pagopa")
+
 lazy val generateCode = taskKey[Unit]("A task for generating the code starting from the swagger definition")
 
 val packagePrefix = settingKey[String]("The package prefix derived from the uservice name")
