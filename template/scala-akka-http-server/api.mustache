@@ -6,9 +6,8 @@ import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
 import akka.http.scaladsl.server.{Directive0, Directive1, Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
-import it.pagopa.interop.commons.logging.ContextFieldsToLog
-import it.pagopa.interop.commons.logging.withLoggingAttributes
-import it.pagopa.interop.commons.logging.logHttp
+import it.pagopa.interop.commons.logging._
+import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 {{^pathMatcherPatterns.isEmpty}}import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
 {{/pathMatcherPatterns.isEmpty}}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
@@ -42,6 +41,9 @@ import akka.http.scaladsl.server.directives.FileInfo
     {{#pathMatcherPatterns}}import {{classname}}Patterns.{{pathMatcherVarName}}
     {{/pathMatcherPatterns}}
 
+    private final val logger: LoggerTakingImplicit[ContextFieldsToLog] =
+        Logger.takingImplicit[ContextFieldsToLog]("{{classname}}")
+
     {{#hasMarshalling}}import {{classVarName}}Marshaller._
     {{/hasMarshalling}}
 
@@ -50,7 +52,7 @@ import akka.http.scaladsl.server.directives.FileInfo
         path({{#vendorExtensions.x-paths}}{{#isText}}"{{/isText}}{{value}}{{#isText}}"{{/isText}}{{^-last}} / {{/-last}}{{/vendorExtensions.x-paths}}) { {{^pathParams.isEmpty}}({{#pathParams}}{{paramName}}{{^-last}}, {{/-last}}{{/pathParams}}) => {{/pathParams.isEmpty}}
         {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} {
         withLoggingAttributes(wrappingDirective) { implicit contexts =>
-          logHttp(loggingEnabled)(contexts) {
+          logHttp(loggingEnabled)(logger, contexts) {
             {{^queryParams.isEmpty}}
             parameters({{#queryParams}}"{{baseName}}".as[{{dataType}}]{{^required}}.?{{#vendorExtensions.x-has-default-value}}({{{defaultValue}}}){{/vendorExtensions.x-has-default-value}}{{/required}}{{^-last}}, {{/-last}}{{/queryParams}}) { ({{#queryParams}}{{paramName}}{{^-last}}, {{/-last}}{{/queryParams}}) =>{{/queryParams.isEmpty}} {{^headerParams.isEmpty}}
             {{#headerParams}}{{#required}}headerValueByName{{/required}}{{^required}}optionalHeaderValueByName{{/required}}("{{baseName}}") { {{paramName}} => {{/headerParams}}{{/headerParams.isEmpty}}{{^cookieParams.isEmpty}}
