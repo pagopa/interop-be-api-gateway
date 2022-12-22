@@ -1,8 +1,10 @@
 package it.pagopa.interop.apigateway.service
 
 import it.pagopa.interop.agreementmanagement.client.model.{Agreement, AgreementState}
-import it.pagopa.interop.apigateway.error.GatewayErrors
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.apigateway.error.GatewayErrors.{
+  ActiveAgreementByEServiceAndConsumerNotFound,
+  MultipleAgreementForEServiceAndConsumer
+}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,21 +30,15 @@ trait AgreementManagementService {
       consumerId = Some(consumerUUID.toString),
       eserviceId = Some(eserviceUUID.toString),
       descriptorId = None,
-      states = Nil
-    )(contexts).flatMap(agreements =>
-      agreements
-        .filter(a => a.state == AgreementState.ACTIVE || a.state == AgreementState.SUSPENDED) match {
-        case head :: Nil => Future.successful(head)
-        case Nil         =>
-          Future.failed(
-            GenericComponentErrors
-              .ResourceNotFoundError(s"agreement on (consumer, eservice): ($consumerUUID, $eserviceUUID)")
-          )
-        // This is the case that "should never happen" in whom the tuple (consumerUUID, eserviceUUID)
-        // is no more exaustive in identifying a unique active/suspended agreement
-        case _           => Future.failed(GatewayErrors.InternalServerError)
-      }
-    )
+      states = List(AgreementState.ACTIVE, AgreementState.SUSPENDED)
+    )(contexts).flatMap {
+      case head :: Nil => Future.successful(head)
+      case Nil         => Future.failed(ActiveAgreementByEServiceAndConsumerNotFound(eserviceUUID, consumerUUID))
+      // This is the case that "should never happen" in whom the tuple (consumerUUID, eserviceUUID)
+      // is no more exaustive in identifying a unique active/suspended agreement
+      case _           => Future.failed(MultipleAgreementForEServiceAndConsumer(eserviceUUID, consumerUUID))
+    }
+
   }
 
 }
