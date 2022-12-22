@@ -622,7 +622,8 @@ final case class GatewayApiServiceImpl(
       description = eService.description,
       technology = eService.technology.toModel,
       attributes = attributes,
-      state = state
+      state = state,
+      serverUrls = latestDescriptor.serverUrls
     )
   private def extractCategoryIpa(
     tenant: TenantManagementApiTenant
