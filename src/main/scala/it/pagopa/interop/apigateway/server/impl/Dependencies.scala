@@ -33,7 +33,7 @@ import it.pagopa.interop.commons.jwt.{JWTConfiguration, KID, PublicKeysHolder, S
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.ratelimiter.impl.RedisRateLimiter
 import it.pagopa.interop.commons.utils.TypeConversions.TryOps
-import it.pagopa.interop.commons.utils.errors.GenericComponentErrors
+import it.pagopa.interop.commons.utils.errors.ServiceCode
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
@@ -49,15 +49,11 @@ trait Dependencies {
   val rateLimiter: RateLimiter =
     RedisRateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplier)
 
+  implicit val serviceCode: ServiceCode = ServiceCode("013")
+
   val rateLimiterDirective: ExecutionContext => Seq[(String, String)] => Directive1[Seq[(String, String)]] = {
     val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
-    ec =>
-      contexts => {
-        RateLimiterDirective.rateLimiterDirective(
-          rateLimiter,
-          problemOf(StatusCodes.TooManyRequests, GenericComponentErrors.TooManyRequests)
-        )(contexts)(ec, entityMarshallerProblem, logger)
-      }
+    ec => contexts => RateLimiterDirective.rateLimiterDirective(rateLimiter)(contexts)(ec, serviceCode, logger)
   }
 
   def agreementManagementService(
