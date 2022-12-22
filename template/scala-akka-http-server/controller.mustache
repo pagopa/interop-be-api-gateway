@@ -125,7 +125,7 @@ validationFunction(request) {
 }
 }
 
-lazy val mainRoutes: Route = appRoutes ~ openapiRoute
+lazy val mainRoutes: Route = openapiRoute ~ appRoutes
 
 lazy val routes: Route = if (devEndpointsEnabled) devRoutes ~ mainRoutes else mainRoutes
 

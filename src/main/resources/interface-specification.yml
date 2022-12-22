@@ -1956,6 +1956,7 @@ components:
         - voucherLifespan
         - dailyCallsPerConsumer
         - dailyCallsTotal
+        - serverUrls
       properties:
         id:
           description: eservice descriptor identifier
@@ -1995,6 +1996,10 @@ components:
             $ref: '#/components/schemas/EServiceDoc'
         state:
           $ref: '#/components/schemas/EServiceDescriptorState'
+        serverUrls:
+          type: array
+          items:
+            type: string
     EService:
       description: The eservice model
       type: object
@@ -2007,6 +2012,7 @@ components:
         - technology
         - attributes
         - state
+        - serverUrls
       properties:
         id:
           description: eservice identifier
@@ -2029,6 +2035,10 @@ components:
           $ref: '#/components/schemas/EServiceAttributes'
         state:
           $ref: '#/components/schemas/EServiceDescriptorState'
+        serverUrls:
+          type : array
+          items:
+            type: string
     EServiceAttributes:
       description: the attributes set associated to the EService
       properties:
