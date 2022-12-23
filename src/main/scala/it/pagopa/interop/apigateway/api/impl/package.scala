@@ -60,14 +60,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val externalIdFormat: RootJsonFormat[ExternalId]                   = jsonFormat2(ExternalId)
   implicit val organizationFormat: RootJsonFormat[Organization]               = jsonFormat4(Organization)
   implicit val eServiceDocFormat: RootJsonFormat[EServiceDoc]                 = jsonFormat3(EServiceDoc)
-  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor]   = jsonFormat10(EServiceDescriptor)
+  implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor]   = jsonFormat11(EServiceDescriptor)
   implicit val eServiceDescriptorsFormat: RootJsonFormat[EServiceDescriptors] = jsonFormat1(EServiceDescriptors)
 
   implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
     jsonFormat4(EServiceAttributeValue)
   implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
   implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
-  implicit val eServiceFormat: RootJsonFormat[EService]                             = jsonFormat8(EService)
+  implicit val eServiceFormat: RootJsonFormat[EService]                             = jsonFormat9(EService)
   implicit val eServicesFormat: RootJsonFormat[EServices]                           = jsonFormat1(EServices)
 
   implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat6(Agreement)
@@ -235,7 +235,8 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
           dailyCallsTotal = descriptor.dailyCallsTotal,
           interface = descriptor.interface.map(_.toModel),
           docs = descriptor.docs.map(_.toModel),
-          state = state
+          state = state,
+          serverUrls = descriptor.serverUrls
         )
       )
   }
