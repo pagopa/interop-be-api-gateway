@@ -47,6 +47,9 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 
 trait Dependencies {
 
+  implicit val loggerTI: LoggerTakingImplicit[ContextFieldsToLog] =
+    Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts")
+
   val rateLimiter: RateLimiter =
     RedisRateLimiter(ApplicationConfiguration.rateLimiterConfigs, OffsetDateTimeSupplier)
 
@@ -154,9 +157,7 @@ trait Dependencies {
         tenantManagementService(blockingEc)
       ),
       GatewayApiMarshallerImpl,
-      jwtReader
-        .OAuth2JWTValidatorAsContexts(Logger.takingImplicit[ContextFieldsToLog]("OAuth2JWTValidatorAsContexts"))
-        .flatMap(rateLimiterDirective(ec))
+      jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
     )
 
   val healthApi: HealthApi = new HealthApi(
