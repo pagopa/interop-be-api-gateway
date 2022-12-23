@@ -20,31 +20,27 @@ class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServ
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = {
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getEService(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
-      result <- invoker
-        .invoke(request, "Retrieving E-Service")
-        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(EServiceNotFound(eServiceId)) }
-    } yield result
-  }
+  override def getEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getEService(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(
+      BearerToken(bearerToken)
+    )
+    result <- invoker
+      .invoke(request, "Retrieving E-Service")
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(EServiceNotFound(eServiceId)) }
+  } yield result
 
   override def getEServices(producerId: UUID, attributeId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Seq[EService]] = {
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getEServices(
-        xCorrelationId = correlationId,
-        producerId = producerId.toString.some,
-        attributeId = attributeId.toString.some,
-        xForwardedFor = ip
-      )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, "Retrieving E-Services")
-    } yield result
-  }
+  ): Future[Seq[EService]] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getEServices(
+      xCorrelationId = correlationId,
+      producerId = producerId.toString.some,
+      attributeId = attributeId.toString.some,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    result <- invoker.invoke(request, "Retrieving E-Services")
+  } yield result
 
 }

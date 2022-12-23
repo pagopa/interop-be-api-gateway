@@ -73,17 +73,15 @@ class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagemen
 
   override def getBulkAttributes(
     attributeIds: Set[UUID]
-  )(implicit contexts: Seq[(String, String)]): Future[AttributesResponse] = {
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request          = api.getBulkedAttributes(
-        xCorrelationId = correlationId,
-        ids = attributeIds.mkString(",").some,
-        xForwardedFor = ip
-      )(BearerToken(bearerToken))
-      attributesString = attributeIds.mkString("[", ",", "]")
-      result <- invoker.invoke(request, s"Retrieving bulk attributes $attributesString")
-    } yield result
-  }
+  )(implicit contexts: Seq[(String, String)]): Future[AttributesResponse] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request          = api.getBulkedAttributes(
+      xCorrelationId = correlationId,
+      ids = attributeIds.mkString(",").some,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    attributesString = attributeIds.mkString("[", ",", "]")
+    result <- invoker.invoke(request, s"Retrieving bulk attributes $attributesString")
+  } yield result
 
 }

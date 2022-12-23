@@ -20,19 +20,17 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] = {
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getAgreement(xCorrelationId = correlationId, agreementId.toString, xForwardedFor = ip)(
-        BearerToken(bearerToken)
-      )
-      result <- invoker
-        .invoke(request, s"Retrieving agreement by id = $agreementId")
-        .recoverWith {
-          case err: ApiError[_] if err.code == 404 => Future.failed(AgreementNotFound(agreementId.toString))
-        }
-    } yield result
-  }
+  override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getAgreement(xCorrelationId = correlationId, agreementId.toString, xForwardedFor = ip)(
+      BearerToken(bearerToken)
+    )
+    result <- invoker
+      .invoke(request, s"Retrieving agreement by id = $agreementId")
+      .recoverWith {
+        case err: ApiError[_] if err.code == 404 => Future.failed(AgreementNotFound(agreementId.toString))
+      }
+  } yield result
 
   override def getAgreements(
     producerId: Option[String] = None,
@@ -40,22 +38,18 @@ class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: A
     eserviceId: Option[String] = None,
     descriptorId: Option[String] = None,
     states: List[AgreementState] = Nil
-  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = {
-
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getAgreements(
-        xCorrelationId = correlationId,
-        xForwardedFor = ip,
-        producerId = producerId,
-        consumerId = consumerId,
-        eserviceId = eserviceId,
-        descriptorId = descriptorId,
-        states = states
-      )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, "Retrieving agreements")
-    } yield result
-
-  }
+  )(implicit contexts: Seq[(String, String)]): Future[Seq[Agreement]] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getAgreements(
+      xCorrelationId = correlationId,
+      xForwardedFor = ip,
+      producerId = producerId,
+      consumerId = consumerId,
+      eserviceId = eserviceId,
+      descriptorId = descriptorId,
+      states = states
+    )(BearerToken(bearerToken))
+    result <- invoker.invoke(request, "Retrieving agreements")
+  } yield result
 
 }

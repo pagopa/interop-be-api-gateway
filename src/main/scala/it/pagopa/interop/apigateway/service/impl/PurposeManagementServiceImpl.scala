@@ -20,30 +20,26 @@ class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: Purpo
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
-  override def getPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] = {
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(BearerToken(bearerToken))
-      result <- invoker
-        .invoke(request, "Invoking getPurpose")
-        .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(PurposeNotFound(purposeId)) }
-    } yield result
-  }
+  override def getPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(BearerToken(bearerToken))
+    result <- invoker
+      .invoke(request, "Invoking getPurpose")
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(PurposeNotFound(purposeId)) }
+  } yield result
 
   override def getPurposes(eserviceId: UUID, consumerId: UUID)(implicit
     contexts: Seq[(String, String)]
-  ): Future[Purposes] = {
-    for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getPurposes(
-        xCorrelationId = correlationId,
-        xForwardedFor = ip,
-        eserviceId.some,
-        consumerId.some,
-        Nil
-      )(BearerToken(bearerToken))
-      result <- invoker.invoke(request, "Invoking getPurposes")
-    } yield result
-  }
+  ): Future[Purposes] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getPurposes(
+      xCorrelationId = correlationId,
+      xForwardedFor = ip,
+      eserviceId.some,
+      consumerId.some,
+      Nil
+    )(BearerToken(bearerToken))
+    result <- invoker.invoke(request, "Invoking getPurposes")
+  } yield result
 
 }
