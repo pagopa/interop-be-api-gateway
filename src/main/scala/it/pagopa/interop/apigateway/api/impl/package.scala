@@ -2,7 +2,6 @@ package it.pagopa.interop.apigateway.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.StatusCode
 import cats.data.Validated
 import cats.implicits._
 import it.pagopa.interop.agreementmanagement.client.model.{
@@ -87,36 +86,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
-  final val serviceErrorCodePrefix: String = "013"
-  final val defaultProblemType: String     = "about:blank"
-  final val defaultErrorMessage: String    = "Unknown error"
-
-  def problemOf(httpError: StatusCode, error: ComponentError): Problem =
-    Problem(
-      `type` = defaultProblemType,
-      status = httpError.intValue,
-      title = httpError.defaultMessage,
-      errors = Seq(
-        ProblemError(
-          code = s"$serviceErrorCodePrefix-${error.code}",
-          detail = Option(error.getMessage).getOrElse(defaultErrorMessage)
-        )
-      )
-    )
-
-  def problemOf(httpError: StatusCode, errors: List[ComponentError]): Problem =
-    Problem(
-      `type` = defaultProblemType,
-      status = httpError.intValue,
-      title = httpError.defaultMessage,
-      errors = errors.map(error =>
-        ProblemError(
-          code = s"$serviceErrorCodePrefix-${error.code}",
-          detail = Option(error.getMessage).getOrElse(defaultErrorMessage)
-        )
-      )
-    )
-
   implicit class EnrichedPurpose(private val purpose: PurposeManagementApiPurpose) extends AnyVal {
     def toModel: Try[Purpose] =
       purpose.versions
@@ -194,7 +163,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit class EnrichedEService(private val eService: CatalogManagementApiEService) extends AnyVal {
     def latestAvailableDescriptor: Future[CatalogManagementApiDescriptor] =
-      eService.descriptors.sortBy(_.version.toInt).lastOption.toFuture(MissingAvailableDescriptor(eService.id.toString))
+      eService.descriptors
+        .filter(_.state != CatalogManagementApiDescriptorState.DRAFT)
+        .sortBy(_.version.toInt)
+        .lastOption
+        .toFuture(MissingAvailableDescriptor(eService.id))
   }
 
   implicit class EnrichedEServiceAttributeValue(private val attribute: CatalogManagementApiAttributeValue)
@@ -321,8 +294,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit class EnrichedEvent(private val events: NotifierApiEvents) extends AnyVal {
-    def toModel: Try[Events] =
-      Success(Events(lastEventId = events.lastEventId, events = events.events.map(toEventModel)))
+    def toModel: Events = Events(lastEventId = events.lastEventId, events = events.events.map(toEventModel))
 
     private[this] def toEventModel(event: NotifierApiEvent): Event = Event(
       eventId = event.eventId,
