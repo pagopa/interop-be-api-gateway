@@ -2397,6 +2397,11 @@ components:
           maxLength: 64
           pattern: '^[ -~]{0,64}$'
           type: string
+        correlationId:
+          description: Unique identifier of the request
+          example: '53af4f2d-0c87-41ef-a645-b726a821852b'
+          maxLength: 64
+          type: string
         detail:
           description: A human readable explanation of the problem.
           example: Request took too long to complete.
