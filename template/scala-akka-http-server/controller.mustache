@@ -104,12 +104,12 @@ complete(HttpEntity(ContentTypes.`application/json`, buildinfo.BuildInfo.toJson)
 }
 
   def swaggerRoute: Route =
-    pathPrefix("api-gateway" / interfaceVersion / "swagger") {
+    pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
       getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
     }
 
   def interfaceRoute: Route =
-    pathPrefix("api-gateway" / interfaceVersion / openApiFileName) {
+    pathPrefix("{{projectName}}" / interfaceVersion / openApiFileName) {
       getFromFile(tmpFile)
     }
 
