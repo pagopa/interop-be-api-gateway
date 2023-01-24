@@ -43,6 +43,12 @@ generateCode := {
 
 }
 
+val runStandalone = inputKey[Unit]("Run the app using standalone configuration")
+runStandalone := {
+  task(System.setProperty("config.file", "src/main/resources/application-standalone.conf")).value
+  (Compile / run).evaluated
+}
+
 (Compile / compile) := ((Compile / compile) dependsOn generateCode).value
 (Test / test)       := ((Test / test) dependsOn generateCode).value
 
