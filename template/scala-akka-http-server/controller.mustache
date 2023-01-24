@@ -20,7 +20,7 @@ import scala.collection.mutable
 
 class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classname}}{{^-last}}, {{/-last}}{{/operations}}{{/apis}}{{/apiInfo}}, validationExceptionToRoute: Option[ValidationReport => Route] = None)(implicit system: ActorSystem) {
 private final val openApiFileName: String = "interface-specification.yml"
-private final val devEndpointsEnabled: Boolean = true //Option(System.getenv("DEV_ENDPOINTS_ENABLED")).flatMap(_.toBooleanOption).getOrElse(false)
+private final val devEndpointsEnabled: Boolean = Option(System.getenv("DEV_ENDPOINTS_ENABLED")).flatMap(_.toBooleanOption).getOrElse(false)
 val interfaceVersion = buildinfo.BuildInfo.interfaceVersion
 
 private val mf = new DefaultMustacheFactory
