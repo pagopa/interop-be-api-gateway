@@ -103,14 +103,19 @@ complete(HttpEntity(ContentTypes.`application/json`, buildinfo.BuildInfo.toJson)
 }
 }
 
-def swaggerRoute: Route =
-pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
-getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
-}
+  def swaggerRoute: Route =
+    pathPrefix("{{projectName}}" / interfaceVersion / "swagger") {
+      getFromResourceDirectory("swagger-ui") ~ getFromFile(tmpFile)
+    }
+
+  def interfaceRoute: Route =
+    pathPrefix("{{projectName}}" / interfaceVersion / openApiFileName) {
+      getFromFile(tmpFile)
+    }
 
 val devRoutes: Route = getBuildInfo ~ swaggerRoute
 
-lazy val appRoutes: Route = pathPrefix("{{projectName}}" / interfaceVersion) {
+lazy val appRoutes: Route = interfaceRoute ~ pathPrefix("{{projectName}}" / interfaceVersion) {
 toStrictEntity(strictnessTimeout) {
 extractRequest { request =>
 validationFunction(request) {
