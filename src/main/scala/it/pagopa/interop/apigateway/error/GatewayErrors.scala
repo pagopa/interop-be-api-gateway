@@ -7,7 +7,7 @@ import java.util.UUID
 object GatewayErrors {
 
   final case object ProducerAndConsumerParamMissing
-      extends ComponentError("0003", "You should pass either producerId or consumerId")
+      extends ComponentError("0003", "Either producerId or consumerId required")
 
   final case class EServiceDescriptorNotFound(eserviceId: String, descriptorId: String)
       extends ComponentError("0004", s"Descriptor $descriptorId not found for e-service $eserviceId")

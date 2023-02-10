@@ -21,7 +21,7 @@ import it.pagopa.interop.catalogmanagement.client.model.{
 import it.pagopa.interop.commons
 import it.pagopa.interop.commons.jwt.M2M_ROLE
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
-import it.pagopa.interop.commons.utils.AkkaUtils.{getOrganizationIdFuture, getOrganizationIdFutureUUID}
+import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
 import it.pagopa.interop.commons.utils.OpenapiUtils.parseArrayParameters
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationForbidden
@@ -118,18 +118,8 @@ final case class GatewayApiServiceImpl(
     logger.info(operationLabel)
 
     val result: Future[Agreements] = for {
-      organizationId  <- getOrganizationIdFuture(contexts)
-      params          <- (producerId, consumerId) match {
-        // TODO If this check is still required, shouldn't be moved to agreement process?
-        case (producer @ Some(_), None)                   => Future.successful((producer, Some(organizationId)))
-        case (None, consumer @ Some(_))                   => Future.successful((Some(organizationId), consumer))
-        case (Some(`organizationId`), consumer @ Some(_)) => Future.successful((Some(organizationId), consumer))
-        case (producer @ Some(_), Some(`organizationId`)) => Future.successful((producer, Some(organizationId)))
-        case (None, None)                                 => Future.failed(ProducerAndConsumerParamMissing)
-        // TODO! case (Some(x), Some(y)) if x === y
-        case _                                            => Future.failed(OperationForbidden)
-      }
-      (producer, consumer) = params
+      // Safe condition to reduce data volume, it can be removed once the pagination will be used
+      _               <- Future.failed(ProducerAndConsumerParamMissing).whenA(producerId.isEmpty && consumerId.isEmpty)
       agreementStates <- parseArrayParameters(states)
         .traverse(AgreementManagementDependency.AgreementState.fromValue)
         .toFuture
@@ -137,8 +127,8 @@ final case class GatewayApiServiceImpl(
         if (agreementStates.nonEmpty) agreementStates
         else List(PENDING, ACTIVE, SUSPENDED, ARCHIVED, MISSING_CERTIFIED_ATTRIBUTES)
       rawAgreements <- agreementManagementService.getAgreements(
-        producer,
-        consumer,
+        producerId,
+        consumerId,
         eServiceId,
         descriptorId,
         safeAgreementStates
