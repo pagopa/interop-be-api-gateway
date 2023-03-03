@@ -173,6 +173,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Purpose retrieved
@@ -291,6 +292,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Agreement retrieved
@@ -526,6 +528,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Attribute retrieved
@@ -860,6 +863,7 @@ paths:
           name: eserviceId
           schema:
             type: string
+            format: uuid
           required: true
       responses:
         '200':
@@ -1202,18 +1206,22 @@ paths:
           name: producerId
           schema:
             type: string
+            format: uuid
         - in: query
           name: consumerId
           schema:
             type: string
+            format: uuid
         - in: query
           name: eserviceId
           schema:
             type: string
+            format: uuid
         - in: query
           name: descriptorId
           schema:
             type: string
+            format: uuid
         - in: query
           name: states
           description: comma separated sequence of agreement states to filter the response with
