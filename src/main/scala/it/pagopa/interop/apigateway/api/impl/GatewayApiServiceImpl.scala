@@ -518,4 +518,10 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerKey: ToEntityMarshaller[Key],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = ???
+
+  override def getKeysEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = ???
 }
