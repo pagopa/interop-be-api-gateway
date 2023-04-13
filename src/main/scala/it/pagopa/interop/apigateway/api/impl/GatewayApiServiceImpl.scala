@@ -512,4 +512,10 @@ final case class GatewayApiServiceImpl(
    */
   private def extractCategoryIpa(attributes: Seq[AttributeManagementApiAttribute]): String =
     attributes.find(_.origin == "IPA".some).map(_.name).getOrElse("Unknown")
+
+  override def getJWKPublicKey(kid: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerKey: ToEntityMarshaller[Key],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = ???
 }
