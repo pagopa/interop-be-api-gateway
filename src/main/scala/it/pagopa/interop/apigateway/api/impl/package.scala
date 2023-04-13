@@ -85,7 +85,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val attributesFormat: RootJsonFormat[Attributes]                         = jsonFormat3(Attributes)
 
   implicit val otherPrimeInfoFormat: RootJsonFormat[OtherPrimeInfo] = jsonFormat3(OtherPrimeInfo)
-  implicit val keyFormat: RootJsonFormat[Key]                       = jsonFormat22(Key)
+  implicit val jwkFormat: RootJsonFormat[JWK]                       = jsonFormat22(JWK)
 
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 

@@ -2027,7 +2027,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Key'
+                $ref: '#/components/schemas/JWK'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -2548,7 +2548,7 @@ components:
         - eventType
         - objectType
         - objectId
-    Key:
+    JWK:
       description: 'Models a JWK'
       type: object
       properties:

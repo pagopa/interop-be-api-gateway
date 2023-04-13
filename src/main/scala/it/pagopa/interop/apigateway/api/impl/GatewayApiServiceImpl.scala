@@ -515,7 +515,7 @@ final case class GatewayApiServiceImpl(
 
   override def getJWKPublicKey(kid: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerKey: ToEntityMarshaller[Key],
+    toEntityMarshallerKey: ToEntityMarshaller[JWK],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = ???
 
