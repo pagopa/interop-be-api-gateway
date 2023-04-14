@@ -2536,13 +2536,27 @@ components:
         eventId:
           type: integer
           format: int64
+          description: |
+            Event identifier.
+            This value is also used to sort the events in chronological order.
         eventType:
           type: string
+          description: |
+            Describes the kind of the event (e.g. ADDED, DELETED, UPDATED)
         objectType:
           type: string
+          description: |
+            Describes which object is involved in the event (e.g. PURPOSE, AGREEMENT, KEY)
         objectId:
           additionalProperties:
             type: string
+          description: | 
+            Contains the identifiers of the object involved in the event
+            Examples:
+            
+            { "agreementId" :  "007523dc-7ec8-4ce4-9e29-d70bf4eda769" }
+            
+            { "kid" : "ajsdkjaskd_asjkdhaskdhj29_eueU" }
       required:
         - eventId
         - eventType
