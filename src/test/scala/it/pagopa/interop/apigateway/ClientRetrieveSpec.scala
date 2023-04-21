@@ -27,7 +27,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         description = Some("A Client Description"),
         purposes = Seq.empty,
         relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER
+        kind = AuthorizationManagement.ClientKind.CONSUMER,
+        createdAt = timestamp
       )
 
       val expectedClient: Client = Client(id = client.id, consumerId = client.consumerId)
@@ -98,7 +99,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
           )
         ),
         relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER
+        kind = AuthorizationManagement.ClientKind.CONSUMER,
+        createdAt = timestamp
       )
 
       val eService: CatalogManagement.EService = CatalogManagement.EService(
@@ -168,7 +170,8 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
           )
         ),
         relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER
+        kind = AuthorizationManagement.ClientKind.CONSUMER,
+        createdAt = timestamp
       )
 
       val eService: CatalogManagement.EService = CatalogManagement.EService(

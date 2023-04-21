@@ -9,6 +9,7 @@ import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
 
+import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,6 +25,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockNotifierService: NotifierService                                       = mock[NotifierService]
   val mockTenantProcessService: TenantProcessService                             = mock[TenantProcessService]
   val mockTenantManagementService: TenantManagementService                       = mock[TenantManagementService]
+  val timestamp: OffsetDateTime                                                  = OffsetDateTime.now()
 
   val service: GatewayApiServiceImpl =
     GatewayApiServiceImpl(
