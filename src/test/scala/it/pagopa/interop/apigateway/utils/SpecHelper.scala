@@ -5,6 +5,7 @@ import it.pagopa.interop.apigateway.api.impl.GatewayApiServiceImpl
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.authorizationmanagement.client.{model => AuthorizationManagement}
 import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.commons.cqrs.service.ReadModelService
 import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
 import spray.json.DefaultJsonProtocol
@@ -12,6 +13,7 @@ import spray.json.DefaultJsonProtocol
 import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random
 
 trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFactory {
 
@@ -26,6 +28,7 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
   val mockTenantProcessService: TenantProcessService                             = mock[TenantProcessService]
   val mockTenantManagementService: TenantManagementService                       = mock[TenantManagementService]
   val timestamp: OffsetDateTime                                                  = OffsetDateTime.now()
+  val readModel: ReadModelService                                                = mock[ReadModelService]
 
   val service: GatewayApiServiceImpl =
     GatewayApiServiceImpl(
@@ -37,8 +40,11 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
       mockPurposeManagementService,
       mockNotifierService,
       mockTenantProcessService,
-      mockTenantManagementService
+      mockTenantManagementService,
+      readModel
     )(ExecutionContext.global)
+
+  def randomString(): String = Random.alphanumeric.take(40).mkString
 
   def mockClientRetrieve(clientId: UUID, result: AuthorizationManagement.Client)(implicit
     contexts: Seq[(String, String)]

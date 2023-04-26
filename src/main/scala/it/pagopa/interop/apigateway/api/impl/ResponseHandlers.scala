@@ -197,4 +197,14 @@ object ResponseHandlers extends AkkaResponses {
       case Failure(ex: AttributeAlreadyExists)      => conflict(ex, logMessage)
       case Failure(ex)                              => internalServerError(ex, logMessage)
     }
+
+  def getKeyJWKfromKIdResponse[T](logMessage: String)(
+    success: T => Route
+  )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
+    result match {
+      case Success(key)             => success(key)
+      case Failure(ex: KeyNotFound) => notFound(ex, logMessage)
+      case Failure(ex)              => internalServerError(ex, logMessage)
+    }
+
 }
