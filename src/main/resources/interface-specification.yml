@@ -1500,9 +1500,9 @@ paths:
     get:
       tags:
         - gateway
-      summary: Retrieve key's JWK
-      description: Retrieve the JWK of the key with Id equal to kId
-      operationId: getKeyJWKfromKId
+      summary: Retrieve key in JWK format
+      description: Retrieve the JWK by kid
+      operationId: getJWKByKid
       security:
         - bearerAuth: [ ]
       parameters:

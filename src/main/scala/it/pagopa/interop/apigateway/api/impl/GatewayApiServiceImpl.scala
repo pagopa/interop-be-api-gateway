@@ -525,7 +525,7 @@ final case class GatewayApiServiceImpl(
     logger.info(operationLabel)
 
     val result: Future[Key] = for {
-      maybeKey <- readModel.findOne[Key]("keys", Filters.eq("data.kId", kId))
+      maybeKey <- readModel.findOne[Key]("keys", Filters.eq("data.kid", kId))
       key      <- maybeKey.toFuture(KeyNotFound(kId))
     } yield key
 
