@@ -516,21 +516,21 @@ final case class GatewayApiServiceImpl(
   private def extractCategoryIpa(attributes: Seq[AttributeManagementApiAttribute]): String =
     attributes.find(_.origin == "IPA".some).map(_.name).getOrElse("Unknown")
 
-  override def getKeyJWKfromKId(kId: String)(implicit
+  override def getJWKByKid(kid: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerKey: ToEntityMarshaller[Key],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
-    val operationLabel = s"Retrieving JWK of key with kId: $kId"
+    val operationLabel = s"Retrieving JWK of key with kId: $kid"
     logger.info(operationLabel)
 
     val result: Future[Key] = for {
-      maybeKey <- readModel.findOne[Key]("keys", Filters.eq("data.kid", kId))
-      key      <- maybeKey.toFuture(KeyNotFound(kId))
+      maybeKey <- readModel.findOne[Key]("keys", Filters.eq("data.kid", kid))
+      key      <- maybeKey.toFuture(KeyNotFound(kid))
     } yield key
 
     onComplete(result) {
-      getKeyJWKfromKIdResponse[Key](operationLabel)(getKeyJWKfromKId200)
+      getKeyJWKfromKIdResponse[Key](operationLabel)(getJWKByKid200)
     }
   }
 }

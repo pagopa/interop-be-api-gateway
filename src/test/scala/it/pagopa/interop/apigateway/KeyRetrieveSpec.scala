@@ -15,12 +15,12 @@ class KeyRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestRout
   "Key retrieve" should {
     "fail if the requester does not have M2M role" in {
       val requesterOrganizationId = UUID.randomUUID()
-      val kId                     = randomString()
+      val kid                     = randomString()
 
       implicit val contexts: Seq[(String, String)] =
         Seq(USER_ROLES -> "admin", ORGANIZATION_ID_CLAIM -> requesterOrganizationId.toString)
 
-      Get() ~> service.getKeyJWKfromKId(kId) ~> check {
+      Get() ~> service.getJWKByKid(kid) ~> check {
         status shouldEqual StatusCodes.Forbidden
       }
     }

@@ -1496,7 +1496,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/keys/{kId}':
+  '/keys/{kid}':
     get:
       tags:
         - gateway
@@ -1506,7 +1506,7 @@ paths:
       security:
         - bearerAuth: [ ]
       parameters:
-        - name: kId
+        - name: kid
           in: path
           description: the unique identifier of the key (kid) to lookup
           required: true
@@ -1538,6 +1538,19 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /status:
     get:
       security: []
