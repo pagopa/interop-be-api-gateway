@@ -518,19 +518,19 @@ final case class GatewayApiServiceImpl(
 
   override def getJWKByKid(kid: String)(implicit
     contexts: Seq[(String, String)],
-    toEntityMarshallerKey: ToEntityMarshaller[Key],
+    toEntityMarshallerKey: ToEntityMarshaller[JWK],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
   ): Route = authorize {
     val operationLabel = s"Retrieving JWK of key with kId: $kid"
     logger.info(operationLabel)
 
-    val result: Future[Key] = for {
-      maybeKey <- readModel.findOne[Key]("keys", Filters.eq("data.kid", kid))
+    val result: Future[JWK] = for {
+      maybeKey <- readModel.findOne[JWK]("keys", Filters.eq("data.kid", kid))
       key      <- maybeKey.toFuture(KeyNotFound(kid))
     } yield key
 
     onComplete(result) {
-      getKeyJWKfromKIdResponse[Key](operationLabel)(getJWKByKid200)
+      getKeyJWKfromKIdResponse[JWK](operationLabel)(getJWKByKid200)
     }
   }
 }

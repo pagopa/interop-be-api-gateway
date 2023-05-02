@@ -1518,7 +1518,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Key'
+                $ref: '#/components/schemas/JWK'
           headers:
             'X-Rate-Limit-Limit':
               schema:
@@ -2210,7 +2210,7 @@ components:
         id:
           description: external organization identifier (es codice ipa)
           type: string
-    Key:
+    JWK:
       description: 'Models a JWK'
       type: object
       properties:
