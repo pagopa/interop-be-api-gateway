@@ -19,6 +19,7 @@ import it.pagopa.interop.catalogmanagement.client.model.{
   EServiceDescriptorState => CatalogManagementDescriptorState
 }
 import it.pagopa.interop.commons
+import it.pagopa.interop.commons.cqrs.service.ReadModelService
 import it.pagopa.interop.commons.jwt.M2M_ROLE
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.AkkaUtils.getOrganizationIdFutureUUID
@@ -28,6 +29,7 @@ import it.pagopa.interop.commons.utils.errors.GenericComponentErrors.OperationFo
 import it.pagopa.interop.purposemanagement.client.model.{Purpose => PurposeManagementApiPurpose}
 import it.pagopa.interop.tenantmanagement.client.model.{Tenant => TenantManagementApiTenant}
 import it.pagopa.interop.tenantprocess.client.model.{ExternalId, M2MAttributeSeed, M2MTenantSeed}
+import org.mongodb.scala.model.Filters
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,7 +43,8 @@ final case class GatewayApiServiceImpl(
   purposeManagementService: PurposeManagementService,
   notifierService: NotifierService,
   tenantProcessService: TenantProcessService,
-  tenantManagementService: TenantManagementService
+  tenantManagementService: TenantManagementService,
+  readModel: ReadModelService
 )(implicit ec: ExecutionContext)
     extends GatewayApiService {
 
@@ -512,4 +515,22 @@ final case class GatewayApiServiceImpl(
    */
   private def extractCategoryIpa(attributes: Seq[AttributeManagementApiAttribute]): String =
     attributes.find(_.origin == "IPA".some).map(_.name).getOrElse("Unknown")
+
+  override def getJWKByKid(kid: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerKey: ToEntityMarshaller[JWK],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize {
+    val operationLabel = s"Retrieving JWK of key with kId: $kid"
+    logger.info(operationLabel)
+
+    val result: Future[JWK] = for {
+      maybeKey <- readModel.findOne[JWK]("keys", Filters.eq("data.kid", kid))
+      key      <- maybeKey.toFuture(KeyNotFound(kid))
+    } yield key
+
+    onComplete(result) {
+      getKeyJWKfromKIdResponse[JWK](operationLabel)(getJWKByKid200)
+    }
+  }
 }

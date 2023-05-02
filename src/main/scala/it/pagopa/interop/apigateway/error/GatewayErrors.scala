@@ -81,4 +81,5 @@ object GatewayErrors {
 
   final case class ClientNotFound(clientId: UUID) extends ComponentError("0030", s"Client $clientId not found")
 
+  final case class KeyNotFound(kId: String) extends ComponentError("0031", s"Key with kId $kId not found")
 }

@@ -1,6 +1,7 @@
 package it.pagopa.interop.apigateway.common
 
 import com.typesafe.config.{Config, ConfigFactory}
+import it.pagopa.interop.commons.cqrs.model.ReadModelConfig
 import it.pagopa.interop.commons.ratelimiter.model.LimiterConfig
 
 import java.util.concurrent.TimeUnit
@@ -40,6 +41,13 @@ object ApplicationConfiguration {
       redisPort = config.getInt("interop-api-gateway.rate-limiter.redis-port"),
       timeout = FiniteDuration(timeout.toMillis, TimeUnit.MILLISECONDS)
     )
+  }
+
+  val readModelConfig: ReadModelConfig = {
+    val connectionString: String = config.getString("api-gateway.read-model.db.connection-string")
+    val dbName: String           = config.getString("api-gateway.read-model.db.name")
+
+    ReadModelConfig(connectionString, dbName)
   }
 
   require(jwtAudience.nonEmpty, "Audience cannot be empty")

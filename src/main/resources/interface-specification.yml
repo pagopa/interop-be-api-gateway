@@ -1496,6 +1496,61 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+  '/keys/{kid}':
+    get:
+      tags:
+        - gateway
+      summary: Retrieve key in JWK format
+      description: Retrieve the JWK by kid
+      operationId: getJWKByKid
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: kid
+          in: path
+          description: the unique identifier of the key (kid) to lookup
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: returns the corresponding JWK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWK'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
+        '404':
+          description: Key not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          headers:
+            'X-Rate-Limit-Limit':
+              schema:
+                type: integer
+              description: Max allowed requests within time interval
+            'X-Rate-Limit-Remaining':
+              schema:
+                type: integer
+              description: Remaining requests within time interval
+            'X-Rate-Limit-Interval':
+              schema:
+                type: integer
+              description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
   /status:
     get:
       security: []
@@ -2155,6 +2210,80 @@ components:
         id:
           description: external organization identifier (es codice ipa)
           type: string
+    JWK:
+      description: 'Models a JWK'
+      type: object
+      properties:
+        kty:
+          type: string
+        key_ops:
+          type: array
+          items:
+            type: string
+        use:
+          type: string
+        alg:
+          type: string
+        kid:
+          type: string
+        x5u:
+          type: string
+          minLength: 1
+        x5t:
+          type: string
+        'x5t#S256':
+          type: string
+        x5c:
+          type: array
+          items:
+            type: string
+        crv:
+          type: string
+        x:
+          type: string
+        'y':
+          type: string
+        d:
+          type: string
+        k:
+          type: string
+        'n':
+          type: string
+        e:
+          type: string
+        p:
+          type: string
+        q:
+          type: string
+        dp:
+          type: string
+        dq:
+          type: string
+        qi:
+          type: string
+        oth:
+          uniqueItems: false
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/OtherPrimeInfo'
+      required:
+        - kty
+        - kid
+    OtherPrimeInfo:
+      title: OtherPrimeInfo
+      type: object
+      properties:
+        r:
+          type: string
+        d:
+          type: string
+        t:
+          type: string
+      required:
+        - r
+        - d
+        - t
     Organization:
       type: object
       description: organization model

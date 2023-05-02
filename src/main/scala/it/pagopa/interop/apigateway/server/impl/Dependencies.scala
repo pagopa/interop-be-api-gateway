@@ -40,6 +40,7 @@ import it.pagopa.interop.partyregistryproxy.client.api.InstitutionApi
 import it.pagopa.interop.purposemanagement.client.api.PurposeApi
 import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
 import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
+import it.pagopa.interop.commons.cqrs.service.{MongoDbReadModelService, ReadModelService}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
@@ -55,6 +56,8 @@ trait Dependencies {
     val logger: LoggerTakingImplicit[ContextFieldsToLog] = Logger.takingImplicit[ContextFieldsToLog](this.getClass)
     ec => contexts => RateLimiterDirective.rateLimiterDirective(rateLimiter)(contexts)(ec, serviceCode, logger)
   }
+
+  val readModelService: ReadModelService = new MongoDbReadModelService(ApplicationConfiguration.readModelConfig)
 
   def agreementManagementService(
     blockingEc: ExecutionContextExecutor
@@ -152,7 +155,8 @@ trait Dependencies {
         purposeManagementService(blockingEc),
         notifierService(blockingEc),
         tenantProcessService(blockingEc),
-        tenantManagementService(blockingEc)
+        tenantManagementService(blockingEc),
+        readModelService
       ),
       GatewayApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
