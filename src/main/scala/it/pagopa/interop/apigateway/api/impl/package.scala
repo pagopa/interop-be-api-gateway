@@ -38,8 +38,8 @@ import it.pagopa.interop.purposemanagement.client.model.{
 import it.pagopa.interop.tenantmanagement.client.model.{
   CertifiedTenantAttribute,
   DeclaredTenantAttribute,
-  VerifiedTenantAttribute,
-  Tenant
+  Tenant,
+  VerifiedTenantAttribute
 }
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
@@ -301,7 +301,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     private[this] def toEventModel(event: NotifierApiEvent): Event = Event(
       eventId = event.eventId,
       eventType = event.eventType,
-      objectType = event.objectType,
+      objectType = event.objectType.toString,
       objectId = event.objectId
     )
   }

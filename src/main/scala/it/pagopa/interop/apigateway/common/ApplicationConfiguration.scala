@@ -44,8 +44,8 @@ object ApplicationConfiguration {
   }
 
   val readModelConfig: ReadModelConfig = {
-    val connectionString: String = config.getString("api-gateway.read-model.db.connection-string")
-    val dbName: String           = config.getString("api-gateway.read-model.db.name")
+    val connectionString: String = config.getString("interop-api-gateway.read-model.db.connection-string")
+    val dbName: String           = config.getString("interop-api-gateway.read-model.db.name")
 
     ReadModelConfig(connectionString, dbName)
   }
