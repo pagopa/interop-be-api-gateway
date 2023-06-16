@@ -109,7 +109,6 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "EService",
         description = "Description",
         technology = CatalogManagement.EServiceTechnology.REST,
-        attributes = CatalogManagement.Attributes(Seq.empty, Seq.empty, Seq.empty),
         descriptors = Seq.empty
       )
 
@@ -180,7 +179,6 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "EService",
         description = "Description",
         technology = CatalogManagement.EServiceTechnology.REST,
-        attributes = CatalogManagement.Attributes(Seq.empty, Seq.empty, Seq.empty),
         descriptors = Seq.empty
       )
 
