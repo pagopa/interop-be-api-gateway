@@ -45,7 +45,7 @@ object Dependencies {
       namespace %% "interop-be-tenant-process-client" % tenantProcessVersion
     lazy val tenantManagement =
       namespace %% "interop-be-tenant-management-client" % tenantManagementVersion
-    lazy val commonsCqrs  = namespace %% "interop-commons-cqrs"  % commonsVersion
+    lazy val commonsCqrs  = namespace %% "interop-commons-cqrs"         % commonsVersion
     lazy val commonsUtils = namespace %% "interop-commons-utils"        % commonsVersion
     lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
     lazy val rateLimiter  = namespace %% "interop-commons-rate-limiter" % commonsVersion
