@@ -502,9 +502,9 @@ final case class GatewayApiServiceImpl(
       tenant           <- tenantManagementService.getTenantById(eService.producerId)
       latestDescriptor <- eService.latestAvailableDescriptor
       state            <- latestDescriptor.state.toModel.toFuture
-      allAttributesIds = eService.attributes.allIds
+      allAttributesIds = latestDescriptor.attributes.allIds
       attributes <- attributeRegistryManagementService.getBulkAttributes(allAttributesIds)
-      attributes <- eService.attributes.toModel(attributes.attributes).toFuture
+      attributes <- latestDescriptor.attributes.toModel(attributes.attributes).toFuture
       category   <- extractCategoryIpa(tenant)
     } yield EService(
       id = eService.id,
