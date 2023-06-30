@@ -1,11 +1,11 @@
 package it.pagopa.interop.apigateway.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementmanagement.client.api.AgreementApi
-import it.pagopa.interop.agreementmanagement.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.agreementmanagement.client.model.{Agreement, AgreementState}
+import it.pagopa.interop.agreementprocess.client.api.AgreementApi
+import it.pagopa.interop.agreementprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementState}
 import it.pagopa.interop.apigateway.error.GatewayErrors.AgreementNotFound
-import it.pagopa.interop.apigateway.service.{AgreementManagementInvoker, AgreementManagementService}
+import it.pagopa.interop.apigateway.service.{AgreementProcessInvoker, AgreementProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -13,16 +13,15 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class AgreementManagementServiceImpl(invoker: AgreementManagementInvoker, api: AgreementApi)(implicit
-  ec: ExecutionContext
-) extends AgreementManagementService {
+class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: AgreementApi)(implicit ec: ExecutionContext)
+    extends AgreementProcessService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request = api.getAgreement(xCorrelationId = correlationId, agreementId.toString, xForwardedFor = ip)(
+    request = api.getAgreementById(xCorrelationId = correlationId, agreementId.toString, xForwardedFor = ip)(
       BearerToken(bearerToken)
     )
     result <- invoker

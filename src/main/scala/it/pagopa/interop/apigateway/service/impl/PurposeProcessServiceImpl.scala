@@ -3,19 +3,19 @@ package it.pagopa.interop.apigateway.service.impl
 import cats.implicits._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.PurposeNotFound
-import it.pagopa.interop.apigateway.service.{PurposeManagementInvoker, PurposeManagementService}
+import it.pagopa.interop.apigateway.service.{PurposeProcessInvoker, PurposeProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
-import it.pagopa.interop.purposemanagement.client.api.PurposeApi
-import it.pagopa.interop.purposemanagement.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.purposemanagement.client.model.{Purpose, Purposes}
+import it.pagopa.interop.purposeprocess.client.api.PurposeApi
+import it.pagopa.interop.purposeprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.purposeprocess.client.model.{Purpose, Purposes}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class PurposeManagementServiceImpl(invoker: PurposeManagementInvoker, api: PurposeApi)(implicit ec: ExecutionContext)
-    extends PurposeManagementService {
+class PurposeProcessServiceImpl(invoker: PurposeProcessInvoker, api: PurposeApi)(implicit ec: ExecutionContext)
+    extends PurposeProcessService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)

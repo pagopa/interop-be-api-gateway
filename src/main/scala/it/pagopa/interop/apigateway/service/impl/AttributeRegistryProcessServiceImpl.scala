@@ -7,10 +7,10 @@ import it.pagopa.interop.apigateway.error.GatewayErrors.{
   AttributeByOriginNotFound,
   AttributeNotFound
 }
-import it.pagopa.interop.apigateway.service.{AttributeRegistryManagementInvoker, AttributeRegistryManagementService}
-import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.interop.attributeregistrymanagement.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute, AttributeSeed, AttributesResponse}
+import it.pagopa.interop.apigateway.service.{AttributeRegistryProcessInvoker, AttributeRegistryProcessService}
+import it.pagopa.interop.attributeregistryprocess.client.api.AttributeApi
+import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute, AttributeSeed, AttributesResponse}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -18,9 +18,9 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class AttributeRegistryManagementServiceImpl(invoker: AttributeRegistryManagementInvoker, api: AttributeApi)(implicit
+class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvoker, api: AttributeApi)(implicit
   ec: ExecutionContext
-) extends AttributeRegistryManagementService {
+) extends AttributeRegistryProcessService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)

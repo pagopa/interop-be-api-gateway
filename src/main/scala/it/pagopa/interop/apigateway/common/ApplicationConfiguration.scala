@@ -13,15 +13,14 @@ object ApplicationConfiguration {
 
   val serverPort: Int = config.getInt("interop-api-gateway.port")
 
-  val agreementManagementURL: String         = config.getString("interop-api-gateway.services.agreement-management")
-  val authorizationManagementURL: String     = config.getString("interop-api-gateway.services.authorization-management")
-  val catalogManagementURL: String           = config.getString("interop-api-gateway.services.catalog-management")
-  val attributeRegistryManagementURL: String =
-    config.getString("interop-api-gateway.services.attribute-registry-management")
-  val partyRegistryProxyURL: String          = config.getString("interop-api-gateway.services.party-registry-proxy")
-  val purposeManagementURL: String           = config.getString("interop-api-gateway.services.purpose-management")
-  val tenantProcessURL: String               = config.getString("interop-api-gateway.services.tenant-process")
-  val tenantManagementURL: String            = config.getString("interop-api-gateway.services.tenant-management")
+  val agreementProcessURL: String         = config.getString("interop-api-gateway.services.agreement-process")
+  val authorizationProcessURL: String     = config.getString("interop-api-gateway.services.authorization-process")
+  val catalogProcessURL: String           = config.getString("interop-api-gateway.services.catalog-process")
+  val attributeRegistryProcessURL: String =
+    config.getString("interop-api-gateway.services.attribute-registry-process")
+  val partyRegistryProxyURL: String       = config.getString("interop-api-gateway.services.party-registry-proxy")
+  val purposeProcessURL: String           = config.getString("interop-api-gateway.services.purpose-process")
+  val tenantProcessURL: String            = config.getString("interop-api-gateway.services.tenant-process")
 
   val notifierURL: String = config.getString("interop-api-gateway.services.notifier")
 

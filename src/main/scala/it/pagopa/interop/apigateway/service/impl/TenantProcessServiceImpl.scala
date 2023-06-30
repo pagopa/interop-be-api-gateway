@@ -2,7 +2,11 @@ package it.pagopa.interop.apigateway.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors
-import it.pagopa.interop.apigateway.error.GatewayErrors.TenantAttributeNotFound
+import it.pagopa.interop.apigateway.error.GatewayErrors.{
+  TenantAttributeNotFound,
+  TenantNotFound,
+  TenantByOriginNotFound
+}
 import it.pagopa.interop.apigateway.service.{TenantProcessInvoker, TenantProcessService}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -20,6 +24,29 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
+
+  override def getTenantByExternalId(origin: String, code: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Tenant] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getTenantByExternalId(
+      xCorrelationId = correlationId,
+      origin = origin,
+      code = code,
+      xForwardedFor = ip
+    )(BearerToken(bearerToken))
+    result <- invoker
+      .invoke(request, "Retrieve Tenant by external ID")
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(TenantByOriginNotFound(origin, code)) }
+  } yield result
+
+  override def getTenantById(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] = for {
+    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    request = api.getTenant(xCorrelationId = correlationId, id = tenantId, xForwardedFor = ip)(BearerToken(bearerToken))
+    result <- invoker
+      .invoke(request, "Retrieve Tenant by ID")
+      .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(TenantNotFound(tenantId)) }
+  } yield result
 
   override def upsertTenant(m2MTenantSeed: M2MTenantSeed)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {

@@ -1,6 +1,6 @@
 package it.pagopa.interop.apigateway.service
 
-import it.pagopa.interop.agreementmanagement.client.model.{Agreement, AgreementState}
+import it.pagopa.interop.agreementprocess.client.model.{Agreement, AgreementState}
 import it.pagopa.interop.apigateway.error.GatewayErrors.{
   ActiveAgreementByEServiceAndConsumerNotFound,
   MultipleAgreementForEServiceAndConsumer
@@ -9,7 +9,7 @@ import it.pagopa.interop.apigateway.error.GatewayErrors.{
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-trait AgreementManagementService {
+trait AgreementProcessService {
 
   def getAgreements(
     producerId: Option[String] = None,

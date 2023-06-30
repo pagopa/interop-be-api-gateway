@@ -1,12 +1,12 @@
 package it.pagopa.interop.apigateway.service.impl
 
-import cats.implicits._
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.EServiceNotFound
-import it.pagopa.interop.apigateway.service.{CatalogManagementInvoker, CatalogManagementService}
-import it.pagopa.interop.catalogmanagement.client.api.EServiceApi
-import it.pagopa.interop.catalogmanagement.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.catalogmanagement.client.model.EService
+import it.pagopa.interop.apigateway.service.{CatalogProcessInvoker, CatalogProcessService}
+import it.pagopa.interop.catalogprocess.client.api.{ProcessApi => EServiceApi}
+import it.pagopa.interop.catalogprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.catalogprocess.client.model.EService
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -14,15 +14,15 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class CatalogManagementServiceImpl(invoker: CatalogManagementInvoker, api: EServiceApi)(implicit ec: ExecutionContext)
-    extends CatalogManagementService {
+class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi)(implicit ec: ExecutionContext)
+    extends CatalogProcessService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getEService(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request = api.getEService(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(
+    request = api.getEServiceById(xCorrelationId = correlationId, eServiceId.toString, xForwardedFor = ip)(
       BearerToken(bearerToken)
     )
     result <- invoker

@@ -2,10 +2,10 @@ package it.pagopa.interop.apigateway.service.impl
 
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.ClientNotFound
-import it.pagopa.interop.apigateway.service.{AuthorizationManagementInvoker, AuthorizationManagementService}
-import it.pagopa.interop.authorizationmanagement.client.api.ClientApi
-import it.pagopa.interop.authorizationmanagement.client.invoker.{ApiError, BearerToken}
-import it.pagopa.interop.authorizationmanagement.client.model.Client
+import it.pagopa.interop.apigateway.service.{AuthorizationProcessInvoker, AuthorizationProcessService}
+import it.pagopa.interop.authorizationprocess.client.api.ClientApi
+import it.pagopa.interop.authorizationprocess.client.invoker.{ApiError, BearerToken}
+import it.pagopa.interop.authorizationprocess.client.model.Client
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -13,16 +13,16 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthorizationManagementServiceImpl(invoker: AuthorizationManagementInvoker, api: ClientApi)(implicit
+class AuthorizationProcessServiceImpl(invoker: AuthorizationProcessInvoker, api: ClientApi)(implicit
   ec: ExecutionContext
-) extends AuthorizationManagementService {
+) extends AuthorizationProcessService {
 
   implicit val logger: LoggerTakingImplicit[ContextFieldsToLog] =
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getClientById(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request = api.getClient(xCorrelationId = correlationId, clientId = clientId, xForwardedFor = ip)(
+    request = api.getClient(xCorrelationId = correlationId, clientId = clientId.toString, xForwardedFor = ip)(
       BearerToken(bearerToken)
     )
     result <- invoker

@@ -1,11 +1,11 @@
 package it.pagopa.interop.apigateway.service
 
-import it.pagopa.interop.attributeregistrymanagement.client.model.{Attribute, AttributeSeed, AttributesResponse}
+import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute, AttributeSeed, AttributesResponse}
 
 import java.util.UUID
 import scala.concurrent.Future
 
-trait AttributeRegistryManagementService {
+trait AttributeRegistryProcessService {
 
   def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute]
   def getBulkAttributes(attributeIds: Set[UUID])(implicit contexts: Seq[(String, String)]): Future[AttributesResponse]
