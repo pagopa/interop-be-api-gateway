@@ -119,6 +119,10 @@ final case class GatewayApiServiceImpl(
     logger.info(operationLabel)
 
     val result: Future[Agreements] = for {
+      producerUuid    <- producerId.traverse(_.toFutureUUID)
+      consumerUuid    <- consumerId.traverse(_.toFutureUUID)
+      eServiceUuid    <- eServiceId.traverse(_.toFutureUUID)
+      descriptorUuid  <- descriptorId.traverse(_.toFutureUUID)
       // Safe condition to reduce data volume, it can be removed once the pagination will be used
       _               <- Future.failed(ProducerAndConsumerParamMissing).whenA(producerId.isEmpty && consumerId.isEmpty)
       agreementStates <- parseArrayParameters(states)
@@ -127,13 +131,13 @@ final case class GatewayApiServiceImpl(
       safeAgreementStates =
         if (agreementStates.nonEmpty) agreementStates
         else List(PENDING, ACTIVE, SUSPENDED, ARCHIVED, MISSING_CERTIFIED_ATTRIBUTES)
-      rawAgreements <- agreementProcessService.getAgreements(
-        producerId,
-        consumerId,
-        eServiceId,
-        descriptorId,
+      rawAgreements <- agreementProcessService.getAllAgreements(
+        producerUuid,
+        consumerUuid,
+        eServiceUuid,
+        descriptorUuid,
         safeAgreementStates
-      )(contexts)
+      )
       agreements    <- rawAgreements.traverse(_.toModel).toFuture
     } yield Agreements(agreements)
 
@@ -152,7 +156,7 @@ final case class GatewayApiServiceImpl(
 
     val result: Future[Attribute] = for {
       attributeUUID <- attributeId.toFutureUUID
-      attribute     <- attributeRegistryProcessService.getAttributeById(attributeUUID)(contexts)
+      attribute     <- attributeRegistryProcessService.getAttributeById(attributeUUID)
     } yield attribute.toModel
 
     onComplete(result) {
@@ -170,7 +174,7 @@ final case class GatewayApiServiceImpl(
 
     val result: Future[EService] = for {
       eServiceUUID <- eServiceId.toFutureUUID
-      eService     <- catalogProcessService.getEService(eServiceUUID)(contexts)
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
       apiEService  <- enhanceEService(eService)
     } yield apiEService
 
@@ -196,7 +200,7 @@ final case class GatewayApiServiceImpl(
     val result: Future[EServices] = for {
       tenant    <- tenantProcessService.getTenantByExternalId(origin, externalId)
       attribute <- attributeRegistryProcessService.getAttributeByOriginAndCode(attributeOrigin, attributeCode)
-      eServices <- catalogProcessService.getEServices(tenant.id, attribute.id)
+      eServices <- catalogProcessService.getAllEServices(tenant.id, attribute.id)
       allowedEServices = eServices.filter(_.descriptors.nonEmpty)
       apiEServices <- Future.traverse(allowedEServices)(enhanceEService)
     } yield EServices(apiEServices)
@@ -216,7 +220,7 @@ final case class GatewayApiServiceImpl(
 
     val result: Future[EServiceDescriptor] = for {
       eServiceUUID <- eServiceId.toFutureUUID
-      eService     <- catalogProcessService.getEService(eServiceUUID)(contexts)
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
       descriptor   <- eService.descriptors
         .find(_.id.toString == descriptorId)
         .toFuture(EServiceDescriptorNotFound(eServiceId, descriptorId))
@@ -240,7 +244,7 @@ final case class GatewayApiServiceImpl(
 
     val result: Future[EServiceDescriptors] = for {
       eServiceUUID <- eServiceId.toFutureUUID
-      eService     <- catalogProcessService.getEService(eServiceUUID)(contexts)
+      eService     <- catalogProcessService.getEServiceById(eServiceUUID)
       descriptors  <- eService.descriptors
         .filter(_.state != CatalogProcessDescriptorState.DRAFT)
         .traverse(_.toModel)
@@ -313,7 +317,7 @@ final case class GatewayApiServiceImpl(
 
     val result: Future[Agreement] = for {
       purposeUUID <- purposeId.toFutureUUID
-      purpose     <- purposeProcessService.getPurpose(purposeUUID)(contexts)
+      purpose     <- purposeProcessService.getPurpose(purposeUUID)
       agreement   <- agreementProcessService.getActiveOrSuspendedAgreementByConsumerAndEserviceId(
         purpose.consumerId,
         purpose.eserviceId
@@ -339,13 +343,13 @@ final case class GatewayApiServiceImpl(
       purpose: PurposeProcessApiPurpose
     ): Future[PurposeProcessApiPurpose] =
       catalogProcessService
-        .getEService(purpose.eserviceId)(contexts)
+        .getEServiceById(purpose.eserviceId)
         .map(_.producerId == subject)
         .ifM(Future.successful(purpose), Future.failed(OperationForbidden))
 
     def getPurposeIfAuthorized(organizationId: UUID, purposeId: UUID): Future[PurposeProcessApiPurpose] =
       purposeProcessService
-        .getPurpose(purposeId)(contexts)
+        .getPurpose(purposeId)
         .flatMap(purpose =>
           if (purpose.consumerId == organizationId) Future.successful(purpose)
           else validatePurposeIfSubjectIsProducer(organizationId, purpose)
@@ -374,9 +378,9 @@ final case class GatewayApiServiceImpl(
     val result: Future[Purposes] = for {
       agreementUUID  <- agreementId.toFutureUUID
       agreement      <- agreementProcessService.getAgreementById(agreementUUID)
-      clientPurposes <- purposeProcessService.getPurposes(agreement.eserviceId, agreement.consumerId)(contexts)
-      purposes       <- clientPurposes.toModel.toFuture
-    } yield purposes
+      clientPurposes <- purposeProcessService.getAllPurposes(agreement.eserviceId, agreement.consumerId)
+      purposes       <- clientPurposes.traverse(_.toModel).toFuture
+    } yield Purposes(purposes)
 
     onComplete(result) {
       getAgreementPurposesResponse(operationLabel)(getAgreementPurposes200, Purposes(purposes = Seq.empty))
@@ -394,7 +398,7 @@ final case class GatewayApiServiceImpl(
     val result: Future[Attribute] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
       certifierId    <- tenantProcessService
-        .getTenant(organizationId)
+        .getTenantById(organizationId)
         .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
         .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
       attribute      <- attributeRegistryProcessService
@@ -429,7 +433,7 @@ final case class GatewayApiServiceImpl(
         client.purposes
           .findM(purpose =>
             catalogProcessService
-              .getEService(purpose.states.eservice.eserviceId)(contexts)
+              .getEServiceById(purpose.states.eservice.eserviceId)
               .map(_.producerId == organizationId)
           )
           .ensure(OperationForbidden)(_.nonEmpty)
@@ -438,7 +442,7 @@ final case class GatewayApiServiceImpl(
     val result: Future[Client] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
       clientUUID     <- clientId.toFutureUUID
-      client         <- authorizationProcessService.getClientById(clientUUID)(contexts)
+      client         <- authorizationProcessService.getClientById(clientUUID)
       _              <- isAllowed(client, organizationId)
     } yield client.toModel
 
@@ -502,7 +506,7 @@ final case class GatewayApiServiceImpl(
       state            <- latestDescriptor.state.toModel.toFuture
       allAttributesIds = latestDescriptor.attributes.allIds
       attributes <- attributeRegistryProcessService.getBulkAttributes(allAttributesIds)
-      attributes <- latestDescriptor.attributes.toModel(attributes.attributes).toFuture
+      attributes <- latestDescriptor.attributes.toModel(attributes).toFuture
       category   <- extractCategoryIpa(tenant)
     } yield EService(
       id = eService.id,

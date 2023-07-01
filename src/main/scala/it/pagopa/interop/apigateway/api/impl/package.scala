@@ -2,8 +2,7 @@ package it.pagopa.interop.apigateway.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import cats.data.Validated
-import cats.implicits._
+import cats.syntax.all._
 import it.pagopa.interop.agreementprocess.client.model.{
   Agreement => AgreementProcessApiAgreement,
   AgreementState => AgreementProcessApiAgreementState
@@ -30,11 +29,7 @@ import it.pagopa.interop.commons.utils.SprayCommonFormats.uuidFormat
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.errors.ComponentError
 import it.pagopa.interop.notifier.client.model.{Event => NotifierApiEvent, Events => NotifierApiEvents}
-import it.pagopa.interop.purposeprocess.client.model.{
-  PurposeVersionState,
-  Purpose => PurposeProcessApiPurpose,
-  Purposes => PurposeProcessApiPurposes
-}
+import it.pagopa.interop.purposeprocess.client.model.{PurposeVersionState, Purpose => PurposeProcessApiPurpose}
 import it.pagopa.interop.tenantprocess.client.model.{
   CertifiedTenantAttribute,
   DeclaredTenantAttribute,
@@ -43,9 +38,8 @@ import it.pagopa.interop.tenantprocess.client.model.{
 }
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
-import java.util.UUID
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+import java.util.UUID
 
 package object impl extends SprayJsonSupport with DefaultJsonProtocol {
 
@@ -89,12 +83,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   final val entityMarshallerProblem: ToEntityMarshaller[Problem] = sprayJsonMarshaller[Problem]
 
   implicit class EnrichedPurpose(private val purpose: PurposeProcessApiPurpose) extends AnyVal {
-    def toModel: Try[Purpose] =
+    def toModel: Either[Throwable, Purpose] = {
       purpose.versions
         .sortBy(_.createdAt)
         .find(p => p.state == PurposeVersionState.ACTIVE || p.state == PurposeVersionState.SUSPENDED)
-        .toTry(MissingActivePurposeVersion(purpose.id))
-        .map(version => Purpose(id = purpose.id, throughput = version.dailyCalls, state = version.state.toModel))
+        .fold(Left(MissingActivePurposeVersion(purpose.id)): Either[Throwable, Purpose]) { v =>
+          Right(Purpose(id = purpose.id, throughput = v.dailyCalls, state = v.state.toModel))
+        }
+    }
   }
 
   implicit class EnrichedPurposeVersionState(private val state: PurposeVersionState) extends AnyVal {
@@ -104,16 +100,6 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       case PurposeVersionState.ARCHIVED             => PurposeState.ARCHIVED
       case PurposeVersionState.WAITING_FOR_APPROVAL => PurposeState.WAITING_FOR_APPROVAL
       case PurposeVersionState.SUSPENDED            => PurposeState.SUSPENDED
-    }
-  }
-
-  implicit class EnrichedPurposes(private val purposes: PurposeProcessApiPurposes) extends AnyVal {
-    def toModel: Try[Purposes] = purposes.results.toList.traverse(_.toModel.toValidated.toValidatedNel) match {
-      case Validated.Valid(purposes) => Success(Purposes(purposes))
-      case Validated.Invalid(errors) =>
-        Failure(MissingActivePurposesVersions(errors.toList.collect { case MissingActivePurposeVersion(purposeId) =>
-          purposeId
-        }))
     }
   }
 

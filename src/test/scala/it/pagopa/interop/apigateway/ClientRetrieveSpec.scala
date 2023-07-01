@@ -4,8 +4,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import it.pagopa.interop.apigateway.utils.SpecHelper
 import org.scalatest.wordspec.AnyWordSpecLike
-import it.pagopa.interop.authorizationmanagement.client.{model => AuthorizationManagement}
-import it.pagopa.interop.catalogmanagement.client.{model => CatalogManagement}
+import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
+import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
 import it.pagopa.interop.apigateway.api.impl._
 import it.pagopa.interop.apigateway.model.Client
 import it.pagopa.interop.commons.jwt.M2M_ROLE
@@ -18,16 +18,16 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
 
   "Client retrieve" should {
     "succeed if the requester is the consumer of the Client" in {
-      val requesterOrganizationId                = UUID.randomUUID()
-      val clientId                               = UUID.randomUUID()
-      val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
+      val requesterOrganizationId             = UUID.randomUUID()
+      val clientId                            = UUID.randomUUID()
+      val client: AuthorizationProcess.Client = AuthorizationProcess.Client(
         id = clientId,
         consumerId = requesterOrganizationId,
         name = "A Client",
         description = Some("A Client Description"),
         purposes = Seq.empty,
-        relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER,
+        relationshipsIds = Set.empty,
+        kind = AuthorizationProcess.ClientKind.CONSUMER,
         createdAt = timestamp
       )
 
@@ -68,47 +68,47 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
       val versionId               = UUID.randomUUID()
       val purposeId               = UUID.randomUUID()
 
-      val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
+      val client: AuthorizationProcess.Client = AuthorizationProcess.Client(
         id = clientId,
         consumerId = consumerId,
         name = "A Client",
         description = Some("A Client Description"),
         purposes = Seq(
-          AuthorizationManagement.Purpose(states =
-            AuthorizationManagement.ClientStatesChain(
+          AuthorizationProcess.ClientPurpose(states =
+            AuthorizationProcess.ClientStatesChain(
               id = UUID.randomUUID(),
-              eservice = AuthorizationManagement.ClientEServiceDetails(
+              eservice = AuthorizationProcess.ClientEServiceDetails(
                 eserviceId = eServiceId,
                 descriptorId = descriptorId,
-                state = AuthorizationManagement.ClientComponentState.ACTIVE,
+                state = AuthorizationProcess.ClientComponentState.ACTIVE,
                 audience = Seq("aud"),
                 voucherLifespan = 1
               ),
-              agreement = AuthorizationManagement.ClientAgreementDetails(
+              agreement = AuthorizationProcess.ClientAgreementDetails(
                 eserviceId = eServiceId,
                 consumerId = consumerId,
                 agreementId = agreementId,
-                state = AuthorizationManagement.ClientComponentState.ACTIVE
+                state = AuthorizationProcess.ClientComponentState.ACTIVE
               ),
-              purpose = AuthorizationManagement.ClientPurposeDetails(
+              purpose = AuthorizationProcess.ClientPurposeDetails(
                 purposeId = purposeId,
                 versionId = versionId,
-                state = AuthorizationManagement.ClientComponentState.ACTIVE
+                state = AuthorizationProcess.ClientComponentState.ACTIVE
               )
             )
           )
         ),
-        relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER,
+        relationshipsIds = Set.empty,
+        kind = AuthorizationProcess.ClientKind.CONSUMER,
         createdAt = timestamp
       )
 
-      val eService: CatalogManagement.EService = CatalogManagement.EService(
+      val eService: CatalogProcess.EService = CatalogProcess.EService(
         id = eServiceId,
         producerId = requesterOrganizationId,
         name = "EService",
         description = "Description",
-        technology = CatalogManagement.EServiceTechnology.REST,
+        technology = CatalogProcess.EServiceTechnology.REST,
         descriptors = Seq.empty
       )
 
@@ -138,47 +138,47 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
       val versionId               = UUID.randomUUID()
       val purposeId               = UUID.randomUUID()
 
-      val client: AuthorizationManagement.Client = AuthorizationManagement.Client(
+      val client: AuthorizationProcess.Client = AuthorizationProcess.Client(
         id = clientId,
         consumerId = consumerId,
         name = "A Client",
         description = Some("A Client Description"),
         purposes = Seq(
-          AuthorizationManagement.Purpose(states =
-            AuthorizationManagement.ClientStatesChain(
+          AuthorizationProcess.ClientPurpose(states =
+            AuthorizationProcess.ClientStatesChain(
               id = UUID.randomUUID(),
-              eservice = AuthorizationManagement.ClientEServiceDetails(
+              eservice = AuthorizationProcess.ClientEServiceDetails(
                 eserviceId = eServiceId,
                 descriptorId = descriptorId,
-                state = AuthorizationManagement.ClientComponentState.ACTIVE,
+                state = AuthorizationProcess.ClientComponentState.ACTIVE,
                 audience = Seq("aud"),
                 voucherLifespan = 1
               ),
-              agreement = AuthorizationManagement.ClientAgreementDetails(
+              agreement = AuthorizationProcess.ClientAgreementDetails(
                 eserviceId = eServiceId,
                 consumerId = consumerId,
                 agreementId = agreementId,
-                state = AuthorizationManagement.ClientComponentState.ACTIVE
+                state = AuthorizationProcess.ClientComponentState.ACTIVE
               ),
-              purpose = AuthorizationManagement.ClientPurposeDetails(
+              purpose = AuthorizationProcess.ClientPurposeDetails(
                 purposeId = purposeId,
                 versionId = versionId,
-                state = AuthorizationManagement.ClientComponentState.ACTIVE
+                state = AuthorizationProcess.ClientComponentState.ACTIVE
               )
             )
           )
         ),
-        relationships = Set.empty,
-        kind = AuthorizationManagement.ClientKind.CONSUMER,
+        relationshipsIds = Set.empty,
+        kind = AuthorizationProcess.ClientKind.CONSUMER,
         createdAt = timestamp
       )
 
-      val eService: CatalogManagement.EService = CatalogManagement.EService(
+      val eService: CatalogProcess.EService = CatalogProcess.EService(
         id = eServiceId,
         producerId = producerId,
         name = "EService",
         description = "Description",
-        technology = CatalogManagement.EServiceTechnology.REST,
+        technology = CatalogProcess.EServiceTechnology.REST,
         descriptors = Seq.empty
       )
 
