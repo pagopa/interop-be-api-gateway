@@ -9,7 +9,7 @@ import it.pagopa.interop.apigateway.error.GatewayErrors.{
 import it.pagopa.interop.apigateway.service.{AttributeRegistryProcessInvoker, AttributeRegistryProcessService}
 import it.pagopa.interop.attributeregistryprocess.client.api.AttributeApi
 import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiRequest, ApiError, BearerToken}
-import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute, AttributeSeed}
+import it.pagopa.interop.attributeregistryprocess.client.model.{Attributes, Attribute, AttributeSeed}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -74,16 +74,18 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
       }
   } yield result
 
-  override def getBulkAttributes(
-    attributeIds: Set[UUID]
-  )(implicit contexts: Seq[(String, String)]): Future[Seq[Attribute]] = for {
+  override def getBulkAttributes(attributeIds: Set[UUID], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Attributes] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[Seq[Attribute]] = api.getBulkedAttributes(
+    request: ApiRequest[Attributes] = api.getBulkedAttributes(
       xCorrelationId = correlationId,
-      ids = Some(attributeIds),
+      requestBody = attributeIds.map(_.toString).toSeq,
+      offset = offset,
+      limit = limit,
       xForwardedFor = ip
     )(BearerToken(bearerToken))
-    attributesString                    = attributeIds.mkString("[", ",", "]")
+    attributesString                = attributeIds.mkString("[", ",", "]")
     result <- invoker.invoke(request, s"Retrieving bulk attributes $attributesString")
   } yield result
 

@@ -87,7 +87,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       purpose.versions
         .sortBy(_.createdAt)
         .find(p => p.state == PurposeVersionState.ACTIVE || p.state == PurposeVersionState.SUSPENDED)
-        .fold(Left(MissingActivePurposeVersion(purpose.id)): Either[Throwable, Purpose]) { v =>
+        .fold[Either[Throwable, Purpose]](Left(MissingActivePurposeVersion(purpose.id))) { v =>
           Right(Purpose(id = purpose.id, throughput = v.dailyCalls, state = v.state.toModel))
         }
     }

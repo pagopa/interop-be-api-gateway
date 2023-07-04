@@ -3,7 +3,7 @@ package it.pagopa.interop.apigateway.api.impl
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.server.Directives.onComplete
 import akka.http.scaladsl.server.Route
-import cats.implicits._
+import cats.syntax.all._
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.agreementprocess.client.{model => AgreementProcessDependency}
 import it.pagopa.interop.apigateway.api.GatewayApiService
@@ -119,10 +119,10 @@ final case class GatewayApiServiceImpl(
     logger.info(operationLabel)
 
     val result: Future[Agreements] = for {
-      producerUuid    <- producerId.traverse(_.toFutureUUID)
-      consumerUuid    <- consumerId.traverse(_.toFutureUUID)
-      eServiceUuid    <- eServiceId.traverse(_.toFutureUUID)
-      descriptorUuid  <- descriptorId.traverse(_.toFutureUUID)
+      producerUuid    <- Future.traverse(producerId.toList)(_.toFutureUUID)
+      consumerUuid    <- Future.traverse(consumerId.toList)(_.toFutureUUID)
+      eServiceUuid    <- Future.traverse(eServiceId.toList)(_.toFutureUUID)
+      descriptorUuid  <- Future.traverse(descriptorId.toList)(_.toFutureUUID)
       // Safe condition to reduce data volume, it can be removed once the pagination will be used
       _               <- Future.failed(ProducerAndConsumerParamMissing).whenA(producerId.isEmpty && consumerId.isEmpty)
       agreementStates <- parseArrayParameters(states)
@@ -132,10 +132,10 @@ final case class GatewayApiServiceImpl(
         if (agreementStates.nonEmpty) agreementStates
         else List(PENDING, ACTIVE, SUSPENDED, ARCHIVED, MISSING_CERTIFIED_ATTRIBUTES)
       rawAgreements <- agreementProcessService.getAllAgreements(
-        producerUuid,
-        consumerUuid,
-        eServiceUuid,
-        descriptorUuid,
+        producerUuid.headOption,
+        consumerUuid.headOption,
+        eServiceUuid.headOption,
+        descriptorUuid.headOption,
         safeAgreementStates
       )
       agreements    <- rawAgreements.traverse(_.toModel).toFuture
@@ -505,7 +505,7 @@ final case class GatewayApiServiceImpl(
       latestDescriptor <- eService.latestAvailableDescriptor
       state            <- latestDescriptor.state.toModel.toFuture
       allAttributesIds = latestDescriptor.attributes.allIds
-      attributes <- attributeRegistryProcessService.getBulkAttributes(allAttributesIds)
+      attributes <- attributeRegistryProcessService.loadBulkAttributes(allAttributesIds)
       attributes <- latestDescriptor.attributes.toModel(attributes).toFuture
       category   <- extractCategoryIpa(tenant)
     } yield EService(
