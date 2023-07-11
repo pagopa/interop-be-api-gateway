@@ -21,11 +21,9 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
 
   override def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[EService] = api.getEServiceById(
-      xCorrelationId = correlationId,
-      eServiceId.toString,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
+    request: ApiRequest[EService] = api.getEServiceById(xCorrelationId = correlationId, eServiceId, xForwardedFor = ip)(
+      BearerToken(bearerToken)
+    )
     result <- invoker
       .invoke(request, "Retrieving E-Service")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(EServiceNotFound(eServiceId)) }

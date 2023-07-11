@@ -505,7 +505,7 @@ final case class GatewayApiServiceImpl(
       latestDescriptor <- eService.latestAvailableDescriptor
       state            <- latestDescriptor.state.toModel.toFuture
       allAttributesIds = latestDescriptor.attributes.allIds
-      attributes <- attributeRegistryProcessService.loadBulkAttributes(allAttributesIds)
+      attributes <- attributeRegistryProcessService.getAllBulkAttributes(allAttributesIds)
       attributes <- latestDescriptor.attributes.toModel(attributes).toFuture
       category   <- extractCategoryIpa(tenant)
     } yield EService(
