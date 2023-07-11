@@ -27,24 +27,22 @@ object Dependencies {
   private[this] object pagopa {
     lazy val namespace = "it.pagopa"
 
-    lazy val agreementManagement =
-      namespace %% "interop-be-agreement-management-client" % agreementManagementVersion
-    lazy val authorizationManagement =
-      namespace %% "interop-be-authorization-management-client" % authorizationManagementVersion
-    lazy val catalogManagement =
-      namespace %% "interop-be-catalog-management-client" % catalogManagementVersion
+    lazy val agreementProcess =
+      namespace %% "interop-be-agreement-process-client" % agreementProcessVersion
+    lazy val authorizationProcess =
+      namespace %% "interop-be-authorization-process-client" % authorizationProcessVersion
+    lazy val catalogProcess =
+      namespace %% "interop-be-catalog-process-client" % catalogProcessVersion
     lazy val partyRegistryProxy =
       namespace %% "interop-be-party-registry-proxy-client" % partyRegistryProxyVersion
-    lazy val attributeRegistryManagement =
-      namespace %% "interop-be-attribute-registry-management-client" % attributeRegistryManagementVersion
-    lazy val purposeManagement =
-      namespace %% "interop-be-purpose-management-client" % purposeManagementVersion
+    lazy val attributeRegistryProcess =
+      namespace %% "interop-be-attribute-registry-process-client" % attributeRegistryProcessVersion
+    lazy val purposeProcess =
+      namespace %% "interop-be-purpose-process-client" % purposeProcessVersion
     lazy val notifier =
       namespace %% "interop-be-notifier-client" % notifierVersion
     lazy val tenantProcess =
       namespace %% "interop-be-tenant-process-client" % tenantProcessVersion
-    lazy val tenantManagement =
-      namespace %% "interop-be-tenant-management-client" % tenantManagementVersion
     lazy val commonsCqrs  = namespace %% "interop-commons-cqrs"  % commonsVersion
     lazy val commonsUtils = namespace %% "interop-commons-utils"        % commonsVersion
     lazy val jwt          = namespace %% "interop-commons-jwt"          % commonsVersion
@@ -114,19 +112,18 @@ object Dependencies {
       cats.core                          % Compile,
       logback.classic                    % Compile,
       mustache.mustache                  % Compile,
-      pagopa.agreementManagement         % Compile,
-      pagopa.authorizationManagement     % Compile,
-      pagopa.attributeRegistryManagement % Compile,
+      pagopa.agreementProcess            % Compile,
+      pagopa.authorizationProcess        % Compile,
+      pagopa.attributeRegistryProcess    % Compile,
       pagopa.commonsUtils                % Compile,
       pagopa.commonsCqrs                 % Compile,
-      pagopa.catalogManagement           % Compile,
+      pagopa.catalogProcess              % Compile,
       pagopa.jwt                         % Compile,
       pagopa.rateLimiter                 % Compile,
       pagopa.notifier                    % Compile,
       pagopa.partyRegistryProxy          % Compile,
-      pagopa.purposeManagement           % Compile,
+      pagopa.purposeProcess              % Compile,
       pagopa.tenantProcess               % Compile,
-      pagopa.tenantManagement            % Compile,
       akka.httpTestkit                   % Test,
       akka.streamTestkit                 % Test,
       akka.testkit                       % Test,

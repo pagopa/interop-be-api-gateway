@@ -6,47 +6,46 @@ import it.pagopa.interop._
 import scala.concurrent.ExecutionContextExecutor
 
 package object service {
-  type CatalogManagementInvoker           = catalogmanagement.client.invoker.ApiInvoker
-  type AgreementManagementInvoker         = agreementmanagement.client.invoker.ApiInvoker
-  type AuthorizationManagementInvoker     = authorizationmanagement.client.invoker.ApiInvoker
-  type AttributeRegistryManagementInvoker = attributeregistrymanagement.client.invoker.ApiInvoker
-  type PurposeManagementInvoker           = purposemanagement.client.invoker.ApiInvoker
-  type NotifierInvoker                    = notifier.client.invoker.ApiInvoker
-  type TenantProcessInvoker               = tenantprocess.client.invoker.ApiInvoker
-  type TenantManagementInvoker            = tenantmanagement.client.invoker.ApiInvoker
-  type PartyRegistryInvoker               = partyregistryproxy.client.invoker.ApiInvoker
+  type CatalogProcessInvoker           = catalogprocess.client.invoker.ApiInvoker
+  type AgreementProcessInvoker         = agreementprocess.client.invoker.ApiInvoker
+  type AuthorizationProcessInvoker     = authorizationprocess.client.invoker.ApiInvoker
+  type AttributeRegistryProcessInvoker = attributeregistryprocess.client.invoker.ApiInvoker
+  type PurposeProcessInvoker           = purposeprocess.client.invoker.ApiInvoker
+  type NotifierInvoker                 = notifier.client.invoker.ApiInvoker
+  type TenantProcessInvoker            = tenantprocess.client.invoker.ApiInvoker
+  type PartyRegistryInvoker            = partyregistryproxy.client.invoker.ApiInvoker
 
-  object AgreementManagementInvoker {
-    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): AgreementManagementInvoker =
-      agreementmanagement.client.invoker.ApiInvoker(agreementmanagement.client.api.EnumsSerializers.all, blockingEc)
+  object AgreementProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): AgreementProcessInvoker =
+      agreementprocess.client.invoker.ApiInvoker(agreementprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
-  object AuthorizationManagementInvoker {
-    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): AuthorizationManagementInvoker =
-      authorizationmanagement.client.invoker
-        .ApiInvoker(authorizationmanagement.client.api.EnumsSerializers.all, blockingEc)
+  object AuthorizationProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): AuthorizationProcessInvoker =
+      authorizationprocess.client.invoker
+        .ApiInvoker(authorizationprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
-  object CatalogManagementInvoker {
-    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): CatalogManagementInvoker =
-      catalogmanagement.client.invoker.ApiInvoker(catalogmanagement.client.api.EnumsSerializers.all, blockingEc)
+  object CatalogProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): CatalogProcessInvoker =
+      catalogprocess.client.invoker.ApiInvoker(catalogprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
-  object AttributeRegistryManagementInvoker {
+  object AttributeRegistryProcessInvoker {
     def apply(
       blockingEc: ExecutionContextExecutor
-    )(implicit actorSystem: ActorSystem): AttributeRegistryManagementInvoker =
-      attributeregistrymanagement.client.invoker
-        .ApiInvoker(attributeregistrymanagement.client.api.EnumsSerializers.all, blockingEc)
+    )(implicit actorSystem: ActorSystem): AttributeRegistryProcessInvoker =
+      attributeregistryprocess.client.invoker
+        .ApiInvoker(attributeregistryprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
-  object PartyRegistryInvoker     {
+  object PartyRegistryInvoker  {
     def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): PartyRegistryInvoker =
       partyregistryproxy.client.invoker.ApiInvoker(partyregistryproxy.client.api.EnumsSerializers.all, blockingEc)
   }
-  object PurposeManagementInvoker {
-    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): PurposeManagementInvoker =
-      purposemanagement.client.invoker.ApiInvoker(purposemanagement.client.api.EnumsSerializers.all, blockingEc)
+  object PurposeProcessInvoker {
+    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): PurposeProcessInvoker =
+      purposeprocess.client.invoker.ApiInvoker(purposeprocess.client.api.EnumsSerializers.all, blockingEc)
   }
 
   object NotifierInvoker {
@@ -58,10 +57,4 @@ package object service {
     def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): TenantProcessInvoker =
       tenantprocess.client.invoker.ApiInvoker(tenantprocess.client.api.EnumsSerializers.all, blockingEc)
   }
-
-  object TenantManagementInvoker {
-    def apply(blockingEc: ExecutionContextExecutor)(implicit actorSystem: ActorSystem): TenantManagementInvoker =
-      tenantmanagement.client.invoker.ApiInvoker(tenantmanagement.client.api.EnumsSerializers.all, blockingEc)
-  }
-
 }

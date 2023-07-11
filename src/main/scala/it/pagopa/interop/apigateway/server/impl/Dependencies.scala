@@ -9,7 +9,7 @@ import com.atlassian.oai.validator.report.ValidationReport
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
-import it.pagopa.interop.agreementmanagement.client.api.{AgreementApi => AgreementManagementApi}
+import it.pagopa.interop.agreementprocess.client.api.{AgreementApi => AgreementProcessApi}
 import it.pagopa.interop.apigateway.api.impl.{
   GatewayApiMarshallerImpl,
   GatewayApiServiceImpl,
@@ -21,9 +21,9 @@ import it.pagopa.interop.apigateway.common.ApplicationConfiguration
 import it.pagopa.interop.apigateway.api.impl.ResponseHandlers.serviceCode
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.apigateway.service.impl._
-import it.pagopa.interop.attributeregistrymanagement.client.api.AttributeApi
-import it.pagopa.interop.authorizationmanagement.client.api.{ClientApi => AuthorizationManagementApi}
-import it.pagopa.interop.catalogmanagement.client.api.{EServiceApi => CatalogManagementApi}
+import it.pagopa.interop.attributeregistryprocess.client.api.AttributeApi
+import it.pagopa.interop.authorizationprocess.client.api.{ClientApi => AuthorizationProcessApi}
+import it.pagopa.interop.catalogprocess.client.api.{ProcessApi => CatalogProcessApi}
 import it.pagopa.interop.commons.jwt.service.JWTReader
 import it.pagopa.interop.commons.jwt.service.impl.{DefaultJWTReader, getClaimsVerifier}
 import it.pagopa.interop.commons.jwt.{JWTConfiguration, KID, PublicKeysHolder, SerializedKey}
@@ -37,8 +37,7 @@ import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
 import it.pagopa.interop.partyregistryproxy.client.api.InstitutionApi
-import it.pagopa.interop.purposemanagement.client.api.PurposeApi
-import it.pagopa.interop.tenantmanagement.client.api.{TenantApi => TenantManagementApi}
+import it.pagopa.interop.purposeprocess.client.api.PurposeApi
 import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
 import it.pagopa.interop.commons.cqrs.service.{MongoDbReadModelService, ReadModelService}
 
@@ -57,30 +56,32 @@ trait Dependencies {
     ec => contexts => RateLimiterDirective.rateLimiterDirective(rateLimiter)(contexts)(ec, serviceCode, logger)
   }
 
-  val readModelService: ReadModelService = new MongoDbReadModelService(ApplicationConfiguration.readModelConfig)
+  implicit val readModelService: ReadModelService = new MongoDbReadModelService(
+    ApplicationConfiguration.readModelConfig
+  )
 
-  def agreementManagementService(
+  def agreementProcessService(
     blockingEc: ExecutionContextExecutor
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
-    new AgreementManagementServiceImpl(
-      AgreementManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      AgreementManagementApi(ApplicationConfiguration.agreementManagementURL)
+    new AgreementProcessServiceImpl(
+      AgreementProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      AgreementProcessApi(ApplicationConfiguration.agreementProcessURL)
     )
 
-  def authorizationManagementService(
+  def authorizationProcessService(
     blockingEc: ExecutionContextExecutor
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
-    new AuthorizationManagementServiceImpl(
-      AuthorizationManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      AuthorizationManagementApi(ApplicationConfiguration.authorizationManagementURL)
+    new AuthorizationProcessServiceImpl(
+      AuthorizationProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      AuthorizationProcessApi(ApplicationConfiguration.authorizationProcessURL)
     )
 
-  def catalogManagementService(
+  def catalogProcessService(
     blockingEc: ExecutionContextExecutor
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
-    new CatalogManagementServiceImpl(
-      CatalogManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      CatalogManagementApi(ApplicationConfiguration.catalogManagementURL)
+    new CatalogProcessServiceImpl(
+      CatalogProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      CatalogProcessApi(ApplicationConfiguration.catalogProcessURL)
     )
 
   def notifierService(
@@ -90,12 +91,12 @@ trait Dependencies {
     EventsApi(ApplicationConfiguration.notifierURL)
   )
 
-  def attributeRegistryManagementService(
+  def attributeRegistryProcessService(
     blockingEc: ExecutionContextExecutor
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
-    new AttributeRegistryManagementServiceImpl(
-      AttributeRegistryManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      AttributeApi(ApplicationConfiguration.attributeRegistryManagementURL)
+    new AttributeRegistryProcessServiceImpl(
+      AttributeRegistryProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      AttributeApi(ApplicationConfiguration.attributeRegistryProcessURL)
     )
 
   def partyRegistryProxyService(
@@ -105,12 +106,12 @@ trait Dependencies {
       PartyRegistryInvoker(blockingEc)(actorSystem.classicSystem),
       InstitutionApi(ApplicationConfiguration.partyRegistryProxyURL)
     )
-  def purposeManagementService(
+  def purposeProcessService(
     blockingEc: ExecutionContextExecutor
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
-    new PurposeManagementServiceImpl(
-      PurposeManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      PurposeApi(ApplicationConfiguration.purposeManagementURL)
+    new PurposeProcessServiceImpl(
+      PurposeProcessInvoker(blockingEc)(actorSystem.classicSystem),
+      PurposeApi(ApplicationConfiguration.purposeProcessURL)
     )
 
   def tenantProcessService(
@@ -119,14 +120,6 @@ trait Dependencies {
     new TenantProcessServiceImpl(
       TenantProcessInvoker(blockingEc)(actorSystem.classicSystem),
       TenantProcessApi(ApplicationConfiguration.tenantProcessURL)
-    )
-
-  def tenantManagementService(
-    blockingEc: ExecutionContextExecutor
-  )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
-    new TenantManagementServiceImpl(
-      TenantManagementInvoker(blockingEc)(actorSystem.classicSystem),
-      TenantManagementApi(ApplicationConfiguration.tenantManagementURL)
     )
 
   def getJwtValidator()(implicit ec: ExecutionContext): Future[JWTReader] = JWTConfiguration.jwtReader
@@ -147,16 +140,14 @@ trait Dependencies {
   ): GatewayApi =
     new GatewayApi(
       GatewayApiServiceImpl(
-        agreementManagementService(blockingEc),
-        authorizationManagementService(blockingEc),
-        catalogManagementService(blockingEc),
-        attributeRegistryManagementService(blockingEc),
+        agreementProcessService(blockingEc),
+        authorizationProcessService(blockingEc),
+        catalogProcessService(blockingEc),
+        attributeRegistryProcessService(blockingEc),
         partyRegistryProxyService(blockingEc),
-        purposeManagementService(blockingEc),
+        purposeProcessService(blockingEc),
         notifierService(blockingEc),
-        tenantProcessService(blockingEc),
-        tenantManagementService(blockingEc),
-        readModelService
+        tenantProcessService(blockingEc)
       ),
       GatewayApiMarshallerImpl,
       jwtReader.OAuth2JWTValidatorAsContexts.flatMap(rateLimiterDirective(ec))
