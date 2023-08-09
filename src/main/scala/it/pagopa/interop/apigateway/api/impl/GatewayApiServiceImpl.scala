@@ -400,17 +400,14 @@ final case class GatewayApiServiceImpl(
       certifierId    <- tenantProcessService
         .getTenantById(organizationId)
         .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
-        .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
-      attribute      <- attributeRegistryProcessService
-        .createAttribute(
-          model.AttributeSeed(
-            name = attributeSeed.name,
-            origin = certifierId.some,
-            code = attributeSeed.code.some,
-            kind = model.AttributeKind.CERTIFIED,
-            description = attributeSeed.description
-          )
+      attribute      <- attributeRegistryProcessService.createCertifiedAttribute(
+        model.CertifiedAttributeSeed(
+          name = attributeSeed.name,
+          origin = certifierId.getOrElse(""),
+          code = attributeSeed.code,
+          description = attributeSeed.description
         )
+      )
     } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
 
     onComplete(result) {

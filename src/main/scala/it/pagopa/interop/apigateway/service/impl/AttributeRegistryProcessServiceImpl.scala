@@ -9,7 +9,7 @@ import it.pagopa.interop.apigateway.error.GatewayErrors.{
 import it.pagopa.interop.apigateway.service.{AttributeRegistryProcessInvoker, AttributeRegistryProcessService}
 import it.pagopa.interop.attributeregistryprocess.client.api.AttributeApi
 import it.pagopa.interop.attributeregistryprocess.client.invoker.{ApiRequest, ApiError, BearerToken}
-import it.pagopa.interop.attributeregistryprocess.client.model.{Attributes, Attribute, AttributeSeed}
+import it.pagopa.interop.attributeregistryprocess.client.model.{Attributes, Attribute, CertifiedAttributeSeed}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
@@ -53,22 +53,22 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
       }
   } yield result
 
-  override def createAttribute(
-    attributeSeed: AttributeSeed
+  override def createCertifiedAttribute(
+    attributeSeed: CertifiedAttributeSeed
   )(implicit contexts: Seq[(String, String)]): Future[Attribute] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[Attribute] = api.createAttribute(
+    request: ApiRequest[Attribute] = api.createCertifiedAttribute(
       xCorrelationId = correlationId,
-      attributeSeed = attributeSeed,
+      certifiedAttributeSeed = attributeSeed,
       xForwardedFor = ip
     )(BearerToken(bearerToken))
     result <- invoker
-      .invoke(request, s"Creating ${attributeSeed.kind} attribute ${attributeSeed.name}")
+      .invoke(request, s"Creating certified attribute ${attributeSeed.name}")
       .recoverWith {
         case err: ApiError[_] if err.code == 409 =>
           (attributeSeed.origin, attributeSeed.code) match {
-            case (Some(origin), Some(code)) => Future.failed(AttributeAlreadyExists(origin, code))
-            case _                          => Future.failed(err)
+            case (origin, code) => Future.failed(AttributeAlreadyExists(origin, code))
+            case _              => Future.failed(err)
           }
 
       }
