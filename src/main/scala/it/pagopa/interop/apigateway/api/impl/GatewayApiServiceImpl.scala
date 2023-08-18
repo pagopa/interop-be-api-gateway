@@ -395,19 +395,15 @@ final case class GatewayApiServiceImpl(
     val operationLabel = s"Creating certified attribute with code ${attributeSeed.code}"
     logger.info(operationLabel)
 
-    val result: Future[Attribute] = for {
-      organizationId <- getOrganizationIdFutureUUID(contexts)
-      _              <- tenantProcessService
-        .getTenantById(organizationId)
-        .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
-      attribute      <- attributeRegistryProcessService.createCertifiedAttribute(
+    val result: Future[Attribute] = attributeRegistryProcessService
+      .createCertifiedAttribute(
         CertifiedAttributeSeed(
           name = attributeSeed.name,
           code = attributeSeed.code,
           description = attributeSeed.description
         )
       )
-    } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
+      .map(attribute => Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED))
 
     onComplete(result) {
       createCertifiedAttributeResponse[Attribute](operationLabel)(createCertifiedAttribute200)

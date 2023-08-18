@@ -67,7 +67,6 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
       .recoverWith {
         case err: ApiError[_] if err.code == 409 =>
           Future.failed(AttributeAlreadyExists(attributeSeed.name, attributeSeed.code))
-        case err: ApiError[_]                    => Future.failed(err)
       }
   } yield result
 
