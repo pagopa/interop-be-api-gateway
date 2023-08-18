@@ -66,11 +66,8 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
       .invoke(request, s"Creating certified attribute ${attributeSeed.name}")
       .recoverWith {
         case err: ApiError[_] if err.code == 409 =>
-          (attributeSeed.origin, attributeSeed.code) match {
-            case (origin, code) => Future.failed(AttributeAlreadyExists(origin, code))
-            case _              => Future.failed(err)
-          }
-
+          Future.failed(AttributeAlreadyExists(attributeSeed.name, attributeSeed.code))
+        case err: ApiError[_]                    => Future.failed(err)
       }
   } yield result
 

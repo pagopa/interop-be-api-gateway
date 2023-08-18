@@ -11,7 +11,7 @@ import it.pagopa.interop.apigateway.api.impl.ResponseHandlers._
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
-import it.pagopa.interop.attributeregistryprocess.client.model
+import it.pagopa.interop.attributeregistryprocess.client.model.CertifiedAttributeSeed
 import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute => AttributeProcessApiAttribute}
 import it.pagopa.interop.authorizationprocess.client.model.{Client => AuthorizationProcessApiClient}
 import it.pagopa.interop.catalogprocess.client.model.{
@@ -397,13 +397,12 @@ final case class GatewayApiServiceImpl(
 
     val result: Future[Attribute] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)
-      certifierId    <- tenantProcessService
+      _              <- tenantProcessService
         .getTenantById(organizationId)
         .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
       attribute      <- attributeRegistryProcessService.createCertifiedAttribute(
-        model.CertifiedAttributeSeed(
+        CertifiedAttributeSeed(
           name = attributeSeed.name,
-          origin = certifierId.getOrElse(""),
           code = attributeSeed.code,
           description = attributeSeed.description
         )
