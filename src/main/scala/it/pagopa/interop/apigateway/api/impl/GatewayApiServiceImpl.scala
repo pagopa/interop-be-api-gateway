@@ -11,7 +11,7 @@ import it.pagopa.interop.apigateway.api.impl.ResponseHandlers._
 import it.pagopa.interop.apigateway.error.GatewayErrors._
 import it.pagopa.interop.apigateway.model._
 import it.pagopa.interop.apigateway.service._
-import it.pagopa.interop.attributeregistryprocess.client.model
+import it.pagopa.interop.attributeregistryprocess.client.model.CertifiedAttributeSeed
 import it.pagopa.interop.attributeregistryprocess.client.model.{Attribute => AttributeProcessApiAttribute}
 import it.pagopa.interop.authorizationprocess.client.model.{Client => AuthorizationProcessApiClient}
 import it.pagopa.interop.catalogprocess.client.model.{
@@ -395,23 +395,15 @@ final case class GatewayApiServiceImpl(
     val operationLabel = s"Creating certified attribute with code ${attributeSeed.code}"
     logger.info(operationLabel)
 
-    val result: Future[Attribute] = for {
-      organizationId <- getOrganizationIdFutureUUID(contexts)
-      certifierId    <- tenantProcessService
-        .getTenantById(organizationId)
-        .map(_.features.collectFirstSome(_.certifier).map(_.certifierId))
-        .flatMap(_.toFuture(OrganizationIsNotACertifier(organizationId)))
-      attribute      <- attributeRegistryProcessService
-        .createAttribute(
-          model.AttributeSeed(
-            name = attributeSeed.name,
-            origin = certifierId.some,
-            code = attributeSeed.code.some,
-            kind = model.AttributeKind.CERTIFIED,
-            description = attributeSeed.description
-          )
+    val result: Future[Attribute] = attributeRegistryProcessService
+      .createCertifiedAttribute(
+        CertifiedAttributeSeed(
+          name = attributeSeed.name,
+          code = attributeSeed.code,
+          description = attributeSeed.description
         )
-    } yield Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED)
+      )
+      .map(attribute => Attribute(id = attribute.id, attribute.name, kind = AttributeKind.CERTIFIED))
 
     onComplete(result) {
       createCertifiedAttributeResponse[Attribute](operationLabel)(createCertifiedAttribute200)
