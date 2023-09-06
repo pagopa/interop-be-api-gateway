@@ -542,4 +542,34 @@ final case class GatewayApiServiceImpl(
       getKeyJWKfromKIdResponse[JWK](operationLabel)(getJWKByKid200)
     }
   }
+
+  override def getEServicesCatalog(limit: Int, offset: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem],
+    toEntityMarshallerCatalogEServices: ToEntityMarshaller[CatalogEServices]
+  ): Route = {
+    val operationLabel = "Retrieving catalog of EServices"
+    logger.info(operationLabel)
+
+    val result: Future[CatalogEServices] = for {
+      pagedResults <- catalogProcessService.getEServices(
+        eServicesIds = Seq.empty,
+        producersIds = Seq.empty,
+        attributesIds = Seq.empty,
+        agreementStates = Seq.empty,
+        states = Seq.empty,
+        offset = offset,
+        limit = limit
+      )
+    } yield CatalogEServices(
+      results = pagedResults.results.map(eservice =>
+        CatalogEService(id = eservice.id, name = eservice.name, description = eservice.description)
+      ),
+      pagination = Pagination(offset = offset, limit = limit, totalCount = pagedResults.totalCount)
+    )
+
+    onComplete(result) {
+      getEservicesCatalogResponse[CatalogEServices](operationLabel)(getEServicesCatalog200)
+    }
+  }
 }
