@@ -20,7 +20,7 @@ servers:
         enum:
           - api         # Production server
           - api.dev     # Development server
-          - api.aut     # UAT server
+          - api.uat     # UAT server
 tags:
   - name: gateway
     description: Everything about your APIs
