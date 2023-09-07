@@ -13,6 +13,12 @@ info:
 servers:
   - url: '/api-gateway/{{version}}'
     description: This service is the interoperability API gateway
+  - url: 'https://api.dev.interop.pagopa.it/<version>'
+    description: dev
+  - url: 'https://api.uat.interop.pagopa.it/<version>'
+    description: uat
+  - url: 'https://api.interop.pagopa.it/<version>'
+    description: prod
 tags:
   - name: gateway
     description: Everything about your APIs
