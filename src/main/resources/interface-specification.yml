@@ -2181,37 +2181,28 @@ components:
           description: certified attributes list
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttribute'
+            type: array
+            items:
+              $ref: '#/components/schemas/EServiceAttribute'
         declared:
           description: declared attributes list
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttribute'
+            type: array
+            items:
+              $ref: '#/components/schemas/EServiceAttribute'
         verified:
           description: verified attributes list
           type: array
           items:
-            $ref: '#/components/schemas/EServiceAttribute'
+            type: array
+            items:
+              $ref: '#/components/schemas/EServiceAttribute'
       required:
         - certified
         - declared
         - verified
     EServiceAttribute:
-      description: |
-        EService attribute model.
-        In the resolution of the expression of the attribute, a single attribute is combined with other attributes 
-        with AND operator.
-        A group of attributes combined together with OR oparator; in the resolution of the expression of the attribute, 
-        it is combined with other attributes with AND operator.
-      type: object
-      properties:
-        single:
-          $ref: '#/components/schemas/EServiceAttributeValue'
-        group:
-          type: array
-          items:
-            $ref: '#/components/schemas/EServiceAttributeValue'
-    EServiceAttributeValue:
       description: attribute value
       type: object
       properties:

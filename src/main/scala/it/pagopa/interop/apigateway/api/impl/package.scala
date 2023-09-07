@@ -17,7 +17,6 @@ import it.pagopa.interop.attributeregistryprocess.client.model.{
 import it.pagopa.interop.authorizationprocess.client.model.{Client => AuthorizationProcessApiClient}
 import it.pagopa.interop.catalogprocess.client.model.{
   Attribute => CatalogProcessApiAttribute,
-  AttributeValue => CatalogProcessApiAttributeValue,
   Attributes => CatalogProcessApiAttributes,
   EService => CatalogProcessApiEService,
   EServiceDescriptor => CatalogProcessApiDescriptor,
@@ -57,12 +56,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor]   = jsonFormat11(EServiceDescriptor)
   implicit val eServiceDescriptorsFormat: RootJsonFormat[EServiceDescriptors] = jsonFormat1(EServiceDescriptors)
 
-  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
-    jsonFormat4(EServiceAttributeValue)
-  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
-  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
-  implicit val eServiceFormat: RootJsonFormat[EService]                             = jsonFormat9(EService)
-  implicit val eServicesFormat: RootJsonFormat[EServices]                           = jsonFormat1(EServices)
+  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]   = jsonFormat4(EServiceAttribute)
+  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes] = jsonFormat3(EServiceAttributes)
+  implicit val eServiceFormat: RootJsonFormat[EService]                     = jsonFormat9(EService)
+  implicit val eServicesFormat: RootJsonFormat[EServices]                   = jsonFormat1(EServices)
 
   implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat6(Agreement)
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
@@ -157,14 +154,14 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         .toFuture(MissingAvailableDescriptor(eService.id))
   }
 
-  implicit class EnrichedEServiceAttributeValue(private val attribute: CatalogProcessApiAttributeValue) extends AnyVal {
+  implicit class EnrichedEServiceAttribute(private val attribute: CatalogProcessApiAttribute) extends AnyVal {
     def toModel(
       registryAttributes: Seq[AttributeRegistryProcessApiAttribute]
-    ): Either[ComponentError, EServiceAttributeValue] = for {
+    ): Either[ComponentError, EServiceAttribute] = for {
       regAttribute <- registryAttributes.find(_.id == attribute.id).toRight(AttributeNotFoundInRegistry(attribute.id))
       origin       <- regAttribute.origin.toRight(MissingAttributeOrigin(attribute.id))
       code         <- regAttribute.code.toRight(MissingAttributeCode(attribute.id))
-    } yield EServiceAttributeValue(
+    } yield EServiceAttribute(
       id = attribute.id,
       code = code,
       origin = origin,
@@ -172,37 +169,19 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
     )
   }
 
-  implicit class EnrichedEServiceAttribute(private val attribute: CatalogProcessApiAttribute) extends AnyVal {
-    def toModel(
-      registryAttributes: Seq[AttributeRegistryProcessApiAttribute]
-    ): Either[ComponentError, EServiceAttribute] =
-      for {
-        single <- attribute.single.traverse(_.toModel(registryAttributes))
-        group  <- attribute.group.traverse(_.traverse(_.toModel(registryAttributes)))
-      } yield EServiceAttribute(single = single, group = group)
-  }
-
   implicit class EnrichedEServiceAttributes(private val attributes: CatalogProcessApiAttributes) extends AnyVal {
     def toModel(
       registryAttributes: Seq[AttributeRegistryProcessApiAttribute]
     ): Either[ComponentError, EServiceAttributes] = {
       for {
-        certified <- attributes.certified.traverse(_.toModel(registryAttributes))
-        declared  <- attributes.declared.traverse(_.toModel(registryAttributes))
-        verified  <- attributes.verified.traverse(_.toModel(registryAttributes))
+        certified <- attributes.certified.traverse(_.traverse(_.toModel(registryAttributes)))
+        declared  <- attributes.declared.traverse(_.traverse(_.toModel(registryAttributes)))
+        verified  <- attributes.verified.traverse(_.traverse(_.toModel(registryAttributes)))
       } yield EServiceAttributes(certified = certified, declared = declared, verified = verified)
     }
 
     def allIds: Set[UUID] = {
-      (attributes.verified ++ attributes.declared ++ attributes.certified)
-        .mapFilter(a =>
-          (a.single, a.group) match {
-            case (Some(s), Some(g)) => Some(s :: g.toList)
-            case (Some(s), None)    => Some(s :: Nil)
-            case (None, g)          => g
-          }
-        )
-        .flatten
+      (attributes.verified.flatten ++ attributes.declared.flatten ++ attributes.certified.flatten)
         .map(_.id)
         .toSet
     }
