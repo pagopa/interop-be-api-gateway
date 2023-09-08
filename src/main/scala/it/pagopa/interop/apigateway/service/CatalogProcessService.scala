@@ -1,5 +1,5 @@
 package it.pagopa.interop.apigateway.service
-import it.pagopa.interop.catalogprocess.client.model.{AgreementState, EService, EServiceDescriptorState, EServices}
+import it.pagopa.interop.catalogprocess.client.model.{EService, EServices}
 
 import java.util.UUID
 import scala.concurrent.{Future, ExecutionContext}
@@ -12,15 +12,8 @@ trait CatalogProcessService {
   ): Future[Seq[EService]] = {
 
     def getEServicesFrom(offset: Int): Future[Seq[EService]] =
-      getEServices(
-        eServicesIds = Seq.empty,
-        producersIds = Seq(producerId),
-        attributesIds = Seq(attributeId),
-        agreementStates = Seq.empty,
-        states = Seq.empty,
-        offset = offset,
-        limit = 50
-      ).map(_.results)
+      getEServices(producerIds = Seq(producerId), attributeIds = Seq(attributeId), offset = offset, limit = 50)
+        .map(_.results)
 
     def go(start: Int)(as: Seq[EService]): Future[Seq[EService]] =
       getEServicesFrom(start).flatMap(eser =>
@@ -32,14 +25,7 @@ trait CatalogProcessService {
 
   def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
 
-  def getEServices(
-    name: Option[String] = None,
-    eServicesIds: Seq[UUID],
-    producersIds: Seq[UUID],
-    attributesIds: Seq[UUID],
-    agreementStates: Seq[AgreementState],
-    states: Seq[EServiceDescriptorState],
-    offset: Int,
-    limit: Int
-  )(implicit contexts: Seq[(String, String)]): Future[EServices]
+  def getEServices(producerIds: Seq[UUID], attributeIds: Seq[UUID], offset: Int, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[EServices]
 }
