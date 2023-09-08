@@ -548,7 +548,7 @@ final case class GatewayApiServiceImpl(
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
     toEntityMarshallerCatalogEServices: ToEntityMarshaller[CatalogEServices]
   ): Route = {
-    val operationLabel = "Retrieving catalog of EServices"
+    val operationLabel = "Retrieving EServices"
     logger.info(operationLabel)
 
     val result: Future[CatalogEServices] = for {

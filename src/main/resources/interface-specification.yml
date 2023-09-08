@@ -756,7 +756,7 @@ paths:
         - gateway
       summary: Retrieves EServices catalog
       description: Retrieves EServices catalog
-      operationId: getEServicesCatalog
+      operationId: getEServices
       security:
         - bearerAuth: []
       parameters:
