@@ -56,10 +56,12 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val eServiceDescriptorFormat: RootJsonFormat[EServiceDescriptor]   = jsonFormat11(EServiceDescriptor)
   implicit val eServiceDescriptorsFormat: RootJsonFormat[EServiceDescriptors] = jsonFormat1(EServiceDescriptors)
 
-  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]   = jsonFormat4(EServiceAttribute)
-  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes] = jsonFormat3(EServiceAttributes)
-  implicit val eServiceFormat: RootJsonFormat[EService]                     = jsonFormat9(EService)
-  implicit val eServicesFormat: RootJsonFormat[EServices]                   = jsonFormat1(EServices)
+  implicit val eServiceAttributeValueFormat: RootJsonFormat[EServiceAttributeValue] =
+    jsonFormat4(EServiceAttributeValue)
+  implicit val eServiceAttributeFormat: RootJsonFormat[EServiceAttribute]           = jsonFormat2(EServiceAttribute)
+  implicit val eServiceAttributesFormat: RootJsonFormat[EServiceAttributes]         = jsonFormat3(EServiceAttributes)
+  implicit val eServiceFormat: RootJsonFormat[EService]                             = jsonFormat9(EService)
+  implicit val eServicesFormat: RootJsonFormat[EServices]                           = jsonFormat1(EServices)
 
   implicit val agreementFormat: RootJsonFormat[Agreement]   = jsonFormat6(Agreement)
   implicit val agreementsFormat: RootJsonFormat[Agreements] = jsonFormat1(Agreements)
@@ -154,19 +156,32 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         .toFuture(MissingAvailableDescriptor(eService.id))
   }
 
-  implicit class EnrichedEServiceAttribute(private val attribute: CatalogProcessApiAttribute) extends AnyVal {
+  implicit class EnrichedEServiceAttributeValue(private val attribute: CatalogProcessApiAttribute) extends AnyVal {
     def toModel(
       registryAttributes: Seq[AttributeRegistryProcessApiAttribute]
-    ): Either[ComponentError, EServiceAttribute] = for {
+    ): Either[ComponentError, EServiceAttributeValue] = for {
       regAttribute <- registryAttributes.find(_.id == attribute.id).toRight(AttributeNotFoundInRegistry(attribute.id))
       origin       <- regAttribute.origin.toRight(MissingAttributeOrigin(attribute.id))
       code         <- regAttribute.code.toRight(MissingAttributeCode(attribute.id))
-    } yield EServiceAttribute(
+    } yield EServiceAttributeValue(
       id = attribute.id,
       code = code,
       origin = origin,
       explicitAttributeVerification = attribute.explicitAttributeVerification
     )
+  }
+
+  implicit class EnrichedEServiceAttribute(
+    private val attributes: Seq[Seq[it.pagopa.interop.apigateway.model.EServiceAttributeValue]]
+  ) extends AnyVal {
+    def toModel: Seq[EServiceAttribute] = {
+      attributes.flatMap { list =>
+        list match {
+          case head :: Nil => Seq(EServiceAttribute(single = head.some, group = None))
+          case values      => Seq(EServiceAttribute(single = None, group = values.some))
+        }
+      }
+    }
   }
 
   implicit class EnrichedEServiceAttributes(private val attributes: CatalogProcessApiAttributes) extends AnyVal {
@@ -177,7 +192,11 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
         certified <- attributes.certified.traverse(_.traverse(_.toModel(registryAttributes)))
         declared  <- attributes.declared.traverse(_.traverse(_.toModel(registryAttributes)))
         verified  <- attributes.verified.traverse(_.traverse(_.toModel(registryAttributes)))
-      } yield EServiceAttributes(certified = certified, declared = declared, verified = verified)
+      } yield EServiceAttributes(
+        certified = certified.toModel,
+        declared = declared.toModel,
+        verified = verified.toModel
+      )
     }
 
     def allIds: Set[UUID] = {
