@@ -13,14 +13,8 @@ info:
 servers:
   - url: '/api-gateway/{{version}}'
     description: This service is the interoperability API gateway
-  - url: https://{environment}.interop.pagopa.it/{{version}}
-    variables:
-      environment:
-        default: api    # Production server
-        enum:
-          - api         # Production server
-          - api.dev     # Development server
-          - api.uat     # UAT server
+  - url: https://{{environment}}.interop.pagopa.it/{{version}}
+    description: This service is the interoperability API gateway for {{environment}}
 tags:
   - name: gateway
     description: Everything about your APIs

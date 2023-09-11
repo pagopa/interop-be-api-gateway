@@ -27,7 +27,8 @@ object ProjectSettings {
     "ciBuildNumber"    -> sys.env.get("BUILD_NUMBER"),
     "commitSha"        -> commitSha,
     "currentBranch"    -> currentBranch,
-    "interfaceVersion" -> interfaceVersion
+    "interfaceVersion" -> interfaceVersion,
+    "environment"      -> sys.env.get("ENVIRONMENT_TYPE")
   )
 
   /** Extention methods for sbt Project instances.
