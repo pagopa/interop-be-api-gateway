@@ -22,12 +22,11 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
 private final val openApiFileName: String = "interface-specification.yml"
 private final val devEndpointsEnabled: Boolean = Option(System.getenv("DEV_ENDPOINTS_ENABLED")).flatMap(_.toBooleanOption).getOrElse(false)
 val interfaceVersion = buildinfo.BuildInfo.interfaceVersion
-val environment = buildinfo.BuildInfo.environment
+val baseUrl = buildinfo.BuildInfo.baseUrl
 
 private val mf = new DefaultMustacheFactory
-val writer =
-mf.compile(openApiFileName)
-    .execute(new StringWriter(), mutable.HashMap("version" -> interfaceVersion, "environment" -> environment).asJava)
+val writer = mf.compile(openApiFileName)
+    .execute(new StringWriter(), mutable.HashMap("version" -> interfaceVersion, "baseUrl" -> baseUrl).asJava)
     .asInstanceOf[StringWriter]
 writer.flush()
 writer.close()
