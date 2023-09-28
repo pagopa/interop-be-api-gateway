@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.{Logger, LoggerTakingImplicit}
 import it.pagopa.interop.apigateway.error.GatewayErrors.EServiceNotFound
 import it.pagopa.interop.apigateway.service.{CatalogProcessInvoker, CatalogProcessService}
 import it.pagopa.interop.catalogprocess.client.api.{ProcessApi => EServiceApi}
-import it.pagopa.interop.catalogprocess.client.invoker.{ApiRequest, ApiError, BearerToken}
+import it.pagopa.interop.catalogprocess.client.invoker.{ApiError, ApiRequest, BearerToken}
 import it.pagopa.interop.catalogprocess.client.model.{EService, EServices}
 import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLog}
 import it.pagopa.interop.commons.utils.TypeConversions._
@@ -29,7 +29,7 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(EServiceNotFound(eServiceId)) }
   } yield result
 
-  override def getEServices(producerId: UUID, attributeId: UUID, offset: Int, limit: Int)(implicit
+  override def getEServices(producerIds: Seq[UUID], attributeIds: Seq[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServices] = for {
     (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
@@ -37,8 +37,8 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
       xCorrelationId = correlationId,
       name = None,
       eservicesIds = Seq.empty,
-      producersIds = Seq(producerId),
-      attributesIds = Seq(attributeId),
+      producersIds = producerIds,
+      attributesIds = attributeIds,
       states = Seq.empty,
       agreementStates = Seq.empty,
       offset = offset,
