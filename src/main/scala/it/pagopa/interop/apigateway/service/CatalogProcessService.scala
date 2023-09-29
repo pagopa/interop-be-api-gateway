@@ -1,6 +1,5 @@
 package it.pagopa.interop.apigateway.service
-
-import it.pagopa.interop.catalogprocess.client.model.{EServices, EService}
+import it.pagopa.interop.catalogprocess.client.model.{EService, EServices}
 
 import java.util.UUID
 import scala.concurrent.{Future, ExecutionContext}
@@ -13,7 +12,8 @@ trait CatalogProcessService {
   ): Future[Seq[EService]] = {
 
     def getEServicesFrom(offset: Int): Future[Seq[EService]] =
-      getEServices(producerId = producerId, attributeId = attributeId, offset = offset, limit = 50).map(_.results)
+      getEServices(producerIds = Seq(producerId), attributeIds = Seq(attributeId), offset = offset, limit = 50)
+        .map(_.results)
 
     def go(start: Int)(as: Seq[EService]): Future[Seq[EService]] =
       getEServicesFrom(start).flatMap(eser =>
@@ -24,7 +24,8 @@ trait CatalogProcessService {
   }
 
   def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService]
-  def getEServices(producerId: UUID, attributeId: UUID, offset: Int, limit: Int)(implicit
+
+  def getEServices(producerIds: Seq[UUID], attributeIds: Seq[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServices]
 }
