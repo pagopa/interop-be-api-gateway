@@ -28,7 +28,7 @@ object ProjectSettings {
     "commitSha"        -> commitSha,
     "currentBranch"    -> currentBranch,
     "interfaceVersion" -> interfaceVersion,
-    "baseUrl"          -> sys.env.get("BASE_URL_API_GATEWAY")
+    "baseUrl"          -> sys.env.get("BASE_URL")
   )
 
   /** Extention methods for sbt Project instances.
