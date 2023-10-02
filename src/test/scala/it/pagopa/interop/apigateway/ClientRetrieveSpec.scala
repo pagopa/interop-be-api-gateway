@@ -109,7 +109,9 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "EService",
         description = "Description",
         technology = CatalogProcess.EServiceTechnology.REST,
-        descriptors = Seq.empty
+        descriptors = Seq.empty,
+        riskAnalysis = Seq.empty,
+        mode = CatalogProcess.EServiceMode.DELIVER
       )
 
       val expectedClient: Client = Client(id = client.id, consumerId = client.consumerId)
@@ -179,7 +181,9 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "EService",
         description = "Description",
         technology = CatalogProcess.EServiceTechnology.REST,
-        descriptors = Seq.empty
+        descriptors = Seq.empty,
+        riskAnalysis = Seq.empty,
+        mode = CatalogProcess.EServiceMode.DELIVER
       )
 
       implicit val contexts: Seq[(String, String)] =
