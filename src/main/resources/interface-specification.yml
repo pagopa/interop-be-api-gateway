@@ -11,8 +11,8 @@ info:
   x-api-id: an x-api-id
   x-summary: an x-summary
 servers:
-  - url: '/api-gateway/{{version}}'
-    description: This service is the interoperability API gateway
+  - url: '{{baseUrl}}/{{version}}'
+    description: Base url of the interoperability API gateway
 tags:
   - name: gateway
     description: Everything about your APIs
