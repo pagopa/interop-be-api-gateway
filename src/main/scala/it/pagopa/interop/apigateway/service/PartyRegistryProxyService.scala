@@ -8,4 +8,10 @@ trait PartyRegistryProxyService {
   def getInstitutionByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution]
+
+  def getAOOByExternalId(origin: String, originId: String)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Institution]
+
+  def getUOByExternalId(origin: String, originId: String)(implicit contexts: Seq[(String, String)]): Future[Institution]
 }

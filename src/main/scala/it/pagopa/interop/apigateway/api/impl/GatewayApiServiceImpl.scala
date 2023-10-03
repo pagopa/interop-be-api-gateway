@@ -79,7 +79,12 @@ final case class GatewayApiServiceImpl(
     logger.info(operationLabel)
 
     val result: Future[Unit] = for {
-      institution <- partyRegistryProxyService.getInstitutionByExternalId(origin, externalId)
+      institution <- partyRegistryProxyService.getInstitutionByExternalId(origin, externalId).recoverWith {
+        case _: InstitutionNotFound =>
+          partyRegistryProxyService.getAOOByExternalId(origin, externalId).recoverWith { case _: InstitutionNotFound =>
+            partyRegistryProxyService.getUOByExternalId(origin, externalId)
+          }
+      }
       updated     <- tenantProcessService
         .upsertTenant(m2mTenantSeedFromApi(origin, externalId, institution.description)(code))
         .void
