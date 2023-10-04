@@ -36,7 +36,7 @@ import it.pagopa.interop.commons.utils.errors.{Problem => CommonProblem}
 import it.pagopa.interop.commons.utils.service.OffsetDateTimeSupplier
 import it.pagopa.interop.commons.utils.{AkkaUtils, OpenapiUtils}
 import it.pagopa.interop.notifier.client.api.EventsApi
-import it.pagopa.interop.partyregistryproxy.client.api.InstitutionApi
+import it.pagopa.interop.partyregistryproxy.client.api.{InstitutionApi, AooApi, UoApi}
 import it.pagopa.interop.purposeprocess.client.api.PurposeApi
 import it.pagopa.interop.tenantprocess.client.api.{TenantApi => TenantProcessApi}
 import it.pagopa.interop.commons.cqrs.service.{MongoDbReadModelService, ReadModelService}
@@ -104,7 +104,9 @@ trait Dependencies {
   )(implicit actorSystem: ActorSystem[_], ec: ExecutionContext) =
     new PartyRegistryProxyServiceImpl(
       PartyRegistryInvoker(blockingEc)(actorSystem.classicSystem),
-      InstitutionApi(ApplicationConfiguration.partyRegistryProxyURL)
+      InstitutionApi(ApplicationConfiguration.partyRegistryProxyURL),
+      AooApi(ApplicationConfiguration.partyRegistryProxyURL),
+      UoApi(ApplicationConfiguration.partyRegistryProxyURL)
     )
   def purposeProcessService(
     blockingEc: ExecutionContextExecutor
