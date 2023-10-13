@@ -22,7 +22,7 @@ class Controller({{#apiInfo}}{{#apis}}{{#operations}}{{classVarName}}: {{classna
 private final val openApiFileName: String = "interface-specification.yml"
 private final val devEndpointsEnabled: Boolean = Option(System.getenv("DEV_ENDPOINTS_ENABLED")).flatMap(_.toBooleanOption).getOrElse(false)
 val interfaceVersion = buildinfo.BuildInfo.interfaceVersion
-val baseUrl = buildinfo.BuildInfo.baseUrl
+val baseUrl = System.getenv("BASE_URL")
 
 private val mf = new DefaultMustacheFactory
 val writer = mf.compile(openApiFileName)
