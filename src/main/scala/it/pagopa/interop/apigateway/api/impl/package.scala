@@ -163,12 +163,10 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       registryAttributes: Seq[AttributeRegistryProcessApiAttribute]
     ): Either[ComponentError, EServiceAttributeValue] = for {
       regAttribute <- registryAttributes.find(_.id == attribute.id).toRight(AttributeNotFoundInRegistry(attribute.id))
-      origin       <- regAttribute.origin.toRight(MissingAttributeOrigin(attribute.id))
-      code         <- regAttribute.code.toRight(MissingAttributeCode(attribute.id))
     } yield EServiceAttributeValue(
       id = attribute.id,
-      code = code,
-      origin = origin,
+      code = regAttribute.code,
+      origin = regAttribute.origin,
       explicitAttributeVerification = attribute.explicitAttributeVerification
     )
   }
