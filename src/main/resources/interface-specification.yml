@@ -2369,8 +2369,6 @@ components:
           type: boolean
       required:
         - id
-        - code
-        - origin
         - explicitAttributeVerification
     EServiceDescriptorState:
       type: string
