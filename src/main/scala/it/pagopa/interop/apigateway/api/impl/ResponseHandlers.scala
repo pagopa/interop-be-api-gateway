@@ -221,4 +221,13 @@ object ResponseHandlers extends AkkaResponses {
       case Success(s)  => success(s)
       case Failure(ex) => internalServerError(ex, logMessage)
     }
+
+  def getPurposesByEserviceAndConsumerResponse[T](logMessage: String)(success: T => Route, emptyResponse: T)(
+    result: Try[T]
+  )(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
+    result match {
+      case Success(s)                                => success(s)
+      case Failure(_: MissingActivePurposesVersions) => success(emptyResponse)
+      case Failure(ex)                               => internalServerError(ex, logMessage)
+    }
 }
