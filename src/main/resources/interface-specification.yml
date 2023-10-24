@@ -159,7 +159,7 @@ paths:
               schema:
                 type: integer
               description: Time interval in milliseconds. Allowed requests will be constantly replenished during the interval. At the end of the interval the max allowed requests will be available
-  '/purposes/eservices/{eserviceId}/consumer/{consumerId}':
+  '/purposes':
     get:
       tags:
         - gateway
@@ -170,14 +170,14 @@ paths:
         - bearerAuth: [ ]
       parameters:
         - name: eserviceId
-          in: path
+          in: query
           description: the eservice Id
           required: true
           schema:
             type: string
             format: uuid
         - name: consumerId
-          in: path
+          in: query
           description: the consumer Id
           required: true
           schema:
