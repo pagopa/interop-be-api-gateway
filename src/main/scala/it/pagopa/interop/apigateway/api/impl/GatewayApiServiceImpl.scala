@@ -574,7 +574,7 @@ final case class GatewayApiServiceImpl(
     }
   }
 
-  override def getPurposesByEserviceAndConsumer(eserviceId: String, consumerId: String)(implicit
+  override def getPurposes(eserviceId: String, consumerId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem]
@@ -590,10 +590,7 @@ final case class GatewayApiServiceImpl(
     } yield Purposes(purposes)
 
     onComplete(result) {
-      getPurposesByEserviceAndConsumerResponse(operationLabel)(
-        getPurposesByEserviceAndConsumer200,
-        Purposes(purposes = Seq.empty)
-      )
+      getPurposesResponse(operationLabel)(getPurposes200, Purposes(purposes = Seq.empty))
     }
   }
 }

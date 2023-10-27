@@ -222,7 +222,7 @@ object ResponseHandlers extends AkkaResponses {
       case Failure(ex) => internalServerError(ex, logMessage)
     }
 
-  def getPurposesByEserviceAndConsumerResponse[T](logMessage: String)(success: T => Route, emptyResponse: T)(
+  def getPurposesResponse[T](logMessage: String)(success: T => Route, emptyResponse: T)(
     result: Try[T]
   )(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
     result match {
