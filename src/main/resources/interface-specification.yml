@@ -165,7 +165,7 @@ paths:
         - gateway
       summary: Get purposes for eserviceId/consumerId
       description: Retrieve all the active purposes associated to eserviceId/consumerId
-      operationId: getPurposesByEserviceAndConsumer
+      operationId: getPurposes
       security:
         - bearerAuth: [ ]
       parameters:
