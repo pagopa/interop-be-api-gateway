@@ -573,4 +573,24 @@ final case class GatewayApiServiceImpl(
       getEservicesResponse[CatalogEServices](operationLabel)(getEServices200)
     }
   }
+
+  override def getPurposes(eserviceId: String, consumerId: String)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerPurposes: ToEntityMarshaller[Purposes],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val operationLabel = s"Retrieving Purposes for eservice $eserviceId and consumer $consumerId"
+    logger.info(operationLabel)
+
+    val result: Future[Purposes] = for {
+      eserviceUUID   <- eserviceId.toFutureUUID
+      consumerUUID   <- consumerId.toFutureUUID
+      clientPurposes <- purposeProcessService.getAllPurposes(eserviceUUID, consumerUUID)
+      purposes       <- clientPurposes.traverse(_.toModel).toFuture
+    } yield Purposes(purposes)
+
+    onComplete(result) {
+      getPurposesResponse(operationLabel)(getPurposes200, Purposes(purposes = Seq.empty))
+    }
+  }
 }
