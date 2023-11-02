@@ -21,12 +21,10 @@ class AuthorizationProcessServiceImpl(invoker: AuthorizationProcessInvoker, api:
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getClientById(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[Client] = api.getClient(
-      xCorrelationId = correlationId,
-      clientId = clientId.toString,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request: ApiRequest[Client] = api.getClient(xCorrelationId = correlationId, clientId = clientId.toString)(
+      BearerToken(bearerToken)
+    )
     result <- invoker
       .invoke(request, s"Retrieving client by id = $clientId")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(ClientNotFound(clientId)) }

@@ -28,12 +28,11 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
   override def getTenantByExternalId(origin: String, code: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Tenant] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Tenant] = api.getTenantByExternalId(
       xCorrelationId = correlationId,
       origin = origin,
-      code = code,
-      xForwardedFor = ip
+      code = code
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, "Retrieve Tenant by external ID")
@@ -41,10 +40,8 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
   } yield result
 
   override def getTenantById(tenantId: UUID)(implicit contexts: Seq[(String, String)]): Future[Tenant] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[Tenant] = api.getTenant(xCorrelationId = correlationId, id = tenantId, xForwardedFor = ip)(
-      BearerToken(bearerToken)
-    )
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request: ApiRequest[Tenant] = api.getTenant(xCorrelationId = correlationId, id = tenantId)(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, "Retrieve Tenant by ID")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(TenantNotFound(tenantId)) }
@@ -52,12 +49,10 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
 
   override def upsertTenant(m2MTenantSeed: M2MTenantSeed)(implicit contexts: Seq[(String, String)]): Future[Tenant] =
     for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request: ApiRequest[Tenant] = api.m2mUpsertTenant(
-        xCorrelationId = correlationId,
-        m2MTenantSeed = m2MTenantSeed,
-        xForwardedFor = ip
-      )(BearerToken(bearerToken))
+      (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+      request: ApiRequest[Tenant] = api.m2mUpsertTenant(xCorrelationId = correlationId, m2MTenantSeed = m2MTenantSeed)(
+        BearerToken(bearerToken)
+      )
       result <- invoker
         .invoke(request, "Invoking m2mUpsertTenant")
         .recoverWith {
@@ -75,13 +70,12 @@ class TenantProcessServiceImpl(invoker: TenantProcessInvoker, api: TenantApi)(im
   override def revokeAttribute(origin: String, externalId: String, code: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Unit] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Unit] = api.m2mRevokeAttribute(
       xCorrelationId = correlationId,
       origin = origin,
       externalId = externalId,
-      code = code,
-      xForwardedFor = ip
+      code = code
     )(BearerToken(bearerToken))
     () <- invoker
       .invoke(request, "Invoking revokeAttribute")

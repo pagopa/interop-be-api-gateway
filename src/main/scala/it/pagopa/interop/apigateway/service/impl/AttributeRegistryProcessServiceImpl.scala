@@ -25,12 +25,10 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[Attribute] = api.getAttributeById(
-      xCorrelationId = correlationId,
-      attributeId = attributeId,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request: ApiRequest[Attribute] = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId)(
+      BearerToken(bearerToken)
+    )
     result <- invoker
       .invoke(request, s"Retrieving attribute by id ${attributeId.toString}")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(AttributeNotFound(attributeId)) }
@@ -39,12 +37,11 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Attribute] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attribute] = api.getAttributeByOriginAndCode(
       xCorrelationId = correlationId,
       origin = origin,
-      code = code,
-      xForwardedFor = ip
+      code = code
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, s"Getting attribute ($origin,$code)")
@@ -56,11 +53,10 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
   override def createCertifiedAttribute(
     attributeSeed: CertifiedAttributeSeed
   )(implicit contexts: Seq[(String, String)]): Future[Attribute] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attribute] = api.createCertifiedAttribute(
       xCorrelationId = correlationId,
-      certifiedAttributeSeed = attributeSeed,
-      xForwardedFor = ip
+      certifiedAttributeSeed = attributeSeed
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, s"Creating certified attribute ${attributeSeed.name}")
@@ -73,13 +69,12 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
   override def getBulkAttributes(attributeIds: Set[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Attributes] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attributes] = api.getBulkedAttributes(
       xCorrelationId = correlationId,
       requestBody = attributeIds.map(_.toString).toSeq,
       offset = offset,
-      limit = limit,
-      xForwardedFor = ip
+      limit = limit
     )(BearerToken(bearerToken))
     attributesString                = attributeIds.mkString("[", ",", "]")
     result <- invoker.invoke(request, s"Retrieving bulk attributes $attributesString")

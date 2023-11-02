@@ -20,8 +20,8 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[EService] = api.getEServiceById(xCorrelationId = correlationId, eServiceId, xForwardedFor = ip)(
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request: ApiRequest[EService] = api.getEServiceById(xCorrelationId = correlationId, eServiceId)(
       BearerToken(bearerToken)
     )
     result <- invoker
@@ -32,7 +32,7 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
   override def getEServices(producerIds: Seq[UUID], attributeIds: Seq[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServices] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[EServices] = api.getEServices(
       xCorrelationId = correlationId,
       name = None,
@@ -42,8 +42,7 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
       states = Seq.empty,
       agreementStates = Seq.empty,
       offset = offset,
-      limit = limit,
-      xForwardedFor = ip
+      limit = limit
     )(BearerToken(bearerToken))
     result <- invoker.invoke(request, "Retrieving E-Services")
   } yield result
