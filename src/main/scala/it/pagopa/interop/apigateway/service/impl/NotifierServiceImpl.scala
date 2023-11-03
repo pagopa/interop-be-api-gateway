@@ -18,38 +18,29 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   override def getEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events] =
     for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getEventsFromId(
-        lastEventId,
-        xCorrelationId = Some(correlationId),
-        xForwardedFor = ip,
-        limit = Some(limit)
-      )(BearerToken(bearerToken))
+      (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+      request = api.getEventsFromId(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
+        BearerToken(bearerToken)
+      )
       result <- invoker.invoke(request, "Retrieving message events")
     } yield result
 
   override def getAllOrganizationEvents(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Events] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request = api.getAllEventsFromId(
-      lastEventId,
-      xCorrelationId = Some(correlationId),
-      xForwardedFor = ip,
-      limit = Some(limit)
-    )(BearerToken(bearerToken))
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request = api.getAllEventsFromId(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
+      BearerToken(bearerToken)
+    )
     result <- invoker.invoke(request, "Retrieving message events for all organizations")
   } yield result
 
   override def getKeysEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events] =
     for {
-      (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-      request = api.getKeysEvents(
-        lastEventId,
-        xCorrelationId = Some(correlationId),
-        xForwardedFor = ip,
-        limit = Some(limit)
-      )(BearerToken(bearerToken))
+      (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+      request = api.getKeysEvents(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
+        BearerToken(bearerToken)
+      )
       result <- invoker.invoke(request, "Retrieving keys events")
     } yield result
 }

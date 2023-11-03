@@ -20,10 +20,8 @@ class PurposeProcessServiceImpl(invoker: PurposeProcessInvoker, api: PurposeApi)
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getPurpose(purposeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Purpose] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request: ApiRequest[Purpose] = api.getPurpose(xCorrelationId = correlationId, purposeId, xForwardedFor = ip)(
-      BearerToken(bearerToken)
-    )
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request: ApiRequest[Purpose] = api.getPurpose(xCorrelationId = correlationId, purposeId)(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, "Invoking getPurpose")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(PurposeNotFound(purposeId)) }
@@ -32,10 +30,9 @@ class PurposeProcessServiceImpl(invoker: PurposeProcessInvoker, api: PurposeApi)
   override def getPurposes(eserviceId: UUID, consumerId: UUID, offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Purposes] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Purposes] = api.getPurposes(
       xCorrelationId = correlationId,
-      xForwardedFor = ip,
       producersIds = Seq.empty,
       consumersIds = Seq(consumerId),
       eservicesIds = Seq(eserviceId),

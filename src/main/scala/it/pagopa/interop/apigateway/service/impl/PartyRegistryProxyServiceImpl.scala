@@ -25,12 +25,11 @@ class PartyRegistryProxyServiceImpl(
   override def getInstitutionByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request = institutionApi.getInstitutionByExternalId(
       xCorrelationId = correlationId,
       origin = origin,
-      originId = originId,
-      xForwardedFor = ip
+      originId = originId
     )(BearerToken(bearerToken))
     result <- invoker
       .invoke(request, "Retrieve Institution by external ID")
@@ -40,13 +39,10 @@ class PartyRegistryProxyServiceImpl(
   override def getAOOByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request = aooApi.getAOOByExternalId(
-      xCorrelationId = correlationId,
-      origin = origin,
-      originId = originId,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request = aooApi.getAOOByExternalId(xCorrelationId = correlationId, origin = origin, originId = originId)(
+      BearerToken(bearerToken)
+    )
     result <- invoker
       .invoke(request, "Retrieve AOO Institution by external ID")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(InstitutionNotFound(origin, originId)) }
@@ -55,13 +51,10 @@ class PartyRegistryProxyServiceImpl(
   override def getUOByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution] = for {
-    (bearerToken, correlationId, ip) <- extractHeaders(contexts).toFuture
-    request = uoApi.getUOByExternalId(
-      xCorrelationId = correlationId,
-      origin = origin,
-      originId = originId,
-      xForwardedFor = ip
-    )(BearerToken(bearerToken))
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request = uoApi.getUOByExternalId(xCorrelationId = correlationId, origin = origin, originId = originId)(
+      BearerToken(bearerToken)
+    )
     result <- invoker
       .invoke(request, "Retrieve UO Institution by external ID")
       .recoverWith { case err: ApiError[_] if err.code == 404 => Future.failed(InstitutionNotFound(origin, originId)) }
