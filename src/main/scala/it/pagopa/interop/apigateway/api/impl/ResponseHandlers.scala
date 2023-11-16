@@ -13,6 +13,14 @@ object ResponseHandlers extends AkkaResponses {
 
   implicit val serviceCode: ServiceCode = ServiceCode("013")
 
+  def getAgreementsEventsFromIdResponse[T](logMessage: String)(
+    success: T => Route
+  )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
+    result match {
+      case Success(s)  => success(s)
+      case Failure(ex) => internalServerError(ex, logMessage)
+    }
+
   def getAgreementResponse[T](logMessage: String, agreementId: String)(
     success: T => Route
   )(result: Try[T])(implicit contexts: Seq[(String, String)], logger: LoggerTakingImplicit[ContextFieldsToLog]): Route =
