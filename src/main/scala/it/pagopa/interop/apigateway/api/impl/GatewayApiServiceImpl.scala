@@ -471,7 +471,7 @@ final case class GatewayApiServiceImpl(
     val operationLabel = s"Retrieving EServices Events lastEventId $lastEventId limit $limit"
     logger.info(operationLabel)
 
-    val result: Future[Events] = notifierService.getAllOrganizationEvents(lastEventId, limit).map(_.toModel)
+    val result: Future[Events] = notifierService.getAllEservicesFromId(lastEventId, limit).map(_.toModel)
 
     onComplete(result) {
       getEservicesEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)

@@ -26,7 +26,7 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
         name = "A Client",
         description = Some("A Client Description"),
         purposes = Seq.empty,
-        relationshipsIds = Set.empty,
+        users = Set.empty,
         kind = AuthorizationProcess.ClientKind.CONSUMER,
         createdAt = timestamp
       )
@@ -98,7 +98,7 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
             )
           )
         ),
-        relationshipsIds = Set.empty,
+        users = Set.empty,
         kind = AuthorizationProcess.ClientKind.CONSUMER,
         createdAt = timestamp
       )
@@ -170,7 +170,7 @@ class ClientRetrieveSpec extends AnyWordSpecLike with SpecHelper with ScalatestR
             )
           )
         ),
-        relationshipsIds = Set.empty,
+        users = Set.empty,
         kind = AuthorizationProcess.ClientKind.CONSUMER,
         createdAt = timestamp
       )
