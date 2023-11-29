@@ -52,6 +52,21 @@ final case class GatewayApiServiceImpl(
   private[this] def authorize(route: => Route)(implicit contexts: Seq[(String, String)]): Route =
     commons.jwt.authorize(M2M_ROLE)(route)
 
+  override def getAgreementsEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = authorize {
+    val operationLabel = s"Retrieving Agreements events lastEventId $lastEventId limit $limit"
+    logger.info(operationLabel)
+
+    val result: Future[Events] = notifierService.getAllAgreementsFromId(lastEventId, limit).map(_.toModel)
+
+    onComplete(result) {
+      getAgreementsEventsFromIdResponse[Events](operationLabel)(getAgreementsEventsFromId200)
+    }
+  }
+
   override def getAgreement(agreementId: String)(implicit
     contexts: Seq[(String, String)],
     toEntityMarshallerProblem: ToEntityMarshaller[Problem],
@@ -471,7 +486,7 @@ final case class GatewayApiServiceImpl(
     val operationLabel = s"Retrieving EServices Events lastEventId $lastEventId limit $limit"
     logger.info(operationLabel)
 
-    val result: Future[Events] = notifierService.getAllOrganizationEvents(lastEventId, limit).map(_.toModel)
+    val result: Future[Events] = notifierService.getAllEservicesFromId(lastEventId, limit).map(_.toModel)
 
     onComplete(result) {
       getEservicesEventsFromIdResponse[Events](operationLabel)(getEventsFromId200)
