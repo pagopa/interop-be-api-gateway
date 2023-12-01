@@ -20,7 +20,7 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getEServiceById(eServiceId: UUID)(implicit contexts: Seq[(String, String)]): Future[EService] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[EService] = api.getEServiceById(xCorrelationId = correlationId, eServiceId)(
       BearerToken(bearerToken)
     )
@@ -32,7 +32,7 @@ class CatalogProcessServiceImpl(invoker: CatalogProcessInvoker, api: EServiceApi
   override def getEServices(producerIds: Seq[UUID], attributeIds: Seq[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[EServices] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[EServices] = api.getEServices(
       xCorrelationId = correlationId,
       name = None,

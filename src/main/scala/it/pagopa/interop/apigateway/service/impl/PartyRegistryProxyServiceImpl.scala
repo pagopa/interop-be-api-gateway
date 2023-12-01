@@ -25,7 +25,7 @@ class PartyRegistryProxyServiceImpl(
   override def getInstitutionByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request = institutionApi.getInstitutionByExternalId(
       xCorrelationId = correlationId,
       origin = origin,
@@ -39,7 +39,7 @@ class PartyRegistryProxyServiceImpl(
   override def getAOOByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request = aooApi.getAOOByExternalId(xCorrelationId = correlationId, origin = origin, originId = originId)(
       BearerToken(bearerToken)
     )
@@ -51,7 +51,7 @@ class PartyRegistryProxyServiceImpl(
   override def getUOByExternalId(origin: String, originId: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Institution] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request = uoApi.getUOByExternalId(xCorrelationId = correlationId, origin = origin, originId = originId)(
       BearerToken(bearerToken)
     )

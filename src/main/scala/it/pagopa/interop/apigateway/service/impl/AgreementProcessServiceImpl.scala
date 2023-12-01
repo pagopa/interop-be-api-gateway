@@ -20,7 +20,7 @@ class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: Agreeme
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getAgreementById(agreementId: UUID)(implicit contexts: Seq[(String, String)]): Future[Agreement] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Agreement] = api.getAgreementById(xCorrelationId = correlationId, agreementId.toString)(
       BearerToken(bearerToken)
     )
@@ -40,7 +40,7 @@ class AgreementProcessServiceImpl(invoker: AgreementProcessInvoker, api: Agreeme
     offset: Int,
     limit: Int
   )(implicit contexts: Seq[(String, String)]): Future[Agreements] = for {
-    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Agreements] = api.getAgreements(
       xCorrelationId = correlationId,
       producersIds = producerId.fold[Seq[UUID]](Seq.empty)(Seq(_)),
