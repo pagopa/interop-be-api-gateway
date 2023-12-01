@@ -25,7 +25,7 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getAttributeById(attributeId: UUID)(implicit contexts: Seq[(String, String)]): Future[Attribute] = for {
-    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attribute] = api.getAttributeById(xCorrelationId = correlationId, attributeId = attributeId)(
       BearerToken(bearerToken)
     )
@@ -37,7 +37,7 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
   def getAttributeByOriginAndCode(origin: String, code: String)(implicit
     contexts: Seq[(String, String)]
   ): Future[Attribute] = for {
-    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attribute] = api.getAttributeByOriginAndCode(
       xCorrelationId = correlationId,
       origin = origin,
@@ -53,7 +53,7 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
   override def createCertifiedAttribute(
     attributeSeed: CertifiedAttributeSeed
   )(implicit contexts: Seq[(String, String)]): Future[Attribute] = for {
-    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attribute] = api.createCertifiedAttribute(
       xCorrelationId = correlationId,
       certifiedAttributeSeed = attributeSeed
@@ -69,7 +69,7 @@ class AttributeRegistryProcessServiceImpl(invoker: AttributeRegistryProcessInvok
   override def getBulkAttributes(attributeIds: Set[UUID], offset: Int, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Attributes] = for {
-    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Attributes] = api.getBulkedAttributes(
       xCorrelationId = correlationId,
       requestBody = attributeIds.map(_.toString).toSeq,

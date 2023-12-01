@@ -21,7 +21,7 @@ class AuthorizationProcessServiceImpl(invoker: AuthorizationProcessInvoker, api:
     Logger.takingImplicit[ContextFieldsToLog](this.getClass)
 
   override def getClientById(clientId: UUID)(implicit contexts: Seq[(String, String)]): Future[Client] = for {
-    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
     request: ApiRequest[Client] = api.getClient(xCorrelationId = correlationId, clientId = clientId.toString)(
       BearerToken(bearerToken)
     )

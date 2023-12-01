@@ -18,7 +18,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   override def getEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events] =
     for {
-      (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+      (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
       request = api.getEventsFromId(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
         BearerToken(bearerToken)
       )
@@ -28,7 +28,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
   override def getAllEservicesFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Events] = for {
-    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
     request = api.getAllEservicesFromId(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
       BearerToken(bearerToken)
     )
@@ -37,7 +37,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
 
   override def getKeysEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events] =
     for {
-      (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+      (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
       request = api.getKeysEvents(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
         BearerToken(bearerToken)
       )
@@ -48,7 +48,7 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
     contexts: Seq[(String, String)]
   ): Future[Events] =
     for {
-      (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+      (bearerToken, correlationId, _) <- extractHeaders(contexts).toFuture
       request = api.getAllAgreementsEventsFromId(
         lastEventId,
         xCorrelationId = Some(correlationId),
