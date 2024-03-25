@@ -101,6 +101,7 @@ package object impl extends SprayJsonSupport with DefaultJsonProtocol {
       case PurposeVersionState.ARCHIVED             => PurposeState.ARCHIVED
       case PurposeVersionState.WAITING_FOR_APPROVAL => PurposeState.WAITING_FOR_APPROVAL
       case PurposeVersionState.SUSPENDED            => PurposeState.SUSPENDED
+      case PurposeVersionState.REJECTED             => PurposeState.REJECTED
     }
   }
 

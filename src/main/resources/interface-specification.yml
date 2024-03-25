@@ -2759,6 +2759,7 @@ components:
         - SUSPENDED
         - WAITING_FOR_APPROVAL
         - ARCHIVED
+        - REJECTED
     Purpose:
       type: object
       additionalProperties: false
