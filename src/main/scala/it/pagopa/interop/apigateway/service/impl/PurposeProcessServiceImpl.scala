@@ -9,7 +9,7 @@ import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.purposeprocess.client.api.PurposeApi
 import it.pagopa.interop.purposeprocess.client.invoker.{ApiError, ApiRequest, BearerToken}
 import it.pagopa.interop.purposeprocess.client.model.PurposeVersionState.{ACTIVE, SUSPENDED}
-import it.pagopa.interop.purposeprocess.client.model.{Purpose, PurposeVersionState, Purposes}
+import it.pagopa.interop.purposeprocess.client.model.{Purpose, Purposes}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
