@@ -7,8 +7,9 @@ import it.pagopa.interop.commons.logging.{CanLogContextFields, ContextFieldsToLo
 import it.pagopa.interop.commons.utils.TypeConversions._
 import it.pagopa.interop.commons.utils.extractHeaders
 import it.pagopa.interop.purposeprocess.client.api.PurposeApi
-import it.pagopa.interop.purposeprocess.client.invoker.{ApiRequest, ApiError, BearerToken}
-import it.pagopa.interop.purposeprocess.client.model.{Purpose, Purposes}
+import it.pagopa.interop.purposeprocess.client.invoker.{ApiError, ApiRequest, BearerToken}
+import it.pagopa.interop.purposeprocess.client.model.PurposeVersionState.{ACTIVE, SUSPENDED}
+import it.pagopa.interop.purposeprocess.client.model.{Purpose, PurposeVersionState, Purposes}
 
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,7 +37,7 @@ class PurposeProcessServiceImpl(invoker: PurposeProcessInvoker, api: PurposeApi)
       producersIds = Seq.empty,
       consumersIds = Seq(consumerId),
       eservicesIds = Seq(eserviceId),
-      states = Seq.empty,
+      states = Seq(ACTIVE, SUSPENDED),
       offset = offset,
       limit = limit
     )(BearerToken(bearerToken))
