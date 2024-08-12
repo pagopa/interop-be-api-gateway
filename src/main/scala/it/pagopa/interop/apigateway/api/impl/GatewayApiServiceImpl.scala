@@ -442,14 +442,16 @@ final case class GatewayApiServiceImpl(
     def isAllowed(client: AuthorizationProcessApiClient, organizationId: UUID): Future[Unit] =
       if (client.consumerId == organizationId) Future.unit
       else
-        client.purposes
-          .findM(purpose =>
+        for {
+          purposes  <- Future.traverse(client.purposes)(purposeProcessService.getPurpose)
+          eservices <- Future.traverse(purposes)(purpose =>
             catalogProcessService
-              .getEServiceById(purpose.states.eservice.eserviceId)
-              .map(_.producerId == organizationId)
+              .getEServiceById(purpose.eserviceId)
           )
-          .ensure(OperationForbidden)(_.nonEmpty)
-          .void
+          result    <-
+            if (eservices.exists(_.producerId == organizationId)) Future.unit
+            else Future.failed(OperationForbidden)
+        } yield result
 
     val result: Future[Client] = for {
       organizationId <- getOrganizationIdFutureUUID(contexts)

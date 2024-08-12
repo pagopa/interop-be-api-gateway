@@ -5,6 +5,7 @@ import it.pagopa.interop.apigateway.api.impl.GatewayApiServiceImpl
 import it.pagopa.interop.apigateway.service._
 import it.pagopa.interop.authorizationprocess.client.{model => AuthorizationProcess}
 import it.pagopa.interop.catalogprocess.client.{model => CatalogProcess}
+import it.pagopa.interop.purposeprocess.client.{model => PurposeProcess}
 import it.pagopa.interop.commons.cqrs.service.ReadModelService
 import org.scalamock.handlers.CallHandler2
 import org.scalamock.scalatest.MockFactory
@@ -58,6 +59,15 @@ trait SpecHelper extends SprayJsonSupport with DefaultJsonProtocol with MockFact
     (mockCatalogProcessService
       .getEServiceById(_: UUID)(_: Seq[(String, String)]))
       .expects(clientId, contexts)
+      .returning(Future.successful(result))
+      .once()
+
+  def mockPurposeRetrieve(purposeId: UUID, result: PurposeProcess.Purpose)(implicit
+    contexts: Seq[(String, String)]
+  ): CallHandler2[UUID, Seq[(String, String)], Future[PurposeProcess.Purpose]] =
+    (mockPurposeProcessService
+      .getPurpose(_: UUID)(_: Seq[(String, String)]))
+      .expects(purposeId, contexts)
       .returning(Future.successful(result))
       .once()
 
