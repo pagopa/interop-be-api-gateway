@@ -9,4 +9,5 @@ trait NotifierService {
   def getAllEservicesFromId(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
   def getAllAgreementsFromId(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
   def getKeysEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
+  def getProducerKeysEvents(lastEventId: Long, limit: Int)(implicit contexts: Seq[(String, String)]): Future[Events]
 }

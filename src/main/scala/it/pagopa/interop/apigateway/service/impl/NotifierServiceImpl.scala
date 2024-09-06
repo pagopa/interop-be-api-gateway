@@ -44,6 +44,16 @@ class NotifierServiceImpl(invoker: NotifierInvoker, api: EventsApi)(implicit ec:
       result <- invoker.invoke(request, "Retrieving keys events")
     } yield result
 
+  override def getProducerKeysEvents(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)]
+  ): Future[Events] = for {
+    (bearerToken, correlationId) <- extractHeaders(contexts).toFuture
+    request = api.getProducerKeysEvents(lastEventId, xCorrelationId = Some(correlationId), limit = Some(limit))(
+      BearerToken(bearerToken)
+    )
+    result <- invoker.invoke(request, "Retrieving keys events")
+  } yield result
+
   override def getAllAgreementsFromId(lastEventId: Long, limit: Int)(implicit
     contexts: Seq[(String, String)]
   ): Future[Events] =

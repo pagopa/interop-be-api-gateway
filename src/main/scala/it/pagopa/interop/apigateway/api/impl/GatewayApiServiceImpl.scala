@@ -510,6 +510,21 @@ final case class GatewayApiServiceImpl(
     }
   }
 
+  override def getProducerKeysEventsFromId(lastEventId: Long, limit: Int)(implicit
+    contexts: Seq[(String, String)],
+    toEntityMarshallerEvents: ToEntityMarshaller[Events],
+    toEntityMarshallerProblem: ToEntityMarshaller[Problem]
+  ): Route = {
+    val operationLabel = s"Retrieving Producer Keys Events lastEventId $lastEventId limit $limit"
+    logger.info(operationLabel)
+
+    val result: Future[Events] = notifierService.getProducerKeysEvents(lastEventId, limit).map(_.toModel)
+
+    onComplete(result) {
+      getProducerKeysEventsFromIdResponse[Events](operationLabel)(getProducerKeysEventsFromId200)
+    }
+  }
+
   def m2mTenantSeedFromApi(origin: String, externalId: String, name: String)(code: String): M2MTenantSeed =
     M2MTenantSeed(ExternalId(origin, externalId), M2MAttributeSeed(code) :: Nil, name)
 
