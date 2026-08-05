@@ -26,19 +26,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
         with:
           fetch-depth: 0
 
       - name: Setup Java (temurin@11)
         if: matrix.java == 'temurin@11'
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@215b7e5f829ab9cac114c149667e57dc1b70b4bc # v2
         with:
           distribution: temurin
           java-version: 11
 
       - name: Cache sbt
-        uses: actions/cache@v2
+        uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
         with:
           path: |
             ~/.sbt
@@ -50,7 +50,7 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Install node 16
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 16
 
@@ -64,7 +64,7 @@ jobs:
         run: tar cf targets.tar target generated/target project/target
 
       - name: Upload target directories
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
           path: targets.tar
@@ -85,19 +85,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
         with:
           fetch-depth: 0
 
       - name: Setup Java (temurin@11)
         if: matrix.java == 'temurin@11'
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@215b7e5f829ab9cac114c149667e57dc1b70b4bc # v2
         with:
           distribution: temurin
           java-version: 11
 
       - name: Cache sbt
-        uses: actions/cache@v2
+        uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
         with:
           path: |
             ~/.sbt
@@ -109,7 +109,7 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Download target directories (2.13.10)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: target-${{ matrix.os }}-2.13.10-${{ matrix.java }}
 
@@ -119,7 +119,7 @@ jobs:
           rm targets.tar
 
       - name: Install node 16
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 16
 
@@ -129,13 +129,13 @@ jobs:
       - name: Get 1.0.x-SNAPSHOTS versionIds
         id: version
         if: github.ref == 'refs/heads/1.0.x'
-        uses: castlabs/get-package-version-id-action@v2.0
+        uses: castlabs/get-package-version-id-action@61097d3d0b65fa880de6de674e8b70e1fff6730b # v2.0
         with:
           version: 1.0.x-SNAPSHOT
 
       - name: Deleting 1.0.x-SNAPSHOTS versions
         if: ${{ github.ref == 'refs/heads/1.0.x' && steps.version.outputs.ids != '' }}
-        uses: actions/delete-package-versions@v2
+        uses: actions/delete-package-versions@000223ef3eaa3505c63d4c610f57ef103bcab46d # v2
         with:
           package-version-ids: ${{ steps.version.outputs.ids }}
 
@@ -146,7 +146,7 @@ jobs:
         run: sbt ++${{ matrix.scala }} compile
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838 # v1
         with:
           aws-region: eu-central-1
           role-to-assume: 'arn:aws:iam::505630707203:role/interop-github-ecr-dev'
@@ -154,7 +154,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@5a88a04c91d5c6f97aae0d9be790e64d9b1d47b7 # v1
 
       - name: Build, tag, and push image to Amazon ECR
         env:
